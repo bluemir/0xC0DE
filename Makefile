@@ -18,7 +18,7 @@ WEB_LIBS      = $(shell find static/lib            -type f                -print
 HTML_SOURCES  = $(shell find static/html-templates -type f -name '*.html' -print)
 
 STATICS =
-STATICS += build/static/js/bundle.js
+STATICS += build/static/js/index.js
 STATICS += $(CSS_SOURCES:static/css/%=build/static/css/%)
 STATICS += $(WEB_LIBS:static/lib/%=build/static/lib/%)
 

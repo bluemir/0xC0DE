@@ -31,14 +31,17 @@ ARG VERSION
 ## copy source
 ADD . /src
 
-RUN make build/${APP_NAME}
+ARG APP_NAME
+RUN make build/$APP_NAME
 
 ################################################################################
 # running image
 FROM fedora:32
 
 WORKDIR /
-COPY --from=build-env /src/build/${APP_NAME} /bin/${APP_NAME}
+ARG APP_NAME
+ENV APP_NAME $APP_NAME
+COPY --from=build-env /src/build/$APP_NAME /bin/$APP_NAME
 
-ENTRYPOINT ["${APP_NAME}"]
+CMD $APP_NAME
 
