@@ -1,3 +1,5 @@
+DOCKER_IMAGE_NAME=$(shell echo $(APP_NAME)| tr A-Z a-z)
+
 docker: build/docker-image
 
 build/docker-image: build/Dockerfile $(GO_SOURCES) $(HTML_SOURCES) $(JS_SOURCES) $(CSS_SOURCES) $(WEB_LIBS)

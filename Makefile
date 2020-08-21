@@ -4,8 +4,6 @@ export VERSION
 IMPORT_PATH=$(shell cat go.mod | head -n 1 | awk '{print $$2}')
 APP_NAME=$(notdir $(IMPORT_PATH))
 
-DOCKER_IMAGE_NAME=$(shell echo $(APP_NAME)| tr A-Z a-z)
-
 export GO111MODULE=on
 export GIT_TERMINAL_PROMPT=1
 
@@ -31,14 +29,16 @@ build/static/%: static/%
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-build/static/js/bundle.js: $(JS_SOURCES) build/tools/yarn build/tools/rollup
+build/static/js/%: $(JS_SOURCES) package.json
+	@$(MAKE) build/tools/yarn build/tools/rollup
 	@mkdir -p $(dir $@)
 	yarn install
-	rollup static/js/index.js --file $@ --format es -p '@rollup/plugin-node-resolve'
+	rollup $(@:build/%=%) --file $@ --format es -p '@rollup/plugin-node-resolve'
 
 build: build/$(APP_NAME)
 
-build/$(APP_NAME).unpacked: $(GO_SOURCES) Makefile build/tools/go
+build/$(APP_NAME).unpacked: $(GO_SOURCES) Makefile
+	@$(MAKE) build/tools/go
 	@mkdir -p build
 	go build -v \
 		-trimpath \
@@ -48,7 +48,8 @@ build/$(APP_NAME).unpacked: $(GO_SOURCES) Makefile build/tools/go
 		" \
 		$(OPTIONAL_BUILD_ARGS) \
 		-o $@ main.go
-build/$(APP_NAME): build/$(APP_NAME).unpacked $(HTML_SOURCES) $(STATICS) build/tools/rice
+build/$(APP_NAME): build/$(APP_NAME).unpacked $(HTML_SOURCES) $(STATICS)
+	$(MAKE) build/tools/rice
 	@mkdir -p build
 	cp $< $@.tmp
 	rice append -v \
