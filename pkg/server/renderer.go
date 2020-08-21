@@ -8,14 +8,14 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/bluemir/0xC0DE/pkg/resources"
+	"github.com/bluemir/0xC0DE/pkg/static"
 )
 
 func NewRenderer() (*template.Template, error) {
 	log := logrus.WithField("method", "NewRenderer")
 	tmpl := template.New("__root__")
 
-	resources.HTMLTemplates.Walk("/", func(path string, info os.FileInfo, err error) error {
+	static.HTMLTemplates.Walk("/", func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() && info.Name()[0] == '.' && path != "/" {
 			return filepath.SkipDir
 		}
@@ -24,7 +24,7 @@ func NewRenderer() (*template.Template, error) {
 		}
 		log.Debugf("parse template: path: %s", path)
 
-		tmpl, err = tmpl.Parse(resources.HTMLTemplates.MustString(path))
+		tmpl, err = tmpl.Parse(static.HTMLTemplates.MustString(path))
 		if err != nil {
 			return err
 		}

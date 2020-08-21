@@ -4,10 +4,10 @@ export VERSION
 IMPORT_PATH=$(shell cat go.mod | head -n 1 | awk '{print $$2}')
 APP_NAME=$(notdir $(IMPORT_PATH))
 
+DOCKER_IMAGE_NAME=$(shell echo $(APP_NAME)| tr A-Z a-z)
+
 export GO111MODULE=on
 export GIT_TERMINAL_PROMPT=1
-
-DOCKER_IMAGE_NAME=reg.navercorp.com/ncc/$(APP_NAME)
 
 ## Go Sources
 GO_SOURCES = $(shell find . -name "vendor"  -prune -o \
@@ -34,7 +34,7 @@ build/static/%: static/%
 build/static/js/bundle.js: $(JS_SOURCES) build/tools/yarn build/tools/rollup
 	@mkdir -p $(dir $@)
 	yarn install
-	rollup static/js/main.js --file $@ --format es -p '@rollup/plugin-node-resolve'
+	rollup static/js/index.js --file $@ --format es -p '@rollup/plugin-node-resolve'
 
 build: build/$(APP_NAME)
 
@@ -77,10 +77,10 @@ build/docker-image.pushed: build/docker-image
 	echo $(shell cat $<) > $@
 
 clean:
-	rm -rf build/
+	rm -rf build/ node_modules/
 
 run: build/$(APP_NAME)
-	$< -vvvv server --config-file=./runtime/local/server.config.yaml --db-path=./runtime/db.sqlite3
+	$< -vvvv server
 
 auto-run:
 	while true; do \
@@ -108,16 +108,6 @@ reset:
 deploy: build/docker-image.pushed
 
 # TOOLS
-tools: build/tools/rice build/tools/npm build/tools/rollup build/tools/yarn
-
-build/tools/rice:
-	which rice || (GO111MODULE=off go get -u github.com/GeertJohan/go.rice/rice)
-build/tools/npm:
-	which npm
-build/tools/rollup: build/tools/npm
-	which rollup || npm install -g rollup && npm install -g '@rollup/plugin-node-resolve'
-build/tools/yarn: build/tools/npm
-	which yarn || npm install -g yarn
-
+-include makefile.d/*
 
 .PHONY: build docker push clean run auto-run .sources test deploy reset

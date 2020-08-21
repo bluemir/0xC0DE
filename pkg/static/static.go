@@ -1,4 +1,4 @@
-package resources
+package static
 
 import (
 	rice "github.com/GeertJohan/go.rice"
@@ -6,5 +6,5 @@ import (
 
 var (
 	Static        = rice.MustFindBox("../../build/static")
-	HTMLTemplates = rice.MustFindBox("../../resources/html-templates")
+	HTMLTemplates = rice.MustFindBox("../../static/html-templates")
 )
