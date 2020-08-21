@@ -38,7 +38,7 @@ build/static/js/bundle.js: $(JS_SOURCES) build/tools/yarn build/tools/rollup
 
 build: build/$(APP_NAME)
 
-build/$(APP_NAME).unpacked: $(GO_SOURCES) Makefile
+build/$(APP_NAME).unpacked: $(GO_SOURCES) Makefile build/tools/go
 	@mkdir -p build
 	go build -v \
 		-trimpath \
@@ -56,26 +56,6 @@ build/$(APP_NAME): build/$(APP_NAME).unpacked $(HTML_SOURCES) $(STATICS) build/t
 		--exec $@.tmp
 	mv build/$(APP_NAME).tmp $@
 
-docker: build/docker-image
-
-build/docker-image: build/Dockerfile $(GO_SOURCES) $(HTML_SOURCES) $(JS_SOURCES) $(CSS_SOURCES) $(WEB_LIBS)
-	docker build \
-		--build-arg VERSION=$(VERSION) \
-		-t $(DOCKER_IMAGE_NAME):$(VERSION) \
-		-f $< .
-	echo $(DOCKER_IMAGE_NAME):$(VERSION) > $@
-
-build/Dockerfile: export APP_NAME:=$(APP_NAME)
-build/Dockerfile: Dockerfile.template
-	@mkdir -p build
-	cat $< | envsubst '$${APP_NAME}' > $@
-
-push: build/docker-image.pushed
-
-build/docker-image.pushed: build/docker-image
-	docker push $(shell cat $<)
-	echo $(shell cat $<) > $@
-
 clean:
 	rm -rf build/ node_modules/
 
@@ -88,6 +68,9 @@ auto-run:
 		entr -rd $(MAKE) test run ;  \
 		echo "hit ^C again to quit" && sleep 1  \
 	; done
+
+reset:
+	ps -e | grep make | grep -v grep | awk '{print $$1}' | xargs kill
 
 .sources:
 	@echo \
@@ -102,12 +85,8 @@ auto-run:
 test:
 	go test -v ./pkg/...
 
-reset:
-	ps -e | grep make | grep -v grep | awk '{print $$1}' | xargs kill
-
-deploy: build/docker-image.pushed
-
-# TOOLS
+# sub-makefiles
+# for build tools, docker build, deploy
 -include makefile.d/*
 
-.PHONY: build docker push clean run auto-run .sources test deploy reset
+.PHONY: build clean run auto-run reset .sources test
