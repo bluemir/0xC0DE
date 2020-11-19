@@ -14,6 +14,7 @@ GO_SOURCES = $(shell find . -name "vendor"  -prune -o \
 ## FE sources
 JS_SOURCES    = $(shell find static/js             -type f -name '*.js'   -print)
 CSS_SOURCES   = $(shell find static/css            -type f -name '*.css'  -print)
+#LESS_SOURCES  = $(shell find static/less           -type f -name '*.less' -print)
 WEB_LIBS      = $(shell find static/lib            -type f                -print)
 HTML_SOURCES  = $(shell find static/html-templates -type f -name '*.html' -print)
 
