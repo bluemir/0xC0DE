@@ -1,5 +1,6 @@
 #!/bin/sh
 
-rm -rf .git init.sh
-
-echo "run 'git init'"
+rm -rf .git readme.md
+git init
+git commit -m "Initial commit" --allow-empty --author="init-bot <bot@bluemir.me>"
+rm init.sh
