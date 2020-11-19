@@ -18,4 +18,7 @@ build/docker-image.pushed: build/docker-image
 	docker push $(shell cat $<)
 	echo $(shell cat $<) > $@
 
+docker-run: build/docker-image
+	docker run -it --rm -v $(PWD)/runtime:/runtime -w=/runtime $(shell cat $<) $(APP_NAME) -vvvv server
+
 .PHONY: docker docker-push

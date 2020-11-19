@@ -6,5 +6,6 @@ import (
 
 var (
 	Static        = rice.MustFindBox("../../build/static")
+	NodeModules   = rice.MustFindBox("../../node_modules")
 	HTMLTemplates = rice.MustFindBox("../../static/html-templates")
 )

@@ -18,9 +18,11 @@ WEB_LIBS      = $(shell find static/lib            -type f                -print
 HTML_SOURCES  = $(shell find static/html-templates -type f -name '*.html' -print)
 
 STATICS =
-STATICS += build/static/js/index.js
-STATICS += $(CSS_SOURCES:static/css/%=build/static/css/%)
-STATICS += $(WEB_LIBS:static/lib/%=build/static/lib/%)
+STATICS += $(JS_SOURCES:%=build/%)
+#STATICS += build/static/js/index.js   # for rollup
+STATICS += $(CSS_SOURCES:%=build/%)
+#STATICS += $(LESS_SOURCES:static/less/%=build/static/css/%)  # for less
+STATICS += $(WEB_LIBS:%=build/%)
 
 default: build
 
@@ -29,11 +31,20 @@ build/static/%: static/%
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-build/static/js/%: $(JS_SOURCES) package.json
-	@$(MAKE) build/tools/yarn build/tools/rollup
-	@mkdir -p $(dir $@)
+#build/static/js/%: $(JS_SOURCES) build/yarn-updated
+#	@$(MAKE) build/tools/rollup
+#	@mkdir -p $(dir $@)
+#	rollup $(@:build/%=%) --file $@ --format es -p '@rollup/plugin-node-resolve'
+
+#build/static/css/%: static/less/% build/yarn-updated
+#	@$(MAKE) build/tools/lessc
+#	@mkdir -p $(dir $@)
+#	lessc $< $@
+
+build/yarn-updated: yarn.lock package.json
+	@$(MAKE) build/tools/yarn
 	yarn install
-	rollup $(@:build/%=%) --file $@ --format es -p '@rollup/plugin-node-resolve'
+	touch $@
 
 build: build/$(APP_NAME)
 
@@ -48,7 +59,7 @@ build/$(APP_NAME).unpacked: $(GO_SOURCES) Makefile
 		" \
 		$(OPTIONAL_BUILD_ARGS) \
 		-o $@ main.go
-build/$(APP_NAME): build/$(APP_NAME).unpacked $(HTML_SOURCES) $(STATICS)
+build/$(APP_NAME): build/$(APP_NAME).unpacked $(HTML_SOURCES) $(STATICS) build/yarn-updated
 	$(MAKE) build/tools/rice
 	@mkdir -p build
 	cp $< $@.tmp
@@ -76,6 +87,8 @@ reset:
 .sources:
 	@echo \
 	Makefile \
+	go.mod go.sum \
+	package.json yarn.lock \
 	$(GO_SOURCES) \
 	$(JS_SOURCES) \
 	$(CSS_SOURCES) \

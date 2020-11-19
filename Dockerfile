@@ -1,6 +1,7 @@
 ARG VERSION=dev
-FROM fedora:32 as build-env
+FROM fedora:33 as build-env
 
+RUN echo "fastestmirror=1" >> /etc/dnf/dnf.conf
 RUN dnf install -y \
     make findutils which \
     golang nodejs \
@@ -36,7 +37,7 @@ RUN make build/$APP_NAME
 
 ################################################################################
 # running image
-FROM fedora:32
+FROM fedora:33
 
 WORKDIR /
 ARG APP_NAME
