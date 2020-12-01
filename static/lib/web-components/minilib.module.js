@@ -1,4 +1,6 @@
 // bluemir's light-weight web component library.
+// TODO import * as $ from "minilib"
+
 var $ = {
 	get: function(target, query) {
 		if(typeof target.querySelector !== "function") {return $.get(document, target)}
@@ -272,14 +274,8 @@ function extend(TargetClass, proto){
 	TargetClass.__minilib_inserted__ = true
 }
 extend(Node, {
-	removeThis : function(){
-		this.parentNode.removeChild(this);
-	},
-	replaceWith: function(newNode) {
-		this.parentNode.replaceChild(newNode, this);
-	},
-	replaceNode: function(oldNode) {
-		oldNode.parentNode.replaceChild(this, oldNode);
+	appendTo: function(target) {
+		target.appendChild(this);
 	},
 	clear : function(filter) {
 		var f = filter || function(e) { return true };
@@ -301,37 +297,17 @@ extend(Element, {
 			return this.getAttribute(name)
 		}
 	},
-	appendTo: function(target) {
-		target.appendChild(this);
-	},
 })
 
 extend(EventTarget, {
-	on : function(name, handler, opt) {
-
+	on: function(name, handler, opt) {
 		this.addEventListener(name, handler, opt);
 
 		return this;
-		//
-		var listeners = [];
-		var eventNames = [];
-		for (var i = 0; i < arguments.length; i++) {
-			switch(typeof(arguments[i])) {
-				case "function":
-					listeners.push(arguments[i]);
-					break;
-				case "string":
-					eventNames.push(arguments[i]);
-					break;
-				default:
-					throw Error("'on' only accept function or string")
-			}
-		}
-		eventNames.forEach((name) => {
-			listeners.forEach((func) => {
-				this.addEventListener(name, func)
-			})
-		})
+	},
+	off: function(name, handler, opt) {
+		this.removeEventListener(name, handler, opt)
+
 		return this;
 	},
 	fireEvent: function(name, detail) {
@@ -342,22 +318,25 @@ extend(EventTarget, {
 });
 
 extend(NodeList, {
-	"map": Array.prototype.map,
+	"map":    Array.prototype.map,
 	"filter": Array.prototype.filter,
 	//"forEach": Array.prototype.forEach,
 });
 extend(HTMLCollection, {
-	"map": Array.prototype.map,
-	"filter": Array.prototype.filter,
+	"map":     Array.prototype.map,
+	"filter":  Array.prototype.filter,
 	"forEach": Array.prototype.forEach,
 });
 
 extend(Array, {
-	"all": function all() { return Promise.all(this); },
-	"race": function race() { return Promise.race(this); },
-
-	// with the lovely addiction of ...
-	"any": function any() { return Promise.any(this); },
+	"promise": function() {
+		var arr = this;
+		return {
+			all:  () => Promise.all(arr),
+			any:  () => Promise.any(arr),
+			race: () => Promise.race(arr),
+		}
+	},
 });
 
 
@@ -393,10 +372,9 @@ class CustomElement extends HTMLElement {
 		var name = h instanceof Function ? h.name : h;
 		var f = h instanceof Function ? h : this[h];
 
-		if (this["--handler"][name]) {
-			return this["--handler"][name]
+		if (!this["--handler"][name]) {
+			this["--handler"][name] = evt => f.call(this, evt.detail);
 		}
-		this["--handler"][name] = evt => f.call(this, evt.detail);
 		return this["--handler"][name];
 	}
 }
