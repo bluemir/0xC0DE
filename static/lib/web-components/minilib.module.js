@@ -1,233 +1,224 @@
 // bluemir's light-weight web component library.
-// TODO import * as $ from "minilib"
+// import * as $ from "minilib"
 
-var $ = {
-	get: function(target, query) {
-		if(typeof target.querySelector !== "function") {return $.get(document, target)}
-		return target.querySelector(query);
-	},
-	all: function(target, query) {
-		if(typeof target.querySelectorAll !== "function") {return $.all(document, target)}
-		return Array.prototype.slice.call(target.querySelectorAll(query));
-	},
-	create: function(tagname, attr) {
-		var newTag = document.createElement(tagname);
-		if (attr && attr.$text){
-			newTag.appendChild(document.createTextNode(attr.$text));
-		}
-		if (attr && attr.$html){
-			newTag.innerHTML = attr.$html;
-		}
-		if (attr && attr.$child) {
-			newTag.appendChild(attr.$child)
-		}
-		for(var key in (attr || {})){
-			if (key[0] == "$") {
-				continue; //skip
-			}
-			newTag.setAttribute(key, attr[key]);
-		}
-		return newTag;
-	},
-	request: async function $request(method, url, options) {
-		var o = options || {}
-		try {
-			var opts = $.config.hook.preRequest(method, url, o) || o;
-		} catch(e) {
-			var opts = o;
-		}
-
-		if (opts.timestamp !== false) {
-			opts.query = opts.query || {};
-			opts.query["_timestamp"] = Date.now();
-		}
-
-		return new Promise(function(resolve, reject) {
-			var req = new XMLHttpRequest();
-
-			req.addEventListener("readystatechange", function(){
-				if (req.readyState  == 4) {
-					var result = {
-						statusCode: req.status,
-						text : req.responseText,
-					};
-
-					var contentType = req.getResponseHeader("Content-Type") || "";
-					if(contentType.includes("application/json")) {
-						result.json = JSON.parse(result.text);
-					}
-
-					if (req.status >= 200, req.status < 300){
-						resolve(result)
-					} else {
-						reject(result);
-					}
-				}
-			});
-
-			if (opts.auth) {
-				console.debug("request with auth", opts.auth)
-				// In Chrome and firefox Auth header not included request(due to security, see https://bugs.chromium.org/p/chromium/issues/detail?id=128323)
-				// so forced set header
-				req.open(method, resolveParam(url, opts.params) + queryString(opts.query), true, opts.auth.user, opts.auth.password);
-				req.setRequestHeader("Authorization", "Basic " + btoa(opts.auth.user+":"+opts.auth.password));
-			} else {
-				req.open(method, resolveParam(url, opts.params) + queryString(opts.query), true);
-			}
-
-			Object.keys(opts.header || {}).forEach(function(name){
-				req.setRequestHeader(name, opts.header[name]);
-			});
-
-			switch (typeof opts.body) {
-				case "object":
-					req.setRequestHeader("Content-Type", "application/json")
-					req.send(JSON.stringify(opts.body))
-					break;
-				case "string":
-					req.send(opts.body);
-					break;
-				case "undefined":
-					req.send();
-					break; // just skip
-				default:
-					reject("unknown type: req.body");
-					break;
-			}
-		});
-	},
-	timeout: async function(ms) {
-		return new Promise(function(resolve, reject){
-			setTimeout(resolve, ms);
-		});
-	},
-	defer: function() {
-		var ret = {}
-		ret.promise = new Promise(function(resolve, reject){
-			ret.resolve = resolve;
-			ret.reject = reject;
-		});
-		return ret;
-	},
-	prevent: function(func){
-		return function(evt){
-			evt.preventDefault();
-			return func();
-		}
-	},
-	form: function(form) {
-		var fd = new FormData(form)
-		return Array.from(fd).reduce((obj, [k, v] )=> {
-			switch($.get(form, `[name=${k}]`).attr("type")) {
-				case "number":
-					obj[k] = v-0;
-					break;
-				default:
-					obj[k] = v;
-					break;
-			}
-			return obj;
-		}, {});
-	},
-	animateFrame: function(callback, {fps = 30} = {}) {
-		var stop = false;
-		var fpsInterval = 1000 / fps;
-		var then = Date.now();
-		animate();
-
-		function animate() {
-			if (stop) {
-				return;
-			}
-			requestAnimationFrame(animate);
-
-			var now = Date.now();
-			var elapsed = now - then;
-
-			if (elapsed > fpsInterval) {
-				then = now - (elapsed % fpsInterval);
-
-				var ret = callback(elapsed - (elapsed%fpsInterval));
-				if (ret && ret.stop) {
-					 stop = true;
-				}
-			}
-		}
-	},
-	query: function(data, query) {
-		var keys = query.split("\\.").map(str => str.split(".")).reduce((p, c) => {
-			if (p.length == 0 ) {
-				return c;
-			}
-			var last = p.pop();
-			var first = c.shift();
-
-			return [].concat(p, [last+"."+first], c);
-		});
-
-		if (query[0] == ".") {
-			keys.shift() // remove first empty key
-		}
-
-		var result = data;
-		for (var i = 0; i < keys.length; i++) {
-			if (result === undefined) {
-				return undefined
-			}
-			result = result[keys[i]];
-		}
-		return result;
-	},
-	querySet: function(obj, query, value) {
-		var keys = query.split("\\.").map(str => str.split(".")).reduce((p, c) => {
-			if (p.length == 0 ) {
-				return c;
-			}
-			var last = p.pop();
-			var first = c.shift();
-
-			return [].concat(p, [last+"."+first], c);
-		});
-
-		if (query[0] == ".") {
-			keys.shift() // remove first empty key
-		}
-
-		var visitor = obj;
-		for (var i = 0; i < keys.length-1; i++) {
-			if (visitor === undefined) {
-				return undefined
-			}
-			visitor = visitor[keys[i]];
-		}
-		visitor[keys[keys.length - 1]] = value;
-	},
-	util: {
-		wsURL: function(url){
-			var u= new URL(url, document.location)
-			u.protocol = document.location.protocol.includes("https") ? "wss:" : "ws:"
-			return u;
-		},
-		filter: {
-			notNull: e => e != null,
-		},
-		reduce: {
-			appendChild: function(parent, child) {
-				parent.appendChild(child);
-				return parent;
-			},
-		},
-	},
-	event: new EventTarget(),
-	_registerGlobal: function() {
-		window.$ = this;
-	},
-	config: {
-		hook: {
-			preRequest: function(method, url, opt) { return opt }
-		},
+export var config = {
+	hook: {
+		preRequest: function(method, url, opt) { return opt }
 	},
 }
+export function get(target, query) {
+	if(!target instanceof Element) {return document.querySelector(target)}
+	return target.querySelector(query);
+}
+export function all(target, query) {
+	if(!target instanceof Element) {return document.querySelectorAll(target)}
+	return target.querySelectorAll(query);
+}
+export function create(tagname, attr) {
+	var newTag = document.createElement(tagname);
+	if (attr && attr.$text){
+		newTag.appendChild(document.createTextNode(attr.$text));
+	}
+	if (attr && attr.$html){
+		newTag.innerHTML = attr.$html;
+	}
+	if (attr && attr.$child) {
+		newTag.appendChild(attr.$child)
+	}
+	for(var key in (attr || {})){
+		if (key[0] == "$") {
+			continue; //skip
+		}
+		newTag.setAttribute(key, attr[key]);
+	}
+	return newTag;
+}
+export async function request(method, url, options) {
+	var o = options || {}
+	try {
+		var opts = config.hook.preRequest(method, url, o) || o;
+	} catch(e) {
+		var opts = o;
+	}
+
+	if (opts.timestamp !== false) {
+		opts.query = opts.query || {};
+		opts.query["_timestamp"] = Date.now();
+	}
+
+	return new Promise(function(resolve, reject) {
+		var req = new XMLHttpRequest();
+
+		req.addEventListener("readystatechange", function(){
+			if (req.readyState  == 4) {
+				var result = {
+					statusCode: req.status,
+					text : req.responseText,
+				};
+
+				var contentType = req.getResponseHeader("Content-Type") || "";
+				if(contentType.includes("application/json")) {
+					result.json = JSON.parse(result.text);
+				}
+
+				if (req.status >= 200, req.status < 300){
+					resolve(result)
+				} else {
+					reject(result);
+				}
+			}
+		});
+
+		if (opts.auth) {
+			console.debug("request with auth", opts.auth)
+			// In Chrome and firefox Auth header not included request(due to security, see https://bugs.chromium.org/p/chromium/issues/detail?id=128323)
+			// so forced set header
+			req.open(method, resolveParam(url, opts.params) + queryString(opts.query), true, opts.auth.user, opts.auth.password);
+			req.setRequestHeader("Authorization", "Basic " + btoa(opts.auth.user+":"+opts.auth.password));
+		} else {
+			req.open(method, resolveParam(url, opts.params) + queryString(opts.query), true);
+		}
+
+		Object.keys(opts.header || {}).forEach(function(name){
+			req.setRequestHeader(name, opts.header[name]);
+		});
+
+		switch (typeof opts.body) {
+			case "object":
+				req.setRequestHeader("Content-Type", "application/json")
+				req.send(JSON.stringify(opts.body))
+				break;
+			case "string":
+				req.send(opts.body);
+				break;
+			case "undefined":
+				req.send();
+				break; // just skip
+			default:
+				reject("unknown type: req.body");
+				break;
+		}
+	});
+}
+export async function timeout(ms) {
+	return new Promise(function(resolve, reject){
+		setTimeout(resolve, ms);
+	});
+}
+export function defer() {
+	var ret = {}
+	ret.promise = new Promise(function(resolve, reject){
+		ret.resolve = resolve;
+		ret.reject = reject;
+	});
+	return ret;
+}
+export function prevent(func){
+	return function(evt){
+		evt.preventDefault();
+		return func();
+	}
+}
+export function form(form) {
+	var fd = new FormData(form)
+	return Array.from(fd).reduce((obj, [k, v] )=> {
+		switch(get(form, `[name=${k}]`).attr("type")) {
+			case "number":
+				obj[k] = v-0;
+				break;
+			default:
+				obj[k] = v;
+				break;
+		}
+		return obj;
+	}, {});
+}
+export  function animateFrame(callback, {fps = 30} = {}) {
+	var stop = false;
+	var fpsInterval = 1000 / fps;
+	var then = Date.now();
+	animate();
+
+	function animate() {
+		if (stop) {
+			return;
+		}
+		requestAnimationFrame(animate);
+
+		var now = Date.now();
+		var elapsed = now - then;
+
+		if (elapsed > fpsInterval) {
+			then = now - (elapsed % fpsInterval);
+
+			var ret = callback(elapsed - (elapsed%fpsInterval));
+			if (ret && ret.stop) {
+				stop = true;
+			}
+		}
+	}
+}
+export function jq(data, query, value) {
+	var keys = query.split("\\.").map(str => str.split(".")).reduce((p, c) => {
+		if (p.length == 0 ) {
+			return c;
+		}
+		var last = p.pop();
+		var first = c.shift();
+
+		return [].concat(p, [last+"."+first], c);
+	});
+
+	if (query[0] == ".") {
+		keys.shift(); // remove first empty key
+	}
+
+	try {
+		var visitor = data;
+		while(keys.length > 1) {
+			visitor = visitor[keys.shift()];
+		}
+
+		if (value !== undefined) {
+			visitor[keys.shift()] = value;
+			return value;
+		} else {
+			return visitor[keys.shift()];
+		}
+	} catch(e) {
+		throw new ExtendedError("[$.jq] not found", e);
+	}
+}
+
+class ExtendedError extends Error {
+	constructor(message, error){
+		super(message)
+
+		this.name = error.name;
+
+		this.cause = error;
+		let message_lines = (this.message.match(/\n/g)||[]).length + 1;
+		this.stack = this.stack.split('\n').slice(0, message_lines+1).join('\n') + '\n' + error.stack;
+	}
+}
+export function wsURL (url){
+	var u= new URL(url, document.location)
+	u.protocol = document.location.protocol.includes("https") ? "wss:" : "ws:"
+	return u;
+}
+
+export var util = {
+	filter: {
+		notNull: e => e != null,
+	},
+	reduce: {
+		appendChild: function(parent, child) {
+			parent.appendChild(child);
+			return parent;
+		},
+	},
+};
+export var event = new EventTarget();
 
 function resolveParam(url, params) {
 	if (params == null) {
@@ -340,7 +331,7 @@ extend(Array, {
 });
 
 
-class CustomElement extends HTMLElement {
+export class CustomElement extends HTMLElement {
 	constructor() {
 		super();
 
@@ -378,7 +369,3 @@ class CustomElement extends HTMLElement {
 		return this["--handler"][name];
 	}
 }
-
-$.CustomElement = CustomElement;
-
-export default $;
