@@ -102,6 +102,6 @@ test:
 
 # sub-makefiles
 # for build tools, docker build, deploy
--include makefile.d/*
+-include Makefile.d/*
 
 .PHONY: build clean run auto-run reset .sources test
