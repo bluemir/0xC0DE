@@ -5,7 +5,6 @@ IMPORT_PATH=$(shell cat go.mod | head -n 1 | awk '{print $$2}')
 APP_NAME=$(notdir $(IMPORT_PATH))
 
 export GO111MODULE=on
-export GIT_TERMINAL_PROMPT=1
 
 ## Go Sources
 GO_SOURCES = $(shell find . -name "vendor"  -prune -o \
@@ -62,12 +61,12 @@ build/$(APP_NAME).unpacked: $(GO_SOURCES) Makefile
 		-o $@ main.go
 build/$(APP_NAME): build/$(APP_NAME).unpacked $(HTML_SOURCES) $(STATICS) build/yarn-updated
 	$(MAKE) build/tools/rice
-	@mkdir -p build
+	@mkdir -p $(dir $<)
 	cp $< $@.tmp
 	rice append -v \
 		-i $(IMPORT_PATH)/pkg/static \
 		--exec $@.tmp
-	mv build/$(APP_NAME).tmp $@
+	mv $@.tmp $@
 
 clean:
 	rm -rf build/ node_modules/
