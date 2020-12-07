@@ -13,16 +13,17 @@ ENV PATH=$PATH:/root/go/bin
 # build
 WORKDIR /src
 
-## install build tools
-ADD makefile.d/tools.mk makefile.d/tools.mk
-RUN make -f makefile.d/tools.mk tools
+ADD go.mod go.sum package.json yarn.lock ./
+ADD Makefile.d/tools.mk Makefile.d/tools.mk
 
 ## download dependancy
-ADD go.mod go.sum package.json ./
 ### go
 RUN go mod download
 ### nodejs
 RUN yarn install
+
+## install build tools
+RUN make -f Makefile.d/tools.mk tools
 
 ## for use vendor folder. uncomment next line
 #ENV OPTIONAL_BUILD_ARGS="-mod=vendor"
