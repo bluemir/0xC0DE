@@ -5,16 +5,19 @@ RUN echo "fastestmirror=1" >> /etc/dnf/dnf.conf
 RUN dnf install -y \
     make findutils which \
     golang nodejs \
+    protobuf protobuf-compiler protobuf-devel \
     && dnf clean all
 
 ENV GOPATH=/root/go
 ENV PATH=$PATH:/root/go/bin
 
 # build
-WORKDIR /src
+WORKDIR /pre-build
 
-ADD go.mod go.sum package.json yarn.lock ./
-ADD Makefile.d/tools.mk Makefile.d/tools.mk
+ADD go.mod go.sum package.json yarn.lock Makefile.d/tools.mk ./
+
+## install build tools
+RUN make -f tools.mk tools
 
 ## download dependancy
 ### go
@@ -22,8 +25,8 @@ RUN go mod download
 ### nodejs
 RUN yarn install
 
-## install build tools
-RUN make -f Makefile.d/tools.mk tools
+# build
+WORKDIR /src
 
 ## for use vendor folder. uncomment next line
 #ENV OPTIONAL_BUILD_ARGS="-mod=vendor"

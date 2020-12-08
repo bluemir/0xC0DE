@@ -7,6 +7,10 @@ import (
 )
 
 func (server *Server) routes(app gin.IRouter) {
+	// GRPC
+	app.Use(server.serveGrpc)
+
+	// js, css, etc.
 	app.Group("/static", staticCache).StaticFS("/", static.Static.HTTPBox())
 	app.Group("/lib", staticCache).StaticFS("/", static.NodeModules.HTTPBox()) // for css or other web libs. eg. font-awesome
 

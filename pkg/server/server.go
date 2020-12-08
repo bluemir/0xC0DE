@@ -3,18 +3,28 @@ package server
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
+	"gorm.io/gorm"
 )
 
 type Config struct {
-	Bind string
-	Key  string
+	Bind   string
+	Key    string
+	DBPath string
 }
 type Server struct {
 	conf *Config
+	grpc *grpc.Server
+	db   *gorm.DB
 }
 
 func Run(conf *Config) error {
-	server := &Server{conf}
+	server := &Server{
+		conf: conf,
+	}
+
+	server.initGrpcService()
+	server.initDB()
 
 	app := gin.New()
 

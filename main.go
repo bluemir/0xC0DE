@@ -33,6 +33,9 @@ func main() {
 		Default(util.RandomString(16)).PlaceHolder("KEY").
 		Envar(strings.ToUpper(AppName) + "_KEY").
 		StringVar(&conf.server.Key)
+	serverCmd.Flag("db-path", "db path").
+		Default(":memory:").
+		StringVar(&conf.server.DBPath)
 
 	cmd := kingpin.MustParse(app.Parse(os.Args[1:]))
 
