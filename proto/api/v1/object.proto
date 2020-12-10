@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package v1;
+
+option go_package = "github.com/bluemir/0xC0DE/pkg/gen/api/v1";
+
+
+message Empty {
+};
+

@@ -45,7 +45,7 @@ build/static/%: static/%
 #	@mkdir -p $(dir $@)
 #	lessc $< $@
 
-build/yarn-updated: yarn.lock package.json
+build/yarn-updated: package.json yarn.lock
 	@$(MAKE) build/tools/yarn
 	yarn install
 	touch $@
