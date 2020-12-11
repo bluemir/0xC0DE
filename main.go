@@ -55,7 +55,7 @@ func main() {
 
 	cmd := kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	level := logrus.Level(logLevel) + logrus.InfoLevel // default is error level
+	level := logrus.Level(logLevel) + logrus.InfoLevel // default is info level
 	logrus.SetOutput(os.Stderr)
 	logrus.SetLevel(level)
 	logrus.SetReportCaller(true)
@@ -63,7 +63,6 @@ func main() {
 
 	Run := func(cmd string) error {
 		switch cmd {
-
 		case serverCmd.FullCommand():
 			return server.Run(&conf.server)
 		case clientCmd.FullCommand():

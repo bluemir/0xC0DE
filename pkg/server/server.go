@@ -52,7 +52,9 @@ func Run(conf *Config) error {
 		}
 
 		// setup Logger
-		writer := logrus.New().Writer()
+		writer := logrus.
+			WithField("from", "gin").
+			WriterLevel(logrus.DebugLevel)
 		defer writer.Close()
 
 		app.Use(gin.LoggerWithWriter(writer))
