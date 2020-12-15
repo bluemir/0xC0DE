@@ -26,6 +26,10 @@ STATICS += $(WEB_LIBS:%=build/%)
 
 default: build
 
+# sub-makefiles
+# for build tools, docker build, deploy
+include Makefile.d/*
+
 ## Web dist
 build/static/%: static/%
 	@mkdir -p $(dir $@)
@@ -41,7 +45,7 @@ build/static/%: static/%
 #	@mkdir -p $(dir $@)
 #	lessc $< $@
 
-build/yarn-updated: yarn.lock package.json
+build/yarn-updated: package.json yarn.lock
 	@$(MAKE) build/tools/yarn
 	yarn install
 	touch $@
@@ -69,7 +73,7 @@ build/$(APP_NAME): build/$(APP_NAME).unpacked $(HTML_SOURCES) $(STATICS) build/y
 	mv $@.tmp $@
 
 clean:
-	rm -rf build/ node_modules/
+	rm -rf build/ node_modules/ $(OPTIONAL_CLEAN_DIR)
 
 run: build/$(APP_NAME)
 	$< -vvvv server
@@ -98,9 +102,5 @@ reset:
 
 test:
 	go test -v ./pkg/...
-
-# sub-makefiles
-# for build tools, docker build, deploy
--include Makefile.d/*
 
 .PHONY: build clean run auto-run reset .sources test

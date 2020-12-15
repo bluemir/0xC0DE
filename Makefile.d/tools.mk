@@ -26,6 +26,9 @@ build/tools/protoc-gen-go: build/tools/go
 	@which $(notdir $@) || (go get -u google.golang.org/protobuf/cmd/protoc-gen-go)
 build/tools/protoc-gen-go-grpc: build/tools/go
 	@which $(notdir $@) || (go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc)
-
+build/tools/protoc-gen-grpc-gateway: build/tools/go
+	@which $(notdir $@) || (go get -u github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway)
+build/tools/protoc-gen-openapiv2: build/tools/go
+	@which $(notdir $@) || (go get -u github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2)
 
 .PHONY: tools
