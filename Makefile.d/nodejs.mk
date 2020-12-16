@@ -9,14 +9,27 @@ build/yarn-updated: package.json yarn.lock
 
 .sources: package.json yarn.lock
 
+##### tools
+tools: build/tools/npm build/tools/yarn
+build/tools/npm:
+	@which $(notdir $@)
+build/tools/yarn: build/tools/npm
+	@which $(notdir $@) || (npm install -g yarn)
+
+
+
+##### other tools
 
 ## roll up
 #STATICS := $(filter-out build/static/js/%.js,$(STATICS)) # remove not entrypoint
-#STATICS += build/static/js/index.js
+#STATICS += build/static/js/index.js                      # entrypoint
 #build/static/js/%: $(JS_SOURCES) build/yarn-updated
 #	@$(MAKE) build/tools/rollup
 #	@mkdir -p $(dir $@)
 #	rollup $(@:build/%=%) --file $@ --format es -p '@rollup/plugin-node-resolve'
+#tools: build/tools/rollup
+#build/tools/rollup: build/tools/npm
+#	@which $(notdir $@) || (npm install -g rollup && npm install -g '@rollup/plugin-node-resolve')
 
 ## less
 #LESS_SOURCES  = $(shell find static/less           -type f -name '*.less' -print)
@@ -27,16 +40,7 @@ build/yarn-updated: package.json yarn.lock
 #	@mkdir -p $(dir $@)
 #	lessc $< $@
 #.sources: $(LESS_SOURCES)
-
-##### tools
-tools: build/tools/npm build/tools/yarn
-#tools: build/tools/lessc build/tools/rollup
-build/tools/npm:
-	@which $(notdir $@)
-build/tools/rollup: build/tools/npm
-	@which $(notdir $@) || (npm install -g rollup && npm install -g '@rollup/plugin-node-resolve')
-build/tools/lessc: build/tools/npm
-	@which $(notdir $@) || (npm install -g less)
-build/tools/yarn: build/tools/npm
-	@which $(notdir $@) || (npm install -g yarn)
+#tools: build/tools/lessc
+#build/tools/lessc: build/tools/npm
+#	@which $(notdir $@) || (npm install -g less)
 
