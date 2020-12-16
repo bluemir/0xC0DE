@@ -27,3 +27,20 @@ build/proto_generated: $(PROTO_SOURCE)
 		--openapiv2_out    build/openapiv2 \
 		$(PROTO_SOURCE)
 	touch $@
+
+
+##### tools
+#tools: build/tools/protoc build/tools/protoc-gen-go build/tools/protoc-gen-go-grpc
+build/tools/protoc:
+	@which $(notdir $@)
+build/tools/protoc-gen-go: build/tools/go
+	@which $(notdir $@) || (go get -u google.golang.org/protobuf/cmd/protoc-gen-go)
+build/tools/protoc-gen-go-grpc: build/tools/go
+	@which $(notdir $@) || (go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc)
+build/tools/protoc-gen-grpc-gateway: build/tools/go
+	@which $(notdir $@) || (go get -u github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway)
+build/tools/protoc-gen-openapiv2: build/tools/go
+	@which $(notdir $@) || (go get -u github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2)
+
+
+.sources: $(PROTO_SOURCE)

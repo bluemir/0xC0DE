@@ -11,18 +11,17 @@ GO_SOURCES = $(shell find . -name "vendor"  -prune -o \
                             -type f -name "*.go" -print)
 
 ## FE sources
-JS_SOURCES    = $(shell find static/js             -type f -name '*.js'   -print)
-CSS_SOURCES   = $(shell find static/css            -type f -name '*.css'  -print)
-#LESS_SOURCES  = $(shell find static/less           -type f -name '*.less' -print)
-WEB_LIBS      = $(shell find static/lib            -type f                -print)
-HTML_SOURCES  = $(shell find static/html-templates -type f -name '*.html' -print)
+JS_SOURCES    := $(shell find static/js             -type f -name '*.js'   -print)
+CSS_SOURCES   := $(shell find static/css            -type f -name '*.css'  -print)
+WEB_LIBS      := $(shell find static/lib            -type f                -print)
+HTML_SOURCES  := $(shell find static/html-templates -type f -name '*.html' -print)
 
-STATICS =
+STATICS :=
 STATICS += $(JS_SOURCES:%=build/%)
-#STATICS += build/static/js/index.js   # for rollup
 STATICS += $(CSS_SOURCES:%=build/%)
-#STATICS += $(LESS_SOURCES:static/less/%=build/static/css/%)  # for less
 STATICS += $(WEB_LIBS:%=build/%)
+
+## see Makefile.d/nodejs.mk for using rollup, less or other tools
 
 default: build
 
@@ -30,29 +29,14 @@ default: build
 # for build tools, docker build, deploy
 include Makefile.d/*
 
-## Web dist
+## Static files
 build/static/%: static/%
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-#build/static/js/%: $(JS_SOURCES) build/yarn-updated
-#	@$(MAKE) build/tools/rollup
-#	@mkdir -p $(dir $@)
-#	rollup $(@:build/%=%) --file $@ --format es -p '@rollup/plugin-node-resolve'
-
-#build/static/css/%: static/less/% build/yarn-updated
-#	@$(MAKE) build/tools/lessc
-#	@mkdir -p $(dir $@)
-#	lessc $< $@
-
-build/yarn-updated: package.json yarn.lock
-	@$(MAKE) build/tools/yarn
-	yarn install
-	touch $@
-
 build: build/$(APP_NAME)
 
-build/$(APP_NAME).unpacked: $(GO_SOURCES) Makefile
+build/$(APP_NAME).unpacked: $(GO_SOURCES) $(MAKEFILE_LIST)
 	@$(MAKE) build/tools/go
 	@mkdir -p build
 	go build -v \
@@ -63,7 +47,8 @@ build/$(APP_NAME).unpacked: $(GO_SOURCES) Makefile
 		" \
 		$(OPTIONAL_BUILD_ARGS) \
 		-o $@ main.go
-build/$(APP_NAME): build/$(APP_NAME).unpacked $(HTML_SOURCES) $(STATICS) build/yarn-updated
+
+build/$(APP_NAME): build/$(APP_NAME).unpacked $(HTML_SOURCES) $(STATICS) $(MAKEFILE_LIST)
 	$(MAKE) build/tools/rice
 	@mkdir -p $(dir $<)
 	cp $< $@.tmp
@@ -73,7 +58,7 @@ build/$(APP_NAME): build/$(APP_NAME).unpacked $(HTML_SOURCES) $(STATICS) build/y
 	mv $@.tmp $@
 
 clean:
-	rm -rf build/ node_modules/ $(OPTIONAL_CLEAN_DIR)
+	rm -rf build/ $(OPTIONAL_CLEAN_DIR)
 
 run: build/$(APP_NAME)
 	$< -vvvv server
@@ -88,17 +73,18 @@ auto-run:
 reset:
 	ps -e | grep make | grep -v grep | awk '{print $$1}' | xargs kill
 
-.sources:
-	@echo \
-	Makefile \
+## watched_sources
+.sources: \
+	$(MAKEFILE_LIST) \
 	go.mod go.sum \
-	package.json yarn.lock \
 	$(GO_SOURCES) \
 	$(JS_SOURCES) \
 	$(CSS_SOURCES) \
 	$(WEB_LIBS) \
-	$(HTML_SOURCES) \
-	| tr " " "\n"
+	$(HTML_SOURCES)
+	@echo $^ | tr " " "\n"
+.test:
+	@echo $(STATICS)
 
 test:
 	go test -v ./pkg/...
