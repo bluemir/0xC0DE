@@ -32,7 +32,7 @@ build/tools/yarn: build/tools/npm
 ## grpc
 tools: build/tools/protoc build/tools/protoc-gen-go build/tools/protoc-gen-go-grpc
 build/tools/protoc:
-	@which $(notdir $@)
+	@which $(notdir $@) || (echo "see https://grpc.io/docs/protoc-installation/")
 build/tools/protoc-gen-go: build/tools/go
 	@which $(notdir $@) || (go get -u google.golang.org/protobuf/cmd/protoc-gen-go)
 build/tools/protoc-gen-go-grpc: build/tools/go

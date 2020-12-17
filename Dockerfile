@@ -11,7 +11,7 @@ RUN dnf install -y \
 ENV GOPATH=/root/go
 ENV PATH=$PATH:/root/go/bin
 
-# build
+# pre build
 WORKDIR /pre-build
 
 ADD go.mod go.sum package.json yarn.lock Makefile.d/tools.mk ./
