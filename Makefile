@@ -65,7 +65,7 @@ run: build/$(APP_NAME)
 
 auto-run:
 	while true; do \
-		$(MAKE) .sources | \
+		$(MAKE) .watched_sources | \
 		entr -rd $(MAKE) test run ;  \
 		echo "hit ^C again to quit" && sleep 1  \
 	; done
@@ -74,7 +74,7 @@ reset:
 	ps -e | grep make | grep -v grep | awk '{print $$1}' | xargs kill
 
 ## watched_sources
-.sources: \
+.watched_sources: \
 	$(MAKEFILE_LIST) \
 	go.mod go.sum \
 	$(GO_SOURCES) \
@@ -89,4 +89,4 @@ reset:
 test:
 	go test -v ./pkg/...
 
-.PHONY: build clean run auto-run reset .sources test
+.PHONY: build clean run auto-run reset .watched_sources test

@@ -28,4 +28,4 @@ build/proto_generated: $(PROTO_SOURCE)
 		$(PROTO_SOURCE)
 	touch $@
 
-.sources: $(PROTO_SOURCE)
+.watched_sources: $(PROTO_SOURCE)

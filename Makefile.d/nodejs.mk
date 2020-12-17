@@ -7,7 +7,7 @@ build/yarn-updated: package.json yarn.lock
 	yarn install
 	touch $@
 
-.sources: package.json yarn.lock
+.watched_sources: package.json yarn.lock
 
 ##### other tools
 
@@ -28,4 +28,4 @@ build/yarn-updated: package.json yarn.lock
 #	@$(MAKE) build/tools/lessc
 #	@mkdir -p $(dir $@)
 #	lessc $< $@
-#.sources: $(LESS_SOURCES)
+#.watched_sources: $(LESS_SOURCES)

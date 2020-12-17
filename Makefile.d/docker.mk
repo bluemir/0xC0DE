@@ -23,6 +23,6 @@ build/docker-image.pushed: build/docker-image
 docker-run: build/docker-image
 	docker run -it --rm -v $(PWD)/runtime:/runtime -w=/runtime $(shell cat $<) $(APP_NAME) -vvvv server
 
-.sources: Dockerfile
+.watched_sources: Dockerfile
 
 .PHONY: docker docker-push
