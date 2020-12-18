@@ -83,8 +83,6 @@ reset:
 	$(WEB_LIBS) \
 	$(HTML_SOURCES)
 	@echo $^ | tr " " "\n"
-.test:
-	@echo $(STATICS)
 
 test:
 	go test -v ./pkg/...
