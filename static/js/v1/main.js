@@ -1,4 +1,4 @@
-import * as $ from "/static/lib/web-components/minilib.module.js";
+import * as $ from "/static/lib/bm.js/bm.module.js";
 import {html, render} from '/lib/lit-html/lit-html.js';
 //import {html, render} from 'lit-html';
 

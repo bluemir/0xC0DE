@@ -36,8 +36,7 @@ build/static/%: static/%
 
 build: build/$(APP_NAME)
 
-build/$(APP_NAME).unpacked: $(GO_SOURCES) $(MAKEFILE_LIST)
-	@$(MAKE) build/tools/go
+build/$(APP_NAME).unpacked: $(GO_SOURCES) $(MAKEFILE_LIST) build/tools/go
 	@mkdir -p build
 	go build -v \
 		-trimpath \
@@ -48,8 +47,7 @@ build/$(APP_NAME).unpacked: $(GO_SOURCES) $(MAKEFILE_LIST)
 		$(OPTIONAL_BUILD_ARGS) \
 		-o $@ main.go
 
-build/$(APP_NAME): build/$(APP_NAME).unpacked $(HTML_SOURCES) $(STATICS) $(MAKEFILE_LIST)
-	$(MAKE) build/tools/rice
+build/$(APP_NAME): build/$(APP_NAME).unpacked $(HTML_SOURCES) $(STATICS) $(MAKEFILE_LIST) build/tools/rice
 	@mkdir -p $(dir $<)
 	cp $< $@.tmp
 	rice append -v \

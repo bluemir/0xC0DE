@@ -1,5 +1,8 @@
-// bluemir's light-weight web component library.
-// import * as $ from "minilib"
+// bluemir's micro js library.
+// light-weight & simple & vanilla friendly
+//
+// Usage
+// import * as $ from "bm.module.js";
 
 export var config = {
 	hook: {
@@ -7,12 +10,16 @@ export var config = {
 	},
 }
 export function get(target, query) {
-	if(!target instanceof Element) {return document.querySelector(target)}
-	return target.querySelector(query);
+	if(target.querySelector instanceof Function) {
+		return target.querySelector(query);
+	}
+	return document.querySelector(target)
 }
 export function all(target, query) {
-	if(!target instanceof Element) {return document.querySelectorAll(target)}
-	return target.querySelectorAll(query);
+	if(target.querySelectorAll instanceof Function) {
+		return target.querySelectorAll(query);
+	}
+	return document.querySelectorAll(target);
 }
 export function create(tagname, attr) {
 	var newTag = document.createElement(tagname);
@@ -85,8 +92,12 @@ export async function request(method, url, options) {
 
 		switch (typeof opts.body) {
 			case "object":
-				req.setRequestHeader("Content-Type", "application/json")
-				req.send(JSON.stringify(opts.body))
+				if (opt.body instanceof FormData) {
+					req.send(opt.body);
+				} else {
+					req.setRequestHeader("Content-Type", "application/json")
+					req.send(JSON.stringify(opts.body))
+				}
 				break;
 			case "string":
 				req.send(opts.body);
@@ -267,6 +278,7 @@ function extend(TargetClass, proto){
 extend(Node, {
 	appendTo: function(target) {
 		target.appendChild(this);
+		return this;
 	},
 	clear : function(filter) {
 		var f = filter || function(e) { return true };
@@ -350,11 +362,14 @@ export class CustomElement extends HTMLElement {
 			new: newValue,
 		});
 	}
+	// syntax sugar
 	connectedCallback()  {
 		this.fireEvent("connected")
+		this.onConnected && this.onConnected();
 	}
 	disconnectedCallback() {
 		this.fireEvent("disconnected")
+		this.onDisconnected && this.onDisconnected();
 	}
 	get shadow() {
 		return this["--shadow"];
