@@ -92,7 +92,7 @@ export async function request(method, url, options) {
 
 		switch (typeof opts.body) {
 			case "object":
-				if (opt.body instanceof FormData) {
+				if (opts.body instanceof FormData) {
 					req.send(opt.body);
 				} else {
 					req.setRequestHeader("Content-Type", "application/json")
@@ -218,9 +218,10 @@ export function wsURL (url){
 	return u;
 }
 
-export var util = {
+export const util = {
 	filter: {
 		notNull: e => e != null,
+		unique: (value, index, self) => self.indexOf(value) === index,
 	},
 	reduce: {
 		appendChild: function(parent, child) {
@@ -332,6 +333,9 @@ extend(HTMLCollection, {
 });
 
 extend(Array, {
+	"unique": function() {
+		return [... new Set(this)];
+	},
 	"promise": function() {
 		var arr = this;
 		return {
@@ -350,6 +354,7 @@ export class CustomElement extends HTMLElement {
 		this["--shadow"]  = this.attachShadow({mode: 'open'})
 		this["--handler"] = {}
 	}
+	// syntactic sugar
 	attributeChangedCallback(name, oldValue, newValue) {
 		//  to use set follow to custom elements
 		//
@@ -361,8 +366,8 @@ export class CustomElement extends HTMLElement {
 			old: oldValue,
 			new: newValue,
 		});
+		this.onAttributeChanged && this.onAttributeChanged();
 	}
-	// syntax sugar
 	connectedCallback()  {
 		this.fireEvent("connected")
 		this.onConnected && this.onConnected();
@@ -382,5 +387,89 @@ export class CustomElement extends HTMLElement {
 			this["--handler"][name] = evt => f.call(this, evt.detail);
 		}
 		return this["--handler"][name];
+	}
+}
+
+export class AwaitEventTarget {
+	constructor() {
+		this.handlers = new Map();
+	}
+
+	// method
+	addEventListener(eventName, handler) {
+		if (!this.handlers.has(eventName)) {
+			this.handlers.set(eventName, new Set());
+		}
+		this.handlers.get(eventName).add(handler);
+	}
+	removeEventListener(eventName, handler) {
+		if (!this.handlers.has(eventName)) {
+			return;
+		}
+		this.handlers.get(eventName).delete(handler);
+	}
+	dispatchEvent(event) {
+		let name = event.type;
+		if (!this.handlers.has(name)) {
+			return;
+		}
+		return [...this.handlers.get(name)].map(handler => {
+			return handler(event);
+		}).promise().all();
+	}
+
+	// syntactic sugar
+	on(eventName, handler) {
+		this.addEventListener(eventName, handler)
+	}
+	off(eventName, handler) {
+		this.removeEventListener(eventName, handler)
+	}
+	fireEvent(name, detail) {
+		var evt = new CustomEvent(name, {detail: detail});
+		// name will be evt.type
+		return this.dispatchEvent(evt);
+	}
+}
+export class AwaitQueue {
+	/*
+		// usage
+
+		var q = new AwaitQueue();
+
+		q.add(() => )
+
+		// main event loop
+		for(let func of q) {
+			 await func();
+		}
+	*/
+	constructor() {
+		this.queue = [];
+		this.resolve = null;
+	}
+	[Symbol.iterator]() {
+		let next = () => {
+			if (this.queue.length > 0) {
+				return {
+					value: this.queue.shift(),
+				}
+			}
+			return {
+				value: (value) => {
+					return new Promise((resolve) => {
+						this.resolve = resolve.bind(this, value);
+					});
+				},
+			};
+		}
+		return { next }
+	}
+	add(f) {
+		this.queue.push(f)
+		if(this.resolve) {
+			this.resolve();
+			this.resolve = null;
+		}
 	}
 }

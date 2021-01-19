@@ -36,17 +36,14 @@ ARG VERSION
 ## copy source
 ADD . /src
 
-ARG APP_NAME
-RUN make build/$APP_NAME
+RUN make build/0xC0DE
 
 ################################################################################
 # running image
 FROM fedora:33
 
 WORKDIR /
-ARG APP_NAME
-ENV APP_NAME $APP_NAME
-COPY --from=build-env /src/build/$APP_NAME /bin/$APP_NAME
+COPY --from=build-env /src/build/0xC0DE /bin/
 
-CMD $APP_NAME
+CMD 0xC0DE
 
