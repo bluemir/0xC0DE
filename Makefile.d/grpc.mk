@@ -6,6 +6,8 @@ OPTIONAL_CLEAN_DIR += pkg/gen
 #pkg/gen/%.pb.go pkg/gen/%_grpc.pb.go pkg/gen/%.pb.gw.go: proto/%.proto $(PROTO_SOURCE)
 
 build/$(APP_NAME).unpacked: build/proto_generated
+test: build/proto_generated
+
 build/proto_generated: $(PROTO_SOURCE)
 	@$(MAKE) \
 		build/tools/protoc \

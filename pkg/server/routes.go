@@ -19,7 +19,7 @@ func (server *Server) routes(app gin.IRouter) {
 	// API
 	{
 		v1 := app.Group("/api/v1")
-		v1.GET("/ping")
+		v1.GET("/ping", server.ping)
 	}
 
 	// WebSocket
