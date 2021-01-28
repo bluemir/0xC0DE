@@ -18,6 +18,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rs/xid v1.2.1
 	github.com/sirupsen/logrus v1.7.0
+	github.com/stretchr/testify v1.5.1
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20200427203606-3cfed13b9966
 	github.com/ugorji/go v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20201117144127-c1f2f97bffc9 // indirect

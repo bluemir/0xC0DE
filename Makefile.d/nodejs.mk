@@ -15,7 +15,7 @@ build/yarn-updated: package.json yarn.lock build/tools/yarn
 #STATICS += build/static/js/index.js                      # entrypoint
 #build/static/js/%: $(JS_SOURCES) build/yarn-updated build/tools/rollup
 #	@mkdir -p $(dir $@)
-#	rollup $(@:build/%=%) --file $@ --format es -p '@rollup/plugin-node-resolve'
+#	rollup $(@:build/%=%) --file $@ --format es -m -p '@rollup/plugin-node-resolve'
 
 
 ## less

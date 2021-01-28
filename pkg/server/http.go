@@ -19,7 +19,7 @@ func (server *Server) RunHTTPServer() error {
 
 	// setup Logger
 	writer := logrus.
-		WithField("from", "gin").
+		WithFields(logrus.Fields{}).
 		WriterLevel(logrus.DebugLevel)
 	defer writer.Close()
 
