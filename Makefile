@@ -48,7 +48,7 @@ build/$(APP_NAME).unpacked: $(GO_SOURCES) $(MAKEFILE_LIST) build/tools/go
 		-o $@ main.go
 
 build/$(APP_NAME): build/$(APP_NAME).unpacked $(HTML_SOURCES) $(STATICS) $(MAKEFILE_LIST) build/tools/rice
-	@mkdir -p $(dir $<)
+	@mkdir -p $(dir $@)
 	cp $< $@.tmp
 	rice append -v \
 		-i $(IMPORT_PATH)/pkg/static \
@@ -65,7 +65,7 @@ auto-run:
 	while true; do \
 		$(MAKE) .watched_sources | \
 		entr -rd $(MAKE) test run ;  \
-		echo "hit ^C again to quit" && sleep 1  \
+		echo "hit ^C again to quit" && sleep 1 \
 	; done
 
 reset:
