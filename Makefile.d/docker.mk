@@ -7,7 +7,6 @@ build/docker-image: Dockerfile $(GO_SOURCES) $(HTML_SOURCES) $(JS_SOURCES) $(CSS
 	@mkdir -p $(dir $@)
 	docker build \
 		--build-arg VERSION=$(VERSION) \
-		--build-arg APP_NAME=$(APP_NAME) \
 		-t $(DOCKER_IMAGE_NAME):$(VERSION) \
 		-f $< .
 	echo $(DOCKER_IMAGE_NAME):$(VERSION) > $@

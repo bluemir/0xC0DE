@@ -6,7 +6,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
 
-	"github.com/bluemir/0xC0DE/pkg/util"
+	"github.com/bluemir/0xC0DE/pkg/auth"
 )
 
 type Config struct {
@@ -14,10 +14,20 @@ type Config struct {
 	GRPCBind string
 	Key      string
 	DBPath   string
+	Salt     string
+	InitUser map[string]string
 }
+
+func NewConfig() Config {
+	return Config{
+		InitUser: map[string]string{},
+	}
+}
+
 type Server struct {
 	conf *Config
 	db   *gorm.DB
+	auth *auth.Manager
 }
 
 func Run(conf *Config) error {
@@ -26,9 +36,10 @@ func Run(conf *Config) error {
 	}
 
 	// init components
-	if err := util.MergeErrors(
-		server.initDB(),
-	); err != nil {
+	if err := server.initDB(); err != nil {
+		return errors.Wrap(err, "init server failed")
+	}
+	if err := server.initAuth(); err != nil {
 		return errors.Wrap(err, "init server failed")
 	}
 

@@ -20,10 +20,14 @@ const (
 
 func Run(AppName string, Version string) error {
 	conf := struct {
-		server   server.Config
-		client   client.Config
-		logLevel int
-	}{}
+		server server.Config
+		client client.Config
+
+		logLevel  int
+		logFormat string
+	}{
+		server: server.NewConfig(),
+	}
 
 	app := kingpin.New(AppName, describe)
 	app.Version(Version)
@@ -44,6 +48,10 @@ func Run(AppName string, Version string) error {
 		serverCmd.Flag("db-path", "db path").
 			Default(":memory:").
 			StringVar(&conf.server.DBPath)
+		serverCmd.Flag("salt", "salt(default: random string)").
+			Default(util.RandomString(16)).PlaceHolder("KEY").
+			Envar(strings.ToUpper(AppName) + "_SALT").
+			StringVar(&conf.server.Salt)
 		serverCmd.Flag("grpc-bind", "grpc bind").
 			Default(":3277").
 			StringVar(&conf.server.GRPCBind)
@@ -63,6 +71,17 @@ func Run(AppName string, Version string) error {
 	logrus.SetLevel(level)
 	logrus.SetReportCaller(true)
 	logrus.Infof("logrus level: %s", level)
+
+	switch conf.logFormat {
+	case "text-color":
+		logrus.SetFormatter(&logrus.TextFormatter{ForceColors: true})
+	case "text":
+		logrus.SetFormatter(&logrus.TextFormatter{})
+	case "json":
+		logrus.SetFormatter(&logrus.JSONFormatter{})
+	default:
+		// do nothing. it means smart.
+	}
 
 	switch cmd {
 	case serverCmd.FullCommand():
