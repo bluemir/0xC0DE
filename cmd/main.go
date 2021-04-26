@@ -8,9 +8,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/bluemir/0xC0DE/pkg/client"
-	"github.com/bluemir/0xC0DE/pkg/server"
-	"github.com/bluemir/0xC0DE/pkg/util"
+	"github.com/bluemir/0xC0DE/internal/client"
+	"github.com/bluemir/0xC0DE/internal/server"
+	"github.com/bluemir/0xC0DE/internal/util"
 )
 
 const (

@@ -51,7 +51,7 @@ build/$(APP_NAME): build/$(APP_NAME).unpacked $(HTML_SOURCES) $(STATICS) $(MAKEF
 	@mkdir -p $(dir $@)
 	cp $< $@.tmp
 	rice append -v \
-		-i $(IMPORT_PATH)/pkg/static \
+		-i $(IMPORT_PATH)/internal/static \
 		--exec $@.tmp
 	mv $@.tmp $@
 

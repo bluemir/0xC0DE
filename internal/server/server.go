@@ -6,7 +6,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
 
-	"github.com/bluemir/0xC0DE/pkg/auth"
+	"github.com/bluemir/0xC0DE/internal/auth"
 )
 
 type Config struct {

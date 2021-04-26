@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	"github.com/bluemir/0xC0DE/pkg/auth"
+	"github.com/bluemir/0xC0DE/internal/auth"
 )
 
 const (

@@ -3,7 +3,7 @@ package server
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/bluemir/0xC0DE/pkg/static"
+	"github.com/bluemir/0xC0DE/internal/static"
 )
 
 func (server *Server) routes(app gin.IRouter) {

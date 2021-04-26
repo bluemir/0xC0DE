@@ -8,7 +8,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/bluemir/0xC0DE/pkg/static"
+	"github.com/bluemir/0xC0DE/internal/static"
 )
 
 func NewRenderer() (*template.Template, error) {
