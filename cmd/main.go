@@ -35,6 +35,8 @@ func Run(AppName string, Version string) error {
 	app.Flag("verbose", "Log level").
 		Short('v').
 		CounterVar(&conf.logLevel)
+	app.Flag("log-format", "Log format").
+		StringVar(&conf.logFormat)
 
 	serverCmd := app.Command("server", "server")
 	{
