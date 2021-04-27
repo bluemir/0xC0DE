@@ -24,4 +24,8 @@ docker-run: build/docker-image
 
 .watched_sources: Dockerfile
 
-.PHONY: docker docker-push
+tools: build/tools/docker
+build/tools/docker:
+	@which $(notdir $@)
+
+.PHONY: docker docker-push docker-run
