@@ -10,7 +10,7 @@ var tmpl = (app) => html`
 <p>hello world</p>
 `;
 
-class CodeMain extends $.CustomElement {
+class AppMain extends $.CustomElement {
 	constructor() {
 		super();
 
@@ -21,4 +21,5 @@ class CodeMain extends $.CustomElement {
 		render(tmpl(this), this.shadow);
 	}
 }
-customElements.define("code-main", CodeMain);
+customElements.define("app-main", AppMain);
+// AppMain.define();

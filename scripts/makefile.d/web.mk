@@ -1,18 +1,18 @@
 ## FE sources
-JS_SOURCES    := $(shell find static/js             -type f -name '*.js'   -print)
-CSS_SOURCES   := $(shell find static/css            -type f -name '*.css'  -print)
-WEB_LIBS      := $(shell find static/lib            -type f                -print)
-HTML_SOURCES  := $(shell find static/html-templates -type f -name '*.html' -print)
+JS_SOURCES    := $(shell find web/js             -type f -name '*.js'   -print)
+CSS_SOURCES   := $(shell find web/css            -type f -name '*.css'  -print)
+WEB_LIBS      := $(shell find web/lib            -type f                -print)
+HTML_SOURCES  := $(shell find web/html-templates -type f -name '*.html' -print)
 
 .watched_sources: $(JS_SOURCES) $(CSS_SOURCES) $(WEB_LIBS) $(HTML_SOURCES)
 
 STATICS :=
-STATICS += $(JS_SOURCES:%=build/%)
-STATICS += $(CSS_SOURCES:%=build/%)
-STATICS += $(WEB_LIBS:%=build/%)
+STATICS += $(JS_SOURCES:web/%=build/static/%)
+STATICS += $(CSS_SOURCES:web/%=build/static/%)
+STATICS += $(WEB_LIBS:web/%=build/static/%)
 
 ## Static files
-build/static/%: static/%
+build/static/%: web/%
 	@mkdir -p $(dir $@)
 	cp $< $@
 
@@ -51,8 +51,8 @@ build/tools/yarn: build/tools/npm
 ## less
 #LESS_SOURCES  = $(shell find static/less           -type f -name '*.less' -print)
 #STATICS := $(filter-out build/static/css/%,$(STATICS)) # remove default css files
-#STATICS += $(LESS_SOURCES:static/less/%=build/static/css/%)
-#build/static/css/%: static/less/% build/yarn-updated
+#STATICS += $(LESS_SOURCES:web/less/%=build/static/css/%)
+#build/static/css/%: web/less/% build/yarn-updated
 #	@$(MAKE) build/tools/lessc
 #	@mkdir -p $(dir $@)
 #	lessc $< $@
