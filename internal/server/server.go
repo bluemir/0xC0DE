@@ -37,10 +37,10 @@ func Run(conf *Config) error {
 
 	// init components
 	if err := server.initDB(); err != nil {
-		return errors.Wrap(err, "init server failed")
+		return errors.Wrapf(err, "init server failed")
 	}
 	if err := server.initAuth(); err != nil {
-		return errors.Wrap(err, "init server failed")
+		return errors.Wrapf(err, "init server failed")
 	}
 
 	// run servers

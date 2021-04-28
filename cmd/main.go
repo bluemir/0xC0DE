@@ -15,7 +15,7 @@ import (
 
 const (
 	describe        = ``
-	defaultLogLevel = logrus.InfoLevel
+	defaultLogLevel = logrus.WarnLevel
 )
 
 func Run(AppName string, Version string) error {

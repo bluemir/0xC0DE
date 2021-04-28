@@ -6,7 +6,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	v1 "github.com/bluemir/0xC0DE/pkg/gen/api/v1"
+	v1 "github.com/bluemir/0xC0DE/pkg/api/v1"
 )
 
 type Config struct {

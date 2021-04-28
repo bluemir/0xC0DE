@@ -1,7 +1,8 @@
 package store
 
 import (
-	"encoding/json"
+	"bytes"
+	"encoding/gob"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -25,10 +26,11 @@ type Store struct {
 }
 
 type Pair struct {
-	Kind  string `gorm:"primary_key"`
-	Id    string `gorm:"primary_key"`
-	Rev   int
-	Value string
+	Kind      string `gorm:"primary_key"`
+	Id        string `gorm:"primary_key"`
+	Namespace string `gorm:"primary_key"`
+	Rev       int
+	Value     []byte
 }
 type Label struct {
 	Kind  string `gorm:"primary_key"`
@@ -42,6 +44,8 @@ type TempKV struct {
 }
 
 func (s *Store) Save(obj Object) error {
+	logrus.Tracef("%#v", obj)
+
 	meta := obj.GetMetadata()
 
 	var err error
@@ -54,7 +58,7 @@ func (s *Store) Save(obj Object) error {
 
 	pair := &Pair{}
 
-	err = txn.Where(&Pair{Kind: meta.Kind, Id: meta.Id}).Take(pair).Error
+	err = txn.Where(&Pair{Kind: meta.Kind, Id: meta.Id, Namespace: meta.Namespace}).Take(pair).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			err = nil
@@ -72,16 +76,17 @@ func (s *Store) Save(obj Object) error {
 
 	meta.Rev += 1
 
-	buf, err := json.Marshal(obj)
-	if err != nil {
+	buf := bytes.NewBuffer(nil)
+	if err := gob.NewEncoder(buf).Encode(obj); err != nil {
 		return err
 	}
 
 	err = txn.Save(&Pair{
-		Kind:  meta.Kind,
-		Id:    meta.Id,
-		Rev:   meta.Rev,
-		Value: string(buf),
+		Kind:      meta.Kind,
+		Id:        meta.Id,
+		Namespace: meta.Namespace,
+		Rev:       meta.Rev,
+		Value:     buf.Bytes(),
 	}).Error
 	if err != nil {
 		return err
@@ -102,25 +107,33 @@ func (s *Store) Save(obj Object) error {
 	return txn.Commit().Error
 }
 func (s *Store) Load(meta *Metadata, obj Object) error {
+	logrus.Tracef("%#v", meta)
+
 	if meta.Id == "" {
+		return gorm.ErrRecordNotFound
+	}
+	if meta.Namespace == "" {
 		return gorm.ErrRecordNotFound
 	}
 	pair := &Pair{}
 
 	if err := s.db.Where(&Pair{
-		Kind: meta.Kind,
-		Id:   meta.Id,
+		Kind:      meta.Kind,
+		Id:        meta.Id,
+		Namespace: meta.Namespace,
 	}).Take(pair).Error; err != nil {
 		return err
 	}
 
-	if err := json.Unmarshal([]byte(pair.Value), obj); err != nil {
+	if err := gob.NewDecoder(bytes.NewReader(pair.Value)).Decode(obj); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *Store) Find(labels map[string]string) ([]Metadata, error) {
+func (s *Store) Find(kind string, namespace string, labels map[string]string) ([]Metadata, error) {
+	logrus.Tracef("%s %s %#v", kind, namespace, labels)
+
 	txn := s.db.Begin()
 	defer txn.Rollback()
 
@@ -130,21 +143,32 @@ func (s *Store) Find(labels map[string]string) ([]Metadata, error) {
 
 	result := []Metadata{}
 	pairs := []Pair{}
-	if err := txn.Table("pairs").
-		Joins("LEFT JOIN labels ON pairs.kind = labels.kind AND pairs.id = labels.id").
-		Where(`(labels.key, labels.value) in (select * from temp_kvs)`).
-		Group(`pairs.kind, pairs.id`).
-		Having("count(*) = ?", len(labels)).
-		Find(&pairs).Error; err != nil {
-		return nil, err
+
+	switch len(labels) {
+	case 0:
+		if err := txn.Table("pairs").
+			Where(`namespace=? AND kind=?`, namespace, kind).
+			Find(&pairs).Error; err != nil {
+			return nil, err
+		}
+	default:
+		if err := txn.Table("pairs").
+			Joins("LEFT JOIN labels ON pairs.kind = labels.kind AND pairs.id = labels.id").
+			Where(`(labels.key, labels.value) in (select * from temp_kvs) AND namespace=? AND pairs.kind=?`, namespace, kind).
+			Group(`pairs.kind, pairs.id`).
+			Having("count(*) = ?", len(labels)).
+			Find(&pairs).Error; err != nil {
+			return nil, err
+		}
 	}
 
 	for _, pair := range pairs {
 		result = append(result, Metadata{
-			Id:     pair.Id,
-			Kind:   pair.Kind,
-			Rev:    pair.Rev,
-			Labels: labels,
+			Id:        pair.Id,
+			Kind:      pair.Kind,
+			Rev:       pair.Rev,
+			Namespace: pair.Namespace,
+			Labels:    labels,
 		})
 	}
 

@@ -36,8 +36,9 @@ func TestMain(t *testing.T) {
 
 	if err := store.Save(&User{
 		Metadata: Metadata{
-			Kind: "User",
-			Id:   "hello",
+			Kind:      "User",
+			Id:        "hello",
+			Namespace: "hello",
 			Labels: map[string]string{
 				"owner": "bot",
 			},
@@ -49,8 +50,9 @@ func TestMain(t *testing.T) {
 
 	tUser := &User{}
 	err = store.Load(&Metadata{
-		Kind: "User",
-		Id:   "hello",
+		Kind:      "User",
+		Id:        "hello",
+		Namespace: "hello",
 	}, tUser)
 	if err != nil {
 		t.Error(err)
@@ -78,8 +80,9 @@ func TestLabel(t *testing.T) {
 
 	store.Save(&User{
 		Metadata: Metadata{
-			Kind: "User",
-			Id:   "t1",
+			Kind:      "User",
+			Id:        "t1",
+			Namespace: "foo",
 			Labels: map[string]string{
 				"owner": "aa",
 			},
@@ -87,8 +90,9 @@ func TestLabel(t *testing.T) {
 	})
 	store.Save(&User{
 		Metadata: Metadata{
-			Kind: "User",
-			Id:   "t2",
+			Kind:      "User",
+			Id:        "t2",
+			Namespace: "foo",
 			Labels: map[string]string{
 				"owner": "aa",
 			},
@@ -97,15 +101,16 @@ func TestLabel(t *testing.T) {
 
 	store.Save(&User{
 		Metadata: Metadata{
-			Kind: "User",
-			Id:   "t3",
+			Kind:      "User",
+			Id:        "t3",
+			Namespace: "foo",
 			Labels: map[string]string{
 				"owner": "bb",
 			},
 		},
 	})
 
-	users, err := store.Find(map[string]string{
+	users, err := store.Find("User", "foo", map[string]string{
 		"owner": "aa",
 	})
 	if err != nil {
@@ -125,8 +130,9 @@ func TestMultipleLabels(t *testing.T) {
 
 	store.Save(&User{
 		Metadata: Metadata{
-			Kind: "User",
-			Id:   "t1",
+			Kind:      "User",
+			Id:        "t1",
+			Namespace: "foo",
 			Labels: map[string]string{
 				"owner": "aa",
 			},
@@ -134,8 +140,9 @@ func TestMultipleLabels(t *testing.T) {
 	})
 	store.Save(&User{
 		Metadata: Metadata{
-			Kind: "User",
-			Id:   "t2",
+			Kind:      "User",
+			Id:        "t2",
+			Namespace: "foo",
 			Labels: map[string]string{
 				"owner": "aa",
 				"state": "foo",
@@ -145,8 +152,9 @@ func TestMultipleLabels(t *testing.T) {
 
 	store.Save(&User{
 		Metadata: Metadata{
-			Kind: "User",
-			Id:   "t3",
+			Kind:      "User",
+			Id:        "t3",
+			Namespace: "foo",
 			Labels: map[string]string{
 				"owner": "bb",
 			},
@@ -154,7 +162,7 @@ func TestMultipleLabels(t *testing.T) {
 	})
 
 	{
-		users, err := store.Find(map[string]string{
+		users, err := store.Find("User", "foo", map[string]string{
 			"owner": "aa",
 			"state": "foo",
 		})
@@ -165,7 +173,7 @@ func TestMultipleLabels(t *testing.T) {
 		assert.Len(t, users, 1)
 	}
 	{
-		users, err := store.Find(map[string]string{
+		users, err := store.Find("User", "foo", map[string]string{
 			"owner": "aa",
 		})
 		if err != nil {
@@ -182,8 +190,35 @@ func TestEmptyID(t *testing.T) {
 	}
 	if err := store.Save(&User{
 		Metadata: Metadata{
-			Kind: "User",
-			Id:   "hello",
+			Kind:      "User",
+			Id:        "hello",
+			Namespace: "foo",
+			Labels: map[string]string{
+				"owner": "bot",
+			},
+		},
+		Foo: "asdf",
+	}); err != nil {
+		t.Error(err)
+	}
+
+	if err := store.Load(&Metadata{
+		Kind:      "User",
+		Namespace: "foo",
+	}, &User{}); err == nil {
+		t.Errorf("must return error on empty id")
+	}
+}
+func TestEmptyNamespace(t *testing.T) {
+	store, err := initStore()
+	if err != nil {
+		t.Error(err)
+	}
+	if err := store.Save(&User{
+		Metadata: Metadata{
+			Kind:      "User",
+			Id:        "hello",
+			Namespace: "foo",
 			Labels: map[string]string{
 				"owner": "bot",
 			},
@@ -195,8 +230,118 @@ func TestEmptyID(t *testing.T) {
 
 	if err := store.Load(&Metadata{
 		Kind: "User",
+		Id:   "hello",
 	}, &User{}); err == nil {
-		t.Errorf("must return error on empty id")
+		t.Errorf("must return error on empty owner")
+	}
+}
+func TestMultipleNamespace(t *testing.T) {
+	store, err := initStore()
+	if err != nil {
+		t.Error(err)
+	}
+
+	users := []User{
+		{
+			Metadata: Metadata{
+				Kind:      "User",
+				Id:        "foo",
+				Namespace: "t1",
+				Labels: map[string]string{
+					"foo": "bar",
+				},
+			},
+		},
+		{
+			Metadata: Metadata{
+				Kind:      "User",
+				Id:        "foo",
+				Namespace: "t2",
+				Labels: map[string]string{
+					"foo": "bar",
+				},
+			},
+		},
+		{
+			Metadata: Metadata{
+				Kind:      "User",
+				Id:        "foo",
+				Namespace: "t3",
+				Labels: map[string]string{
+					"foo": "bar",
+				},
+			},
+		},
+	}
+	for _, u := range users {
+		store.Save(&u)
+	}
+
+	{
+		users, err := store.Find("User", "t1", map[string]string{
+			"foo": "bar",
+		})
+		if err != nil {
+			t.Error(err)
+		}
+
+		assert.Len(t, users, 1)
+	}
+}
+func TestRev(t *testing.T) {
+	store, err := initStore()
+	if err != nil {
+		t.Error(err)
+	}
+
+	store.Save(&User{
+		Metadata: Metadata{
+			Kind:      "User",
+			Id:        "t1",
+			Namespace: "foo",
+			Labels: map[string]string{
+				"owner": "aa",
+			},
+		},
+	})
+	if err := store.Save(&User{
+		Metadata: Metadata{
+			Kind:      "User",
+			Id:        "t1",
+			Namespace: "foo",
+			Labels: map[string]string{
+				"owner": "aa",
+				"state": "foo",
+			},
+		},
+	}); err == nil {
+		t.Errorf("must return error on same Rev")
+	}
+}
+func TestFindWithEmptyLabel(t *testing.T) {
+	store, err := initStore()
+	if err != nil {
+		t.Error(err)
+	}
+
+	store.Save(&User{
+		Metadata: Metadata{
+			Kind:      "User",
+			Id:        "t1",
+			Namespace: "foo",
+			Labels: map[string]string{
+				"owner": "aa",
+			},
+		},
+	})
+	{
+		users, err := store.Find("User", "foo", nil)
+		if err != nil {
+			t.Error(err)
+		}
+
+		assert.Len(t, users, 1)
+		assert.Equal(t, "foo", users[0].Namespace)
 	}
 }
 

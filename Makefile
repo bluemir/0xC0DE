@@ -18,7 +18,7 @@ include scripts/makefile.d/*
 build: build/$(APP_NAME)
 
 run: build/$(APP_NAME)
-	$< -vvvv server
+	$< -vvv server
 
 test:
 	go test -v ./pkg/... ./internal/...
