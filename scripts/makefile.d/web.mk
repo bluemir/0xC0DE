@@ -28,7 +28,7 @@ build/yarn-updated: package.json yarn.lock
 
 .watched_sources: package.json yarn.lock
 
-tools: build/tools/npm build/tools/yarn build/tools/npx
+build-tools: build/tools/npm build/tools/yarn build/tools/npx
 build/tools/npm:
 	@which $(notdir $@)
 build/tools/npx:
@@ -49,21 +49,21 @@ build/tools/yarn: build/tools/npm
 
 
 ## less
-#LESS_SOURCES  = $(shell find static/less           -type f -name '*.less' -print)
+#LESS_SOURCES  = $(shell find web/less           -type f -name '*.less' -print)
 #STATICS := $(filter-out build/static/css/%,$(STATICS)) # remove default css files
 #STATICS += $(LESS_SOURCES:web/less/%=build/static/css/%)
 #build/static/css/%: web/less/% build/yarn-updated
 #	@$(MAKE) build/tools/lessc
 #	@mkdir -p $(dir $@)
-#	lessc $< $@
+#	npx lessc $< $@
 #.watched_sources: $(LESS_SOURCES)
 
 
-#tools: build/tools/rollup
+#build-tools: build/tools/rollup
 build/tools/rollup: build/tools/npm
 	@which $(notdir $@) || (npm install -g rollup && npm install -g '@rollup/plugin-node-resolve')
 
-#tools: build/tools/lessc
+#build-tools: build/tools/lessc
 build/tools/lessc: build/tools/npm
 	@which $(notdir $@) || (npm install -g less)
 

@@ -14,10 +14,11 @@ ENV PATH=$PATH:/root/go/bin
 # pre build
 WORKDIR /pre-build
 
-ADD go.mod go.sum package.json yarn.lock Makefile.d/tools.mk ./
+ADD go.mod go.sum package.json yarn.lock Makefile  ./
+ADD scripts/makefile.d/ scripts/makefile.d/
 
 ## install build tools
-RUN make -f tools.mk tools
+RUN make build-tools
 
 ## download dependancy
 ### go

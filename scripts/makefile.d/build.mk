@@ -25,7 +25,7 @@ build/$(APP_NAME): build/$(APP_NAME).unpacked $(MAKEFILE_LIST)
 		--exec $@.tmp
 	mv $@.tmp $@
 
-tools: build/tools/go build/tools/rice
+build-tools: build/tools/go build/tools/rice
 build/tools/go:
 	@which $(notdir $@) || echo "see https://golang.org/doc/install"
 build/tools/rice: build/tools/go
