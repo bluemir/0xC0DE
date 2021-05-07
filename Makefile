@@ -27,6 +27,8 @@ clean:
 	rm -rf build/ $(OPTIONAL_CLEAN_DIR)
 
 tools: build-tools
-	@echo "-- end of tools --"
+	@echo "--- done ---"
+
 
 .PHONY: default build run test clean tools build-tools
+

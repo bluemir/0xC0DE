@@ -2,7 +2,7 @@ DOCKER_IMAGE_NAME=$(shell echo $(APP_NAME)| tr A-Z a-z)
 
 docker: build/docker-image
 
-build/docker-image: Dockerfile $(GO_SOURCES) $(HTML_SOURCES) $(JS_SOURCES) $(CSS_SOURCES) $(WEB_LIBS)
+build/docker-image: Dockerfile $(MAKEFILE_LIST)
 	@$(MAKE) build/tools/docker
 	@mkdir -p $(dir $@)
 	docker build \

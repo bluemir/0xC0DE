@@ -31,6 +31,7 @@ build/proto_generated: $(PROTO_SOURCE)
 	touch $@
 
 .watched_sources: $(PROTO_SOURCE)
+build/docker-image: $(PROTO_SOURCE)
 
 ## grpc
 build-tools: build/tools/protoc build/tools/protoc-gen-go build/tools/protoc-gen-go-grpc

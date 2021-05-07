@@ -5,6 +5,8 @@ WEB_LIBS      := $(shell find web/lib            -type f                -print)
 HTML_SOURCES  := $(shell find web/html-templates -type f -name '*.html' -print)
 
 .watched_sources: $(JS_SOURCES) $(CSS_SOURCES) $(WEB_LIBS) $(HTML_SOURCES)
+build/docker-image: $(JS_SOURCES) $(CSS_SOURCES) $(WEB_LIBS) $(HTML_SOURCES)
+
 
 STATICS :=
 
