@@ -26,6 +26,30 @@ func APIErrorHandler(c *gin.Context, err error, opts ...ErrHandlerOpt) {
 	c.JSON(code, HTTPError{Message: message})
 	c.Abort()
 }
+func HTMLErrorHandler(c *gin.Context, err error, opts ...ErrHandlerOpt) {
+	logrus.Warn(err)
+
+	code, message := defaultCodeMessage(err)
+
+	for _, f := range opts {
+		code, message = f(code, message)
+	}
+
+	c.HTML(code, errPage(code), HTTPError{Message: message})
+	c.Abort()
+}
+func errPage(code int) string {
+	switch code {
+	case http.StatusNotFound:
+		return "/errors/not-found.html"
+	case http.StatusForbidden:
+		return "/errors/forbidden.html"
+	case http.StatusUnauthorized:
+		return "/errors/unauthorized.html"
+	default:
+		return "/errors/internal-server-error.html"
+	}
+}
 func defaultCodeMessage(err error) (int, string) {
 	switch v := err.(type) {
 	case nil:
@@ -46,12 +70,13 @@ func withCode(code int) ErrHandlerOpt {
 		return code, message
 	}
 }
-func withMessage(message string) ErrHandlerOpt {
+func withMessage(format string, args ...interface{}) ErrHandlerOpt {
 	return func(code int, m string) (int, string) {
-		return code, message
+		return code, fmt.Sprintf(format, args...)
 	}
 }
-func withAdditionalMessage(message string) ErrHandlerOpt {
+func withAdditionalMessage(format string, args ...interface{}) ErrHandlerOpt {
+	message := fmt.Sprintf(format, args...)
 	return func(code int, m string) (int, string) {
 		return code, fmt.Sprintf("%s: %s", message, m)
 	}

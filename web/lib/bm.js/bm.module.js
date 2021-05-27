@@ -270,6 +270,14 @@ Object.keyValues= function(obj, f) {
 		return {key, value};
 	});
 }
+Object.map = function(obj, f) {
+	return Object.entries(obj).map(([key, value]) => {
+		return f(key, value)
+	}).reduce((p, c) => {
+		p[c.key] = c.value;
+		return p;
+	}, {});
+}
 
 const sig = "__bm.js_inserted__"
 function extend(TargetClass, proto){

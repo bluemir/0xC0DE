@@ -25,7 +25,7 @@ build/static/%: web/%
 #build/static/js/%: $(JS_SOURCES) build/yarn-updated
 #	@$(MAKE) build/tools/npx
 #	@mkdir -p $(dir $@)
-#	npx rollup $(@:build/%=%) --file $@ --format es -m -p '@rollup/plugin-node-resolve'
+#	npx rollup $(@:build/static/%=web/%) --file $@ --format es -m -p '@rollup/plugin-node-resolve'
 
 ## less
 ## yarn add --dev less
@@ -45,12 +45,13 @@ build/$(APP_NAME): $(HTML_SOURCES) $(STATICS)
 OPTIONAL_CLEAN_DIR += node_modules
 
 build/$(APP_NAME): build/yarn-updated
-build/yarn-updated: package.json yarn.lock
+build/yarn-updated: package.json
 	@$(MAKE) build/tools/yarn
 	yarn install
 	touch $@
 
 .watched_sources: package.json
+build/docker-image: package.json
 
 build-tools: build/tools/npm build/tools/yarn build/tools/npx
 build/tools/npm:
@@ -59,4 +60,3 @@ build/tools/npx:
 	@which $(notdir $@)
 build/tools/yarn: build/tools/npm
 	@which $(notdir $@) || (npm install -g yarn)
-
