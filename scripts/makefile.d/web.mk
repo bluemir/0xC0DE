@@ -1,5 +1,7 @@
 ## FE sources
-JS_SOURCES    := $(shell find web/js             -type f -name '*.js'   -print)
+JS_SOURCES    := $(shell find web/js             -type f -name '*.js'   -print -o \
+                                                 -type f -name '*.jsx'  -print -o \
+                                                 -type f -name '*.json' -print)
 CSS_SOURCES   := $(shell find web/css            -type f -name '*.css'  -print)
 WEB_LIBS      := $(shell find web/lib            -type f                -print)
 HTML_SOURCES  := $(shell find web/html-templates -type f -name '*.html' -print)
@@ -11,12 +13,19 @@ build/docker-image: $(JS_SOURCES) $(CSS_SOURCES) $(WEB_LIBS) $(HTML_SOURCES)
 STATICS :=
 
 ## common static files
-STATICS += $(JS_SOURCES:web/%=build/static/%)
 STATICS += $(CSS_SOURCES:web/%=build/static/%)
 STATICS += $(WEB_LIBS:web/%=build/static/%)
 build/static/%: web/%
 	@mkdir -p $(dir $@)
 	cp $< $@
+
+## esbuild
+STATICS += build/static/js/index.js # entrypoint
+build/static/js/%: $(JS_SOURCES) build/yarn-updated
+	@$(MAKE) build/tools/npx
+	@mkdir -p $(dir $@)
+	npx esbuild $(@:build/static/%=web/%) --outfile=$@ \
+		--bundle --minify --sourcemap=inline
 
 ## rollup & js
 ## yarn add --dev rollup '@rollup/plugin-node-resolve'
@@ -37,7 +46,6 @@ build/static/%: web/%
 #	@mkdir -p $(dir $@)
 #	npx lessc $< $@
 #.watched_sources: $(LESS_SOURCES)
-
 
 build/$(APP_NAME): $(HTML_SOURCES) $(STATICS)
 
