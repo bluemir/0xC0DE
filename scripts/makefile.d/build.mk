@@ -11,8 +11,9 @@ build/$(APP_NAME).unpacked: $(GO_SOURCES) $(MAKEFILE_LIST)
 	go build -v \
 		-trimpath \
 		-ldflags "\
-			-X main.AppName=$(APP_NAME) \
-			-X main.Version=$(VERSION)  \
+			-X 'main.AppName=$(APP_NAME)' \
+			-X 'main.Version=$(VERSION)'  \
+			-X 'main.Time=$(shell date --rfc-3339=ns)'  \
 		" \
 		$(OPTIONAL_BUILD_ARGS) \
 		-o $@ main.go

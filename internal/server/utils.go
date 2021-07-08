@@ -5,7 +5,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rs/xid"
+
+	"github.com/bluemir/0xC0DE/internal/buildinfo"
+	"github.com/bluemir/0xC0DE/internal/util"
 )
 
 func (server *Server) static(path string) func(c *gin.Context) {
@@ -14,14 +16,17 @@ func (server *Server) static(path string) func(c *gin.Context) {
 	}
 }
 
-var etag = xid.New().String()
+func (server *Server) initEtag() error {
+	server.etag = util.Hash(buildinfo.AppName + buildinfo.Version + buildinfo.Time)
+	return nil
+}
 
-func staticCache(c *gin.Context) {
+func (server *Server) staticCache(c *gin.Context) {
 	c.Header("Cache-Control", "no-cache, max-age=86400")
-	c.Header("ETag", etag)
+	c.Header("ETag", server.etag)
 
 	if match := c.GetHeader("If-None-Match"); match != "" {
-		if strings.Contains(match, etag) {
+		if strings.Contains(match, server.etag) {
 			c.Status(http.StatusNotModified)
 			c.Abort()
 			return

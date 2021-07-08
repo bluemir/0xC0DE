@@ -6,11 +6,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
 
+	"github.com/bluemir/0xC0DE/internal/buildinfo"
 	"github.com/bluemir/0xC0DE/internal/server"
 	"github.com/bluemir/0xC0DE/internal/util"
 )
 
-func Register(cmd *kingpin.CmdClause, AppName string) {
+func Register(cmd *kingpin.CmdClause) {
 	conf := server.NewConfig()
 
 	cmd.Flag("bind", "bind").
@@ -18,14 +19,14 @@ func Register(cmd *kingpin.CmdClause, AppName string) {
 		StringVar(&conf.Bind)
 	cmd.Flag("key", "key(default: random string)").
 		Default(util.RandomString(16)).PlaceHolder("KEY").
-		Envar(strings.ToUpper(AppName) + "_KEY").
+		Envar(strings.ToUpper(buildinfo.AppName) + "_KEY").
 		StringVar(&conf.Key)
 	cmd.Flag("db-path", "db path").
 		Default(":memory:").
 		StringVar(&conf.DBPath)
 	cmd.Flag("salt", "salt(default: random string)").
 		Default(util.RandomString(16)).PlaceHolder("KEY").
-		Envar(strings.ToUpper(AppName) + "_SALT").
+		Envar(strings.ToUpper(buildinfo.AppName) + "_SALT").
 		StringVar(&conf.Salt)
 	cmd.Flag("grpc-bind", "grpc bind").
 		Default(":3277").

@@ -28,6 +28,7 @@ type Server struct {
 	conf *Config
 	db   *gorm.DB
 	auth *auth.Manager
+	etag string
 }
 
 func Run(conf *Config) error {
@@ -36,6 +37,9 @@ func Run(conf *Config) error {
 	}
 
 	// init components
+	if err := server.initEtag(); err != nil {
+		return errors.Wrapf(err, "init server failed")
+	}
 	if err := server.initDB(); err != nil {
 		return errors.Wrapf(err, "init server failed")
 	}

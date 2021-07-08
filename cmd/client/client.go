@@ -5,7 +5,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-func Register(cmd *kingpin.CmdClause, AppName string) {
+func Register(cmd *kingpin.CmdClause) {
 	conf := client.Config{}
 	cmd.Flag("endpoint", "endpoint").
 		Default("localhost:3277").

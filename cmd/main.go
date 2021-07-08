@@ -9,6 +9,7 @@ import (
 
 	clientCmd "github.com/bluemir/0xC0DE/cmd/client"
 	serverCmd "github.com/bluemir/0xC0DE/cmd/server"
+	"github.com/bluemir/0xC0DE/internal/buildinfo"
 )
 
 const (
@@ -16,14 +17,14 @@ const (
 	defaultLogLevel = logrus.WarnLevel
 )
 
-func Run(AppName string, Version string) error {
+func Run() error {
 	conf := struct {
 		logLevel  int
 		logFormat string
 	}{}
 
-	app := kingpin.New(AppName, describe)
-	app.Version(Version)
+	app := kingpin.New(buildinfo.AppName, describe)
+	app.Version(buildinfo.Version)
 
 	app.Flag("verbose", "Log level").
 		Short('v').
@@ -53,9 +54,8 @@ func Run(AppName string, Version string) error {
 		return nil
 	})
 
-	serverCmd.Register(app.Command("server", "server"), AppName)
-
-	clientCmd.Register(app.Command("client", "client"), AppName)
+	serverCmd.Register(app.Command("server", "server"))
+	clientCmd.Register(app.Command("client", "client"))
 
 	cmd, err := app.Parse(os.Args[1:])
 	if err != nil {

@@ -29,6 +29,15 @@ clean:
 tools: build-tools
 	@echo "--- done ---"
 
+help: CMD_LIST=$(shell echo $(MAKEFILE_LIST) | xargs grep -h  "^.PHONY" | awk -F": " '{print $$2}' | tr ' ' '\n' | sort | tr '\n' ' ')
+help:
+	# requirement
+	#  - golang: 1.16.x
+	#  - node  : 14.16.x
+	#  - make  : 4.3
+	#
+	# available command :
+	#    $(CMD_LIST)
 
-.PHONY: default build run test clean tools build-tools
+.PHONY: default build run test clean tools build-tools help
 
