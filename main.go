@@ -9,14 +9,12 @@ import (
 	"github.com/bluemir/0xC0DE/internal/buildinfo"
 )
 
-var Version string
 var AppName string
-var Time string
+var Version string
 
 func main() {
 	buildinfo.AppName = AppName
 	buildinfo.Version = Version
-	buildinfo.Time = Time
 
 	if err := cmd.Run(); err != nil {
 		logrus.Fatal(err)

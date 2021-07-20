@@ -1,13 +1,15 @@
 package server
 
 import (
+	"crypto"
+	"encoding/hex"
+	"io"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/bluemir/0xC0DE/internal/buildinfo"
-	"github.com/bluemir/0xC0DE/internal/util"
 )
 
 func (server *Server) static(path string) func(c *gin.Context) {
@@ -17,7 +19,14 @@ func (server *Server) static(path string) func(c *gin.Context) {
 }
 
 func (server *Server) initEtag() error {
-	server.etag = util.Hash(buildinfo.AppName + buildinfo.Version + buildinfo.Time)
+	hashed := crypto.SHA512.New()
+
+	io.WriteString(hashed, buildinfo.AppName)
+	io.WriteString(hashed, buildinfo.Version)
+	io.WriteString(hashed, buildinfo.BuildTime)
+
+	server.etag = hex.EncodeToString(hashed.Sum(nil))[:20]
+
 	return nil
 }
 

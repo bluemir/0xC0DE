@@ -31,6 +31,8 @@ func Register(cmd *kingpin.CmdClause) {
 	cmd.Flag("grpc-bind", "grpc bind").
 		Default(":3277").
 		StringVar(&conf.GRPCBind)
+	cmd.Flag("init-user", "initial user").
+		StringMapVar(&conf.InitUser)
 	cmd.Action(func(*kingpin.ParseContext) error {
 		logrus.Trace("called")
 		return server.Run(&conf)

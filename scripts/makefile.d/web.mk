@@ -9,7 +9,6 @@ HTML_SOURCES  := $(shell find web/html-templates -type f -name '*.html' -print)
 .watched_sources: $(JS_SOURCES) $(CSS_SOURCES) $(WEB_LIBS) $(HTML_SOURCES)
 build/docker-image: $(JS_SOURCES) $(CSS_SOURCES) $(WEB_LIBS) $(HTML_SOURCES)
 
-
 STATICS :=
 
 ## common static files
@@ -21,11 +20,13 @@ build/static/%: web/%
 
 ## esbuild
 STATICS += build/static/js/index.js # entrypoint
+build/static/js/%: export NODE_PATH=web/js:web/lib
 build/static/js/%: $(JS_SOURCES) build/yarn-updated
 	@$(MAKE) build/tools/npx
 	@mkdir -p $(dir $@)
-	npx esbuild $(@:build/static/%=web/%) --outfile=$@ \
-		--bundle --minify --sourcemap=inline
+	npx esbuild $(@:build/static/%=web/%) --outdir=$(dir $@) \
+		--bundle --minify --sourcemap --format=esm
+	#--external:/config.js \
 
 ## rollup & js
 ## yarn add --dev rollup '@rollup/plugin-node-resolve'

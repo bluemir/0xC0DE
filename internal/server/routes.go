@@ -9,7 +9,7 @@ import (
 func (server *Server) routes(app gin.IRouter) {
 	// js, css, etc.
 	app.Group("/static", server.staticCache).StaticFS("/", static.Static.HTTPBox())
-	app.Group("/lib", server.staticCache).StaticFS("/", static.NodeModules.HTTPBox()) // for css or other web libs. eg. font-awesome
+	//app.Group("/lib", server.staticCache).StaticFS("/", static.NodeModules.HTTPBox()) // for css or other web libs. eg. font-awesome
 
 	// Static Pages
 	{
