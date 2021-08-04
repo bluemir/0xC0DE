@@ -1,7 +1,10 @@
 package server
 
 import (
+	"context"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -35,6 +38,13 @@ func Register(cmd *kingpin.CmdClause) {
 		StringMapVar(&conf.InitUser)
 	cmd.Action(func(*kingpin.ParseContext) error {
 		logrus.Trace("called")
-		return server.Run(&conf)
+
+		ctx, stop := signal.NotifyContext(context.Background(),
+			syscall.SIGTERM,
+			syscall.SIGINT,
+		)
+		defer stop()
+
+		return server.Run(ctx, &conf)
 	})
 }

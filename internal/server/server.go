@@ -31,7 +31,7 @@ type Server struct {
 	etag string
 }
 
-func Run(conf *Config) error {
+func Run(ctx context.Context, conf *Config) error {
 	server := &Server{
 		conf: conf,
 	}
@@ -48,9 +48,9 @@ func Run(conf *Config) error {
 	}
 
 	// run servers
-	eg, _ := errgroup.WithContext(context.Background())
-	eg.Go(server.RunHTTPServer)
-	eg.Go(server.RunGRPCServer)
+	eg, nCtx := errgroup.WithContext(ctx)
+	eg.Go(server.RunHTTPServer(nCtx))
+	eg.Go(server.RunGRPCServer(nCtx))
 
 	if err := eg.Wait(); err != nil {
 		return errors.WithStack(err)

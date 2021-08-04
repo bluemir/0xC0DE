@@ -14,19 +14,21 @@ import (
 	v1 "github.com/bluemir/0xC0DE/pkg/api/v1"
 )
 
-func (server *Server) RunGRPCServer() error {
-	grpcServer := grpc.NewServer()
+func (server *Server) RunGRPCServer(ctx context.Context) func() error {
+	return func() error {
+		grpcServer := grpc.NewServer()
 
-	// TODO register GRPC service
-	v1.RegisterHelloServiceServer(grpcServer, &HelloServiceServer{Server: server})
+		// TODO register GRPC service
+		v1.RegisterHelloServiceServer(grpcServer, &HelloServiceServer{Server: server})
 
-	// Starting grpc Server
-	lis, err := net.Listen("tcp", server.conf.GRPCBind)
-	if err != nil {
-		logrus.Fatalf("failed to listen: %v", err)
+		// Starting grpc Server
+		lis, err := net.Listen("tcp", server.conf.GRPCBind)
+		if err != nil {
+			logrus.Fatalf("failed to listen: %v", err)
+		}
+
+		return grpcServer.Serve(lis)
 	}
-
-	return grpcServer.Serve(lis)
 }
 
 type HelloServiceServer struct {
