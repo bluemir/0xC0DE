@@ -5,5 +5,5 @@ import (
 )
 
 var (
-	ErrKeyNotMatched = errors.Errorf("hashed key not matched")
+	ErrUnauthroized = errors.Errorf("hashed key not matched")
 )
