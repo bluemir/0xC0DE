@@ -1,7 +1,7 @@
 PROTO_SOURCE = $(shell find api/proto -type d -name google -prune -o \
                                       -type f -name '*.proto' -print)
 
-OPTIONAL_CLEAN_DIR += pkg/api
+OPTIONAL_CLEAN_DIR += $(shell find pkg/api -type f -name '*.go' ! -name 'docs.go')
 
 #pkg/gen/%.pb.go pkg/gen/%_grpc.pb.go pkg/gen/%.pb.gw.go: proto/%.proto $(PROTO_SOURCE)
 
