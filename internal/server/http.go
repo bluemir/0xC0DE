@@ -89,7 +89,6 @@ func (server *Server) RunHTTPServer(ctx context.Context) func() error {
 
 		return nil
 	}
-
 }
 
 func fixURL(c *gin.Context) {
