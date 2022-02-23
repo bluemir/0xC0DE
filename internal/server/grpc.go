@@ -27,6 +27,11 @@ func (server *Server) RunGRPCServer(ctx context.Context) func() error {
 			logrus.Fatalf("failed to listen: %v", err)
 		}
 
+		go func() {
+			<-ctx.Done()
+			grpcServer.GracefulStop()
+		}()
+
 		return grpcServer.Serve(lis)
 	}
 }

@@ -44,3 +44,10 @@ func (server *Server) staticCache(c *gin.Context) {
 
 	c.Request.Header.Del("If-Modified-Since") // only accept etag
 }
+func (server *Server) AbortIfHasPrefix(prefix string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.URL.Path, prefix) {
+			c.Abort()
+		}
+	}
+}
