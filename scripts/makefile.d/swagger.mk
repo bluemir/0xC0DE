@@ -1,9 +1,13 @@
+##@ Swagger
 .PRECIOUS: internal/swagger/docs.go
 
 # see https://github.com/swaggo/swag for documents
 
 build/$(APP_NAME).unpacked: internal/swagger/docs.go
 test: internal/swagger/docs.go
+
+.PHONY: swagger
+swagger: internal/swagger/docs.go ## Make swagger file
 
 internal/swagger/docs.go: $(filter ./internal/server/%.go,$(GO_SOURCES))
 	@$(MAKE) build/tools/swag

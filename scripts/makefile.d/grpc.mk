@@ -1,3 +1,4 @@
+##@ gRPC
 PROTO_SOURCE = $(shell find api/proto -type d -name google -prune -o \
                                       -type f -name '*.proto' -print)
 
@@ -7,6 +8,9 @@ OPTIONAL_CLEAN_DIR += $(shell find pkg/api -type f -name '*.go' ! -name 'docs.go
 
 build/$(APP_NAME).unpacked: build/proto_generated
 test: build/proto_generated
+
+.PHONY: grpc-gen
+grpc-gen: build/proto_generated ## Generate grpc codes
 
 build/proto_generated: $(PROTO_SOURCE)
 	@$(MAKE) \

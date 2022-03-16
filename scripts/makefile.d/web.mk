@@ -1,3 +1,4 @@
+##@ Web
 ## FE sources
 JS_SOURCES    := $(shell find web/js             -type f -name '*.js'   -print -o \
                                                  -type f -name '*.jsx'  -print -o \
@@ -14,6 +15,10 @@ STATICS :=
 ## common static files
 STATICS += $(CSS_SOURCES:web/%=build/static/%)
 STATICS += $(WEB_LIBS:web/%=build/static/%)
+
+.PHONY: build-web
+build-web: $(STATICS) ## Build web-files. (bundle, minify, transpile, etc.)
+
 build/static/%: web/%
 	@mkdir -p $(dir $@)
 	cp $< $@
