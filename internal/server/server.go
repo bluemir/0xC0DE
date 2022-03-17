@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/bluemir/0xC0DE/internal/auth"
+	"github.com/bluemir/0xC0DE/internal/server/handler"
 )
 
 type Config struct {
@@ -25,10 +26,11 @@ func NewConfig() Config {
 }
 
 type Server struct {
-	conf *Config
-	db   *gorm.DB
-	auth *auth.Manager
-	etag string
+	conf    *Config
+	db      *gorm.DB
+	auth    *auth.Manager
+	handler *handler.Handler
+	etag    string
 }
 
 func Run(ctx context.Context, conf *Config) error {
@@ -45,6 +47,11 @@ func Run(ctx context.Context, conf *Config) error {
 	}
 	if err := server.initAuth(); err != nil {
 		return errors.Wrapf(err, "init server failed")
+	}
+	if h, err := handler.New(server.db); err != nil {
+		return errors.Wrapf(err, "init handler failed")
+	} else {
+		server.handler = h
 	}
 
 	// run servers

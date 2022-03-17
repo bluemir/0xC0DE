@@ -7,6 +7,7 @@ OPTIONAL_CLEAN_DIR += $(shell find pkg/api -type f -name '*.go' ! -name 'docs.go
 #pkg/gen/%.pb.go pkg/gen/%_grpc.pb.go pkg/gen/%.pb.gw.go: proto/%.proto $(PROTO_SOURCE)
 
 build/$(APP_NAME).unpacked: build/proto_generated
+vet: build/proto_generated
 test: build/proto_generated
 
 .PHONY: grpc-gen

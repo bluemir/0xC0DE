@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/bluemir/0xC0DE/internal/auth"
+	"github.com/bluemir/0xC0DE/internal/server/handler"
 )
 
 const (
@@ -18,6 +19,7 @@ const (
 
 var (
 	ErrUnauthroized = errors.Errorf("unauthroized")
+	APIErrorHandler = handler.APIErrorHandler
 )
 
 func (server *Server) initAuth() error {

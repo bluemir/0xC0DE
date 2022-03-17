@@ -41,6 +41,11 @@ func init() {
 }
 func Metrics(labels ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		/* if need sampling
+		if rand.Intn(100) < 1 {
+			return // skip & next
+		}
+		*/
 
 		start := time.Now()
 		c.Next()
