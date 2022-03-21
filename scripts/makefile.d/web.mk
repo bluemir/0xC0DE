@@ -20,8 +20,6 @@ STATICS += $(WEB_LIBS:web/%=build/static/%)
 STATICS += $(IMAGES:web/%=build/static/%)
 STATICS += $(WEB_META:web/%=build/static/%)
 
-.PHONY: build-web
-build-web: $(STATICS) ## Build web-files. (bundle, minify, transpile, etc.)
 
 build/static/%: web/%
 	@mkdir -p $(dir $@)
@@ -58,6 +56,9 @@ build/static/js/%: $(JS_SOURCES) build/yarn-updated
 #	npx lessc $< $@
 #.watched_sources: $(LESS_SOURCES)
 
+.PHONY: build-web
+build-web: $(STATICS) ## Build web-files. (bundle, minify, transpile, etc.)
+
 build/$(APP_NAME): $(HTML_SOURCES) $(STATICS)
 
 ## resolve depandancy
@@ -72,6 +73,7 @@ build/yarn-updated: package.json
 
 .watched_sources: package.json
 build/docker-image: package.json
+
 
 build-tools: build/tools/npm build/tools/yarn build/tools/npx
 build/tools/npm:

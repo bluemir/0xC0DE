@@ -6,6 +6,8 @@ APP_NAME=$(notdir $(IMPORT_PATH))
 
 export GO111MODULE=on
 
+export PATH:=${PATH}:./build/tools/
+
 # go build args
 OPTIONAL_BUILD_ARGS :=
 
