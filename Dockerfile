@@ -15,7 +15,7 @@ ENV PATH=$PATH:/root/go/bin
 WORKDIR /pre-build
 
 ADD go.mod go.sum package.json yarn.lock Makefile  ./
-ADD scripts/makefile.d/ scripts/makefile.d/
+ADD scripts/ scripts/
 
 ## install build tools
 RUN make build-tools

@@ -30,7 +30,7 @@ help: ## Display this help
 	# requirement
 	#  - golang: 1.16.x
 	#  - node  : 14.16.x
-	#  - make  : 4.3
+	#  - make  : 4.3 (*CAUTION* osx has lower verion of make)
 	#
 	@echo -e "# Usage:"
 	@echo -e "#   make \033[36m<target>\033[0m"
