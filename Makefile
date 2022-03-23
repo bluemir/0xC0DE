@@ -19,7 +19,7 @@ include scripts/makefile.d/*
 
 ##@ General
 clean: ## Clean up
-	rm -rf build/ $(OPTIONAL_CLEAN_DIR)
+	rm -rf build/ $(OPTIONAL_CLEAN)
 
 build-tools: ## Install build tools
 	# Build tool installed

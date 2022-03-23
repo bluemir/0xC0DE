@@ -62,7 +62,7 @@ build-web: $(STATICS) ## Build web-files. (bundle, minify, transpile, etc.)
 build/$(APP_NAME): $(HTML_SOURCES) $(STATICS)
 
 ## resolve depandancy
-OPTIONAL_CLEAN_DIR += node_modules
+OPTIONAL_CLEAN += node_modules
 
 build/$(APP_NAME): build/yarn-updated
 build/yarn-updated: package.json
