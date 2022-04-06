@@ -6,14 +6,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bluemir/0xC0DE/internal/auth"
 	"github.com/gin-contrib/location"
-
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	"github.com/bluemir/0xC0DE/internal/auth"
+	errhandler "github.com/bluemir/0xC0DE/internal/server/middleware/errors"
 )
 
 func (server *Server) RunHTTPServer(ctx context.Context) func() error {
@@ -42,8 +43,9 @@ func (server *Server) RunHTTPServer(ctx context.Context) func() error {
 		app.Use(gin.LoggerWithWriter(writer))
 		app.Use(gin.Recovery())
 
-		app.Use(location.Default())
-		app.Use(fixURL)
+		app.Use(location.Default(), fixURL)
+
+		app.Use(errhandler.Handler())
 
 		// handle routes
 		server.routes(app)
@@ -89,12 +91,4 @@ func (server *Server) RunHTTPServer(ctx context.Context) func() error {
 
 		return nil
 	}
-}
-
-func fixURL(c *gin.Context) {
-	url := location.Get(c)
-
-	// QUESTION is it right?
-	c.Request.URL.Scheme = url.Scheme
-	c.Request.URL.Host = url.Host
 }

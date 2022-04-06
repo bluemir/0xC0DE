@@ -25,7 +25,7 @@ func (server *Server) routes(app gin.IRouter) {
 
 	// API
 	{
-		v1 := app.Group("/api/v1")
+		v1 := app.Group("/api/v1", markAPI)
 		v1.GET("/ping", server.handler.Ping)
 		v1.GET("/authed/ping", server.authAPI, server.handler.Ping)
 	}
@@ -38,7 +38,7 @@ func (server *Server) routes(app gin.IRouter) {
 		// js, css, etc.
 		app.Group("/static", server.staticCache).StaticFS("/", static.Static.HTTPBox())
 		//app.Group("/lib", server.staticCache).StaticFS("/", static.NodeModules.HTTPBox()) // for css or other web libs. eg. font-awesome
-		app.GET("/", server.static("/index.html"))
+		app.GET("/", markHTML, server.static("/index.html"))
 		// or for SPA(single page application), client side routing
 		// app.Use(AbortIfHasPrefix("/api"), server.static("/index.html"))
 	}

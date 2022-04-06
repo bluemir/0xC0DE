@@ -10,6 +10,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/gin-contrib/location"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/xid"
 	"github.com/sirupsen/logrus"
@@ -82,4 +83,18 @@ func (server *Server) proxy(headerKey string, targetURL *url.URL) gin.HandlerFun
 		proxy.ServeHTTP(c.Writer, c.Request)
 		logrus.WithField("req-id", rid).Tracef("[proxy] reponse %d", c.Writer.Status())
 	}
+}
+
+func fixURL(c *gin.Context) {
+	url := location.Get(c)
+
+	// QUESTION is it right?
+	c.Request.URL.Scheme = url.Scheme
+	c.Request.URL.Host = url.Host
+}
+func markAPI(c *gin.Context) {
+	c.SetAccepted("application/json")
+}
+func markHTML(c *gin.Context) {
+	c.SetAccepted("text/html")
 }
