@@ -29,19 +29,6 @@ type Option func(*handlerOpts)
 func ShowStackTrace(o *handlerOpts) {
 	o.showStackTrace = true
 }
-func example(c *gin.Context) {
-	//
-	e := errors.New("example")
-
-	c.Error(e)
-	c.Abort()
-	// return
-
-	// or
-
-	c.AbortWithError(http.StatusUnauthorized, e)
-	// return
-}
 
 func Handler(options ...Option) gin.HandlerFunc {
 	opts := &handlerOpts{}
@@ -74,8 +61,14 @@ func Handler(options ...Option) gin.HandlerFunc {
 func getResponse(c *gin.Context, opts *handlerOpts) (int, HTTPErrorResponse) {
 	code := c.Writer.Status()
 	if code < 100 {
-		code = http.StatusInternalServerError
+		// find code..
+		if c.Errors.Last().IsType(gin.ErrorTypeBind) {
+			code = http.StatusBadRequest
+		} else {
+			code = findCode(c.Errors.Last())
+		}
 	}
+
 	res := HTTPErrorResponse{}
 	res.Message = c.Errors.Last().Err.Error()
 
@@ -139,5 +132,4 @@ func getStackTrace(err error) []string {
 			return nil
 		}
 	}
-
 }

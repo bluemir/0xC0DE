@@ -9,7 +9,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/bluemir/0xC0DE/internal/auth"
-	"github.com/bluemir/0xC0DE/internal/server/handler"
 )
 
 const (
@@ -21,7 +20,6 @@ const (
 
 var (
 	ErrUnauthroized = auth.ErrUnauthroized
-	APIErrorHandler = handler.APIErrorHandler
 )
 
 func (server *Server) initAuth() error {
@@ -103,7 +101,7 @@ func (server *Server) apiLogin(c *gin.Context) {
 		Password string `form:"password"`
 	}{}
 	if err := c.ShouldBind(req); err != nil {
-		APIErrorHandler(c, err)
+		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
@@ -111,14 +109,17 @@ func (server *Server) apiLogin(c *gin.Context) {
 
 	token, err := server.auth.Default(req.Username, req.Password)
 	if err != nil {
-		APIErrorHandler(c, err)
+		c.Error(err)
+		c.Abort()
 		return
 	}
 
 	session := sessions.Default(c)
 	session.Set(SessionKeyUser, token)
 	if err := session.Save(); err != nil {
-		APIErrorHandler(c, err)
+		c.Error(err)
+		c.Abort()
+		return
 	}
 
 	c.JSON(http.StatusOK, token)
@@ -127,16 +128,10 @@ func (server *Server) apiLogout(c *gin.Context) {
 	session := sessions.Default(c)
 	session.Delete(SessionKeyUser)
 	if err := session.Save(); err != nil {
-		APIErrorHandler(c, err)
+		c.Error(err)
+		c.Abort()
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{})
-}
-func (server *Server) Token(c *gin.Context) (*auth.Token, error) {
-	session := sessions.Default(c)
-	t, ok := session.Get(SessionKeyUser).(*auth.Token)
-	if !ok {
-		return nil, ErrUnauthroized
-	}
-	return t, nil
 }

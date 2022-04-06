@@ -57,38 +57,42 @@ func (server *Server) RunHTTPServer(ctx context.Context) func() error {
 		}
 		app.Use(mw)
 
-		// setup graceful server
-		// https://github.com/gin-gonic/examples/blob/master/graceful-shutdown/graceful-shutdown/notify-with-context/server.go
-		s := http.Server{
-			Addr:    server.conf.Bind,
-			Handler: app,
-		}
-
-		errc := make(chan error)
-		go func() {
-			defer close(errc)
-
-			logrus.Infof("Listening and serving HTTP on '%s'", server.conf.Bind)
-			if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				errc <- err
-			}
-		}()
-
-		select {
-		case <-ctx.Done():
-			logrus.Warn("shutting down gracefully, press Ctrl+C again to force")
-		case err := <-errc:
-			logrus.Errorf("listen: %s\n", err)
-		}
-
-		// nCtx for shutdown timeout only
-		nCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		if err := s.Shutdown(nCtx); err != nil {
-			return errors.Wrapf(err, "Server forced to shutdown: ")
-		}
-
-		return nil
+		return runGracefulServer(ctx, server.conf.Bind, app)
 	}
+}
+
+func runGracefulServer(ctx context.Context, bind string, handler http.Handler) error {
+	// setup graceful server
+	// https://github.com/gin-gonic/examples/blob/master/graceful-shutdown/graceful-shutdown/notify-with-context/server.go
+	s := http.Server{
+		Addr:    bind,
+		Handler: handler,
+	}
+
+	errc := make(chan error)
+	go func() {
+		defer close(errc)
+
+		logrus.Infof("Listening and serving HTTP on '%s'", bind)
+		if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			errc <- err
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		logrus.Warn("shutting down gracefully, press Ctrl+C again to force")
+	case err := <-errc:
+		logrus.Errorf("listen: %s\n", err)
+	}
+
+	// nCtx for shutdown timeout only
+	nCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := s.Shutdown(nCtx); err != nil {
+		return errors.Wrapf(err, "Server forced to shutdown: ")
+	}
+
+	return nil
 }

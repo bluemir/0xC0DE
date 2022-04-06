@@ -11,7 +11,7 @@ import (
 func (handler *Handler) Ping(c *gin.Context) {
 	// for example
 	if err := handler.db.AutoMigrate(); err != nil {
-		APIErrorHandler(c, err)
+		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "pong"})
