@@ -23,10 +23,6 @@ func (server *Server) routes(app gin.IRouter) {
 	// swagger
 	app.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("/swagger/doc.json")))
 
-	// js, css, etc.
-	app.Group("/static", server.staticCache).StaticFS("/", static.Static.HTTPBox())
-	//app.Group("/lib", server.staticCache).StaticFS("/", static.NodeModules.HTTPBox()) // for css or other web libs. eg. font-awesome
-
 	// API
 	{
 		v1 := app.Group("/api/v1")
@@ -39,6 +35,9 @@ func (server *Server) routes(app gin.IRouter) {
 
 	// Static Pages
 	{
+		// js, css, etc.
+		app.Group("/static", server.staticCache).StaticFS("/", static.Static.HTTPBox())
+		//app.Group("/lib", server.staticCache).StaticFS("/", static.NodeModules.HTTPBox()) // for css or other web libs. eg. font-awesome
 		app.GET("/", server.static("/index.html"))
 		// or for SPA(single page application), client side routing
 		// app.Use(AbortIfHasPrefix("/api"), server.static("/index.html"))

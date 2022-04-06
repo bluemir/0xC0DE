@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/bluemir/0xC0DE/internal/auth"
@@ -14,11 +13,14 @@ import (
 )
 
 const (
-	SessionToken = "token"
+	SessionKeyUser = "token"
+)
+const (
+	ContextKeyUser = "user"
 )
 
 var (
-	ErrUnauthroized = errors.Errorf("unauthroized")
+	ErrUnauthroized = auth.ErrUnauthroized
 	APIErrorHandler = handler.APIErrorHandler
 )
 
@@ -42,9 +44,41 @@ func (server *Server) initAuth() error {
 	return nil
 }
 
-func (server *Server) authHTML(c *gin.Context) {
+func (server *Server) authMiddleware(c *gin.Context) {
+	// 1. check session
 	session := sessions.Default(c)
-	if session.Get(SessionToken) == nil {
+	user := session.Get(SessionKeyUser)
+	if user != nil {
+		c.Set(ContextKeyUser, user)
+		c.Next()
+		return
+	}
+
+	// 2. check api token
+	user, err := server.auth.HTTP(c.Request)
+	if err != nil {
+		return
+	}
+
+	c.Set(ContextKeyUser, user)
+	c.Next()
+	return
+}
+func User(c *gin.Context) (*auth.User, error) {
+	u, ok := c.Get(ContextKeyUser)
+	if !ok {
+		return nil, ErrUnauthroized
+	}
+	user, ok := u.(*auth.User)
+	if !ok {
+		return nil, ErrUnauthroized
+	}
+	return user, nil
+}
+
+func (server *Server) authHTML(c *gin.Context) {
+	_, err := User(c)
+	if err != nil {
 		c.HTML(http.StatusUnauthorized, "/errors/unauthorized.html", c)
 		c.Abort()
 		return
@@ -52,8 +86,8 @@ func (server *Server) authHTML(c *gin.Context) {
 	// TODO authz
 }
 func (server *Server) authAPI(c *gin.Context) {
-	session := sessions.Default(c)
-	if session.Get(SessionToken) == nil {
+	_, err := User(c)
+	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"message": "unauthorized",
 		})
@@ -82,7 +116,7 @@ func (server *Server) apiLogin(c *gin.Context) {
 	}
 
 	session := sessions.Default(c)
-	session.Set(SessionToken, token)
+	session.Set(SessionKeyUser, token)
 	if err := session.Save(); err != nil {
 		APIErrorHandler(c, err)
 	}
@@ -91,7 +125,7 @@ func (server *Server) apiLogin(c *gin.Context) {
 }
 func (server *Server) apiLogout(c *gin.Context) {
 	session := sessions.Default(c)
-	session.Delete(SessionToken)
+	session.Delete(SessionKeyUser)
 	if err := session.Save(); err != nil {
 		APIErrorHandler(c, err)
 	}
@@ -100,7 +134,7 @@ func (server *Server) apiLogout(c *gin.Context) {
 }
 func (server *Server) Token(c *gin.Context) (*auth.Token, error) {
 	session := sessions.Default(c)
-	t, ok := session.Get(SessionToken).(*auth.Token)
+	t, ok := session.Get(SessionKeyUser).(*auth.Token)
 	if !ok {
 		return nil, ErrUnauthroized
 	}
