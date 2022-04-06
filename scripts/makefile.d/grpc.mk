@@ -35,7 +35,7 @@ build/proto_generated: $(PROTO_SOURCE)
 		$(PROTO_SOURCE)
 	touch $@
 
-.watched_sources: $(PROTO_SOURCE)
+WATCHED_FILES+=$(PROTO_SOURCE)
 build/docker-image: $(PROTO_SOURCE)
 
 ## grpc
@@ -43,15 +43,15 @@ build-tools: build/tools/protoc build/tools/protoc-gen-go build/tools/protoc-gen
 build/tools/protoc:
 	@which $(notdir $@) || (echo "see https://grpc.io/docs/protoc-installation/")
 build/tools/protoc-gen-go: build/tools/go
-	@which $(notdir $@) || (./scripts/go-install-tool.sh google.golang.org/protobuf/cmd/protoc-gen-go)
+	@which $(notdir $@) || (./scripts/makefile.d/install-go-tool.sh google.golang.org/protobuf/cmd/protoc-gen-go)
 build/tools/protoc-gen-go-grpc: build/tools/go
-	@which $(notdir $@) || (./scripts/go-install-tool.sh  google.golang.org/grpc/cmd/protoc-gen-go-grpc)
+	@which $(notdir $@) || (./scripts/makefile.d/install-go-tool.sh google.golang.org/grpc/cmd/protoc-gen-go-grpc)
 
 build-tools: build/tools/protoc-gen-grpc-gateway
 build/tools/protoc-gen-grpc-gateway: build/tools/go
-	@which $(notdir $@) || (./scripts/go-install-tool.sh github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway)
+	@which $(notdir $@) || (./scripts/makefile.d/install-go-tool.sh github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway)
 
 build-tools: build/tools/protoc-gen-openapiv2
 build/tools/protoc-gen-openapiv2: build/tools/go
-	@which $(notdir $@) || (./scripts/go-install-tool.sh github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2)
+	@which $(notdir $@) || (./scripts/makefile.d/install-go-tool.sh github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2)
 

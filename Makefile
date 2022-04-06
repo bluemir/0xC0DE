@@ -6,7 +6,7 @@ APP_NAME=$(notdir $(IMPORT_PATH))
 
 export GO111MODULE=on
 
-export PATH:=${PATH}:./build/tools/
+export PATH:=./build/tools/:$(PATH)
 
 # go build args
 OPTIONAL_BUILD_ARGS :=
@@ -15,7 +15,7 @@ default: build
 
 # sub-makefiles
 # for build tools, docker build, deploy, static web files.
-include scripts/makefile.d/*
+include scripts/makefile.d/*.mk
 
 ##@ General
 clean: ## Clean up

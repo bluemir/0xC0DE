@@ -4,8 +4,8 @@ run: build/$(APP_NAME) ## Run web app
 	$< -vvv server
 dev-run: ## Run dev server. If detect file change, automatically rebuild&restart server
 	@$(MAKE) build/tools/entr
-	while true; do \
-		$(MAKE) .watched_sources | \
+	@while true; do \
+		echo $(WATCHED_FILES) | tr " " "\n"	| \
 		entr -rd $(MAKE) test run ;  \
 		echo "hit ^C again to quit" && sleep 1 \
 	; done
@@ -13,14 +13,7 @@ dev-run: ## Run dev server. If detect file change, automatically rebuild&restart
 reset: ## Kill all make process. Use when dev-run stuck.
 	ps -e | grep make | grep -v grep | awk '{print $$1}' | xargs kill
 
-## watched_sources
-.watched_sources: \
-	$(MAKEFILE_LIST)
-	@echo $^ | tr " " "\n"
-
-# To add watched resource, just add as depandancy
-# example:
-#   .watched_sources: Dockerfile
+WATCHED_FILES+=$(MAKEFILE_LIST)
 
 tools: build/tools/entr
 build/tools/entr:
