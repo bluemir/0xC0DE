@@ -56,3 +56,9 @@ func (m *Manager) RevokeToken(username, unhashedKey string) error {
 
 	return nil
 }
+func (m *Manager) RevokeExpiredToken() error {
+	if err := m.db.Model(&Token{}).Where("expired_at < ?", time.Now()).Delete(&struct{}{}).Error; err != nil {
+		return err
+	}
+	return nil
+}

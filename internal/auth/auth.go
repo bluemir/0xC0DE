@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"time"
+
 	"github.com/rs/xid"
 	"gorm.io/gorm"
 )
@@ -41,6 +43,15 @@ func (m *Manager) Default(username, unhashedKey string) (*User, error) {
 			return nil, ErrUnauthroized
 		}
 		return nil, err
+	}
+
+	if token.ExpiredAt == nil {
+		return user, nil
+	}
+
+	if token.ExpiredAt.Before(time.Now()) {
+		m.RevokeToken(username, unhashedKey)
+		return nil, ErrUnauthroized
 	}
 
 	return user, nil
