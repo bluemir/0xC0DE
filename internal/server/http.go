@@ -14,6 +14,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/bluemir/0xC0DE/internal/auth"
+	authMiddleware "github.com/bluemir/0xC0DE/internal/server/middleware/auth"
 	errhandler "github.com/bluemir/0xC0DE/internal/server/middleware/errors"
 )
 
@@ -46,6 +47,8 @@ func (server *Server) RunHTTPServer(ctx context.Context) func() error {
 		app.Use(location.Default(), fixURL)
 
 		app.Use(errhandler.Handler())
+
+		app.Use(authMiddleware.Middleware(server.auth))
 
 		// handle routes
 		server.routes(app)

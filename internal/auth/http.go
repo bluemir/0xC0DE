@@ -22,7 +22,7 @@ func (m *Manager) HTTP(req *http.Request) (*User, error) {
 
 	return m.Default(username, key)
 }
-func (m *Manager) NewHTTPToken(username string, expireAt *time.Time) (string, error) {
+func (m *Manager) NewHTTPToken(username string, expireAt time.Time) (string, error) {
 	user := &User{}
 	if err := m.db.Where(&User{Name: username}).Take(user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -33,7 +33,7 @@ func (m *Manager) NewHTTPToken(username string, expireAt *time.Time) (string, er
 
 	newKey := hash(xid.New().String(), user.Salt)
 
-	if err := m.IssueToken(username, newKey, expireAt); err != nil {
+	if err := m.IssueToken(username, newKey, &expireAt); err != nil {
 		return "", err
 	}
 
@@ -60,7 +60,7 @@ func parseHTTPHeader(header string) (string, string, error) {
 	method, data := split2(header, " ")
 
 	switch strings.ToLower(method) {
-	case "basic", "token":
+	case "basic", "token", "bearer":
 		c, err := base64.StdEncoding.DecodeString(strings.TrimSpace(data))
 		if err != nil {
 			return "", "", err

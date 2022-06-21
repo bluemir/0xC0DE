@@ -11,16 +11,22 @@ func New(db *gorm.DB, salt string) (*Manager, error) {
 	if err := db.AutoMigrate(
 		&User{},
 		&Token{},
+		&RoleBinding{},
 	); err != nil {
 		return nil, err
 	}
 
-	return &Manager{db, salt}, nil
+	return &Manager{
+		db:    db,
+		roles: map[string]Role{},
+		salt:  salt,
+	}, nil
 }
 
 type Manager struct {
-	db   *gorm.DB
-	salt string
+	db    *gorm.DB
+	roles map[string]Role
+	salt  string
 }
 
 func (m *Manager) Default(username, unhashedKey string) (*User, error) {

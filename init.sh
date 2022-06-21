@@ -1,12 +1,22 @@
 #!/bin/sh
 
+set -e
+
 rm -rf .git readme.md
 git init
 git commit -m "Initial commit" --allow-empty --author="init-bot <bot@bluemir.me>"
 
-read -p "Application Name? " NAME
+read -p "Application REPO? " REPO
+echo $REPO
+read -p "Application NAME?(default: $(basename $REPO))" NAME
 
-find . -type f | xargs -n 1 sed -i "s/0xC0DE/$NAME/g"
+if [ "$NAME" =  "" ] ; then
+	NAME=$(basename $REPO)
+fi
+echo $NAME
+
+find . -name init.sh -prune -o -type f | xargs -n 1 sed -i "s#github.com/bluemir/0xC0DE#$REPO#g"
+find . -name init.sh -prune -o -type f | xargs -n 1 sed -i "s#0xC0DE#$NAME#g"
 
 read -p "Do you wish to remove init.sh(Y/n)?" yn
 case $yn in

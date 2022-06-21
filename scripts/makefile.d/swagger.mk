@@ -19,7 +19,8 @@ internal/swagger/docs.go: $(filter ./internal/server/%.go,$(GO_SOURCES))
 		--generalInfo internal/server/routes.go \
 		--parseInternal \
 		--output $(dir $@)
-	# for dependency add this option: `--parseDependency`
+	# for dependency, add this option: `--parseDependency`
+	# for override swaggo, add this option `--overridesFile .swaggo`
 
 build/tools/swag:
 	@$(MAKE) build/tools/go
