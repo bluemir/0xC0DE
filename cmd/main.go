@@ -24,7 +24,7 @@ func Run() error {
 	}{}
 
 	app := kingpin.New(buildinfo.AppName, describe)
-	app.Version(buildinfo.Version)
+	app.Version(buildinfo.Version + "\nbuildtime:" + buildinfo.BuildTime)
 
 	app.Flag("verbose", "Log level").
 		Short('v').

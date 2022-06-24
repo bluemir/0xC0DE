@@ -2,7 +2,7 @@ package server
 
 import (
 	"html/template"
-	"os"
+	"io/fs"
 	"path/filepath"
 	"strings"
 
@@ -14,7 +14,15 @@ import (
 func NewRenderer() (*template.Template, error) {
 	tmpl := template.New("__root__")
 
-	static.HTMLTemplates.Walk("/", func(path string, info os.FileInfo, err error) error {
+	tmplFS, err := fs.Sub(static.Static, "html-templates")
+	if err != nil {
+		return nil, err
+	}
+	fs.WalkDir(tmplFS, "/", func(path string, info fs.DirEntry, err error) error {
+		if info == nil {
+			logrus.Tracef("%#v %s", info, path)
+			return nil
+		}
 		if info.IsDir() && info.Name()[0] == '.' && path != "/" {
 			return filepath.SkipDir
 		}
@@ -23,7 +31,12 @@ func NewRenderer() (*template.Template, error) {
 		}
 		logrus.Debugf("parse template: path: %s", path)
 
-		tmpl, err = tmpl.Parse(static.HTMLTemplates.MustString(path))
+		buf, err := fs.ReadFile(tmplFS, path)
+		if err != nil {
+			return err
+		}
+
+		tmpl, err = tmpl.Parse(string(buf))
 		if err != nil {
 			return err
 		}

@@ -20,8 +20,12 @@ STATICS += $(WEB_LIBS:web/%=build/static/%)
 STATICS += $(IMAGES:web/%=build/static/%)
 STATICS += $(WEB_META:web/%=build/static/%)
 
-
 build/static/%: web/%
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+TEMPLATES += $(HTML_SOURCES:web/%=build/templates/%)
+build/templates/%: web/%
 	@mkdir -p $(dir $@)
 	cp $< $@
 
@@ -57,9 +61,9 @@ build/static/js/%: $(JS_SOURCES) build/yarn-updated
 #WATCHED_FILES+=$(LESS_SOURCES)
 
 .PHONY: build-web
-build-web: $(STATICS) ## Build web-files. (bundle, minify, transpile, etc.)
+build-web: $(STATICS) $(TEMPLATES) ## Build web-files. (bundle, minify, transpile, etc.)
 
-build/$(APP_NAME): $(HTML_SOURCES) $(STATICS)
+build/$(APP_NAME): $(STATICS) $(TEMPLATES)
 
 ## resolve depandancy
 OPTIONAL_CLEAN += node_modules
@@ -73,7 +77,6 @@ build/yarn-updated: package.json
 
 WATCHED_FILES+=package.json
 build/docker-image: package.json
-
 
 build-tools: build/tools/npm build/tools/yarn build/tools/npx
 build/tools/npm:

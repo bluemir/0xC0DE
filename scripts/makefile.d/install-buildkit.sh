@@ -1,6 +1,6 @@
 set -e
 
-BINDIR=$(pwd)/bin
+BINDIR=$(pwd)/build/tools
 
 OS=$(go env GOOS)
 ARCH=$(go env GOARCH)

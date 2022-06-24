@@ -1,6 +1,8 @@
 package server
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/bluemir/0xC0DE/internal/server/middleware/auth"
@@ -57,7 +59,7 @@ func (server *Server) routes(app gin.IRouter) {
 	// Static Pages
 	{
 		// js, css, etc.
-		app.Group("/static", server.staticCache).StaticFS("/", static.Static.HTTPBox())
+		app.Group("/static", server.staticCache).StaticFS("/", http.FS(static.Static))
 		//app.Group("/lib", server.staticCache).StaticFS("/", static.NodeModules.HTTPBox()) // for css or other web libs. eg. font-awesome
 
 		app.GET("/", markHTML, server.static("/index.html"))

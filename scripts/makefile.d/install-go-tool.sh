@@ -1,6 +1,6 @@
 set -e
 
-export GOBIN=$PWD/bin/
+export GOBIN=$PWD/build/tools
 
 TMP_DIR=$(mktemp -d)
 cd $TMP_DIR

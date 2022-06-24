@@ -1,11 +1,14 @@
 package static
 
 import (
-	rice "github.com/GeertJohan/go.rice"
+	"io/fs"
+	"os"
 )
 
 var (
-	Static        = rice.MustFindBox("../../build/static")
-	HTMLTemplates = rice.MustFindBox("../../web/html-templates")
-	// NodeModules   = rice.MustFindBox("../../node_modules")
+	Static fs.FS = os.DirFS("build/static") // default, when no embed.
 )
+
+func InitFS(rootfs fs.FS) {
+	Static = rootfs
+}

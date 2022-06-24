@@ -38,10 +38,14 @@ build/proto_generated: $(PROTO_SOURCE)
 WATCHED_FILES+=$(PROTO_SOURCE)
 build/docker-image: $(PROTO_SOURCE)
 
+
+export PATH:=./build/tools/protobuf/bin:$(PATH)
+install-protoc:
+	./scripts/makefile.d/install-protoc.sh
 ## grpc
 build-tools: build/tools/protoc build/tools/protoc-gen-go build/tools/protoc-gen-go-grpc
 build/tools/protoc:
-	@which $(notdir $@) || (echo "see https://grpc.io/docs/protoc-installation/")
+	@which $(notdir $@) || ($(MAKE) install-protoc)
 build/tools/protoc-gen-go: build/tools/go
 	@which $(notdir $@) || (./scripts/makefile.d/install-go-tool.sh google.golang.org/protobuf/cmd/protoc-gen-go)
 build/tools/protoc-gen-go-grpc: build/tools/go

@@ -13,33 +13,22 @@ build: build/$(APP_NAME) ## Build web app
 test: fmt vet ## Run test
 	go test -v ./...
 
-build/$(APP_NAME).unpacked: $(GO_SOURCES) $(MAKEFILE_LIST) fmt vet
+build/$(APP_NAME): $(GO_SOURCES) $(MAKEFILE_LIST) fmt vet
 	@$(MAKE) build/tools/go
 	@mkdir -p build
 	go build -v \
 		-trimpath \
 		-ldflags "\
-			-X 'main.AppName=$(APP_NAME)' \
-			-X 'main.Version=$(VERSION)'  \
+			-X '$(IMPORT_PATH)/internal/buildinfo.AppName=$(APP_NAME)' \
+			-X '$(IMPORT_PATH)/internal/buildinfo.Version=$(VERSION)' \
+			-X '$(IMPORT_PATH)/internal/buildinfo.BuildTime=$(shell date --rfc-3339=ns)' \
 		" \
 		$(OPTIONAL_BUILD_ARGS) \
-		-o $@ main.go
+		-o $@ .
 
-build/$(APP_NAME): build/$(APP_NAME).unpacked $(MAKEFILE_LIST)
-	@$(MAKE) build/tools/rice
-	@mkdir -p $(dir $@)
-	date --rfc-3339=ns > build/static/.time
-	cp $< $@.tmp
-	rice append -v \
-		-i $(IMPORT_PATH)/internal/static \
-		--exec $@.tmp
-	mv $@.tmp $@
-
-build-tools: build/tools/go build/tools/rice
+build-tools: build/tools/go
 build/tools/go:
 	@which $(notdir $@) || echo "see https://golang.org/doc/install"
-build/tools/rice: build/tools/go
-	@which $(notdir $@) || (./scripts/makefile.d/install-go-tool.sh github.com/GeertJohan/go.rice/rice)
 
 .PHONY: fmt
 fmt: ## Run go fmt against code
@@ -47,4 +36,4 @@ fmt: ## Run go fmt against code
 
 .PHONY: vet
 vet: ## Run go vet against code
-	go vet ./...
+	go vet -tags noembed ./...
