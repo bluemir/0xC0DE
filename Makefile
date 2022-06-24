@@ -9,7 +9,7 @@ export GOPRIVATE=
 export PATH:=./build/tools/:$(PATH)
 
 # go build args
-OPTIONAL_BUILD_ARGS :=
+OPTIONAL_BUILD_ARGS?=
 
 default: build
 
