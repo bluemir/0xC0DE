@@ -79,7 +79,7 @@ export async function request(method, url, options) {
 					result.json = JSON.parse(result.text);
 				}
 
-				if (req.status >= 200, req.status < 300){
+				if (req.status >= 200 && req.status < 300){
 					resolve(result)
 				} else {
 					reject(result);
@@ -155,7 +155,7 @@ export function form(form) {
 		return obj;
 	}, {});
 }
-export  function animateFrame(callback, {fps = 30} = {}) {
+export function animateFrame(callback, {fps = 30} = {}) {
 	var stop = false;
 	var fpsInterval = 1000 / fps;
 	var then = Date.now();
@@ -271,12 +271,48 @@ Object.keyValues= function(obj, f) {
 	});
 }
 Object.map = function(obj, f) {
-	return Object.entries(obj).map(([key, value]) => {
-		return f(key, value)
-	}).reduce((p, c) => {
-		p[c.key] = c.value;
-		return p;
-	}, {});
+	return Object.entries(obj).map(([key, value]) => f({key,value})).reduce((obj, {key,value}={}) => (key?{ ...obj, [key]: value}:obj), {});
+}
+Object.same = function(x, y) {
+	if (x === null || x === undefined || y === null || y === undefined) {
+		return x === y;
+	}
+	if (x.constructor !== y.constructor) {
+		return false;
+	}
+	if (x instanceof RegExp || x instanceof Function) {
+		return x === y;
+	}
+	if (x === y || x.valueOf() === y.valueOf()) {
+		return true;
+	}
+	if (Array.isArray(x) && x.length !== y.length) {
+		return false;
+	}
+
+    // if they are dates, they must had equal valueOf
+	if (x instanceof Date) {
+		return false;
+	}
+
+	if (!(x instanceof Object)) {
+		return false;
+	}
+	if (!(y instanceof Object)) {
+		return false;
+	}
+	let xk = Object.keys(x);
+	let yk = Object.keys(y);
+
+	if (xk.length != yk.length) {
+		return false
+	}
+	if (!xk.every(i => yk.indexOf(i) !== -1)) {
+		return false
+	}
+
+    // recursive object equality check
+	return xk.every(i => Object.same(x[i], y[i]))
 }
 
 const sig = "__bm.js_inserted__"
@@ -342,26 +378,36 @@ extend(EventTarget, {
 });
 
 extend(NodeList, {
-	"map":    Array.prototype.map,
-	"filter": Array.prototype.filter,
+	map:    Array.prototype.map,
+	filter: Array.prototype.filter,
 	//"forEach": Array.prototype.forEach,
 });
 extend(HTMLCollection, {
-	"map":     Array.prototype.map,
-	"filter":  Array.prototype.filter,
-	"forEach": Array.prototype.forEach,
+	map:     Array.prototype.map,
+	filter:  Array.prototype.filter,
+	forEach: Array.prototype.forEach,
 });
 
 extend(Array, {
-	"unique": function() {
-		return [... new Set(this)];
+	unique: function(isSame) {
+		if (!isSame) {
+			return [... new Set(this)];
+		}
+		return this.filter((v, i)  => this.first(v, isSame) == i);
 	},
-	"promise": function() {
+	promise: function() {
 		var arr = this;
 		return {
 			all:  () => Promise.all(arr),
 			any:  () => Promise.any(arr),
 			race: () => Promise.race(arr),
+		}
+	},
+	first: function(v, isSame = ((a,b)=>a==b)) {
+		for (let i = 0; i < this.length; i ++){
+			if(isSame(this[i], v)) {
+				return i;
+			}
 		}
 	},
 });
@@ -424,36 +470,6 @@ export class CustomElement extends HTMLElement {
 		// TODO other template engine
 	}
 }
-function transformCamelcaseToElementName(name) {
-	let t = "";
-	let tokens = [];
-	for (let i = 0; i < name.length; i ++){
-		let c = name[i];
-
-		if (/[A-Z]/.test(c)) {
-			if (/^[A-Z]+$/.test(t)) {
-				t += c;
-			} else {
-				tokens.push(t);
-				t = c;
-			}
-		} else if(/[_]/.test(c)) {
-			tokens.push(t);
-			t = "";
-		} else {
-			if (/^[A-Z]+$/.test(t)) {
-				// pick last
-				tokens.push(t.substring(0, t.length-1));
-				t = t[t.length-1]+c;
-			} else {
-				t += c;
-			}
-		}
-	}
-	tokens.push(t);
-
-	return tokens.filter(t => t.length > 0).map(t => t.toLowerCase()).join("-");
-}
 
 export class AwaitEventTarget {
 	constructor() {
@@ -509,27 +525,28 @@ export class AwaitQueue {
 				}
 			}
 			return {
-				value: new Promise((resolve) => {
-					this.resolve = resolve.bind(this);
+				value: () => new Promise((resolve) => {
+					this.resolve = resolve;
 				}),
 			};
 		}
 		return { next }
 	}
 	add(f) {
+		if (!(f instanceof Function)) {
+			throw Error("must put function");
+		}
 		if(this.resolve) {
-			this.resolve(f);
+			this.resolve(f());
 			this.resolve = null;
 			return
 		}
 		this.queue.push(f)
 	}
+	remove(f) {
+		this.queue = this.queue.filter(job => job != f);
+	}
 	get length() {
 		return this.queue.length;
 	}
-}
-
-// for test
-export var __test__ = {
-	transformCamelcaseToElementName,
 }
