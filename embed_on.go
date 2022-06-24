@@ -8,8 +8,8 @@ import (
 	"github.com/bluemir/0xC0DE/internal/static"
 )
 
-//go:embed build/static/*
-//go:embed build/templates/*
+//go:embed build/static
+//go:embed build/templates
 var embedFS embed.FS
 
 func init() {
