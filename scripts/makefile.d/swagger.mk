@@ -22,8 +22,11 @@ internal/swagger/docs.go: $(filter ./internal/server/%.go,$(GO_SOURCES))
 	# for dependency, add this option: `--parseDependency`
 	# for override swaggo, add this option `--overridesFile .swaggo`
 
+
+install-swaggo: ## install swaggo
+	./scripts/makefile.d/install-go-tool.sh github.com/swaggo/swag/cmd/swag
 build/tools/swag:
 	@$(MAKE) build/tools/go
-	@which $(notdir $@) || (./scripts/makefile.d/install-go-tool.sh github.com/swaggo/swag/cmd/swag)
+	@which $(notdir $@) || ($(MAKE) install-swaggo)
 
 tools: build/tools/swag

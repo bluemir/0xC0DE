@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/bluemir/0xC0DE/internal/static"
@@ -14,15 +15,12 @@ import (
 func NewRenderer() (*template.Template, error) {
 	tmpl := template.New("__root__")
 
-	tmplFS, err := fs.Sub(static.Static, "html-templates")
-	if err != nil {
-		return nil, err
-	}
-	fs.WalkDir(tmplFS, "/", func(path string, info fs.DirEntry, err error) error {
-		if info == nil {
-			logrus.Tracef("%#v %s", info, path)
-			return nil
+	if err := fs.WalkDir(static.Templates, ".", func(path string, info fs.DirEntry, err error) error {
+		if err != nil {
+			return errors.Wrapf(err, "read template error: path: %s", path)
 		}
+		logrus.Debugf("read template: path: %s", path)
+
 		if info.IsDir() && info.Name()[0] == '.' && path != "/" {
 			return filepath.SkipDir
 		}
@@ -31,7 +29,7 @@ func NewRenderer() (*template.Template, error) {
 		}
 		logrus.Debugf("parse template: path: %s", path)
 
-		buf, err := fs.ReadFile(tmplFS, path)
+		buf, err := fs.ReadFile(static.Templates, path)
 		if err != nil {
 			return err
 		}
@@ -41,7 +39,9 @@ func NewRenderer() (*template.Template, error) {
 			return err
 		}
 		return nil
-	})
+	}); err != nil {
+		return nil, err
+	}
 
 	return tmpl, nil
 }

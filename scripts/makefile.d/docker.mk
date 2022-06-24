@@ -27,6 +27,6 @@ docker-run: build/docker-image ## Run docker container
 
 tools: build/tools/docker
 build/tools/docker:
-	@which $(notdir $@)
+	@which $(notdir $@) || (echo "see https://docs.docker.com/engine/install/")
 
 .PHONY: docker docker-push docker-run

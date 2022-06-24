@@ -40,7 +40,7 @@ build/docker-image: $(PROTO_SOURCE)
 
 
 export PATH:=./build/tools/protobuf/bin:$(PATH)
-install-protoc:
+install-protoc: ## install protoc
 	./scripts/makefile.d/install-protoc.sh
 ## grpc
 build-tools: build/tools/protoc build/tools/protoc-gen-go build/tools/protoc-gen-go-grpc

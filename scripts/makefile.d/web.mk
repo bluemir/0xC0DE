@@ -24,8 +24,8 @@ build/static/%: web/%
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-TEMPLATES += $(HTML_SOURCES:web/%=build/templates/%)
-build/templates/%: web/%
+TEMPLATES += $(HTML_SOURCES:web/html-templates/%=build/templates/%)
+build/templates/%: web/html-templates/%
 	@mkdir -p $(dir $@)
 	cp $< $@
 
