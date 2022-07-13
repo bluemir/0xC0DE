@@ -30,7 +30,7 @@ runtime/certs/%.crt: runtime/certs/%.csr runtime/certs/ca.crt runtime/certs/ca.k
 		-CAkey runtime/certs/ca.key \
 		-CAcreateserial \
 		-out $@ \
-		-extfile <(printf "subjectAltName=DNS:$(APP_NAME)")
+		-extfile <(printf "subjectAltName=DNS:$(APP_NAME),DNS:localhost")
 
 
 runtime/certs/ca.yaml: runtime/certs/ca.crt

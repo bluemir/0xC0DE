@@ -55,6 +55,10 @@ func (server *Server) routes(app gin.IRouter) {
 
 	// WebSocket
 	app.GET("/ws", server.websocket)
+	// http2 Server Sent Event
+	app.GET("/stream", server.stream)
+	// http2 Server Push
+	app.GET("/push", server.push)
 
 	// Static Pages
 	{

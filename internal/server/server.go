@@ -12,10 +12,12 @@ import (
 
 type Config struct {
 	Bind     string
+	KeyFile  string
+	CertFile string
 	GRPCBind string
-	Key      string
 	DBPath   string
 	Salt     string
+	Seed     string
 	InitUser map[string]string
 }
 

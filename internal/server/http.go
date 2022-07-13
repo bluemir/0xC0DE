@@ -60,11 +60,11 @@ func (server *Server) RunHTTPServer(ctx context.Context) func() error {
 		}
 		app.Use(mw)
 
-		return runGracefulServer(ctx, server.conf.Bind, app)
+		return runGracefulServer(ctx, server.conf.Bind, app, server.conf.CertFile, server.conf.KeyFile)
 	}
 }
 
-func runGracefulServer(ctx context.Context, bind string, handler http.Handler) error {
+func runGracefulServer(ctx context.Context, bind string, handler http.Handler, certFile, keyFile string) error {
 	// setup graceful server
 	// https://github.com/gin-gonic/examples/blob/master/graceful-shutdown/graceful-shutdown/notify-with-context/server.go
 	s := http.Server{
@@ -77,8 +77,14 @@ func runGracefulServer(ctx context.Context, bind string, handler http.Handler) e
 		defer close(errc)
 
 		logrus.Infof("Listening and serving HTTP on '%s'", bind)
-		if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			errc <- err
+		if certFile == "" && keyFile == "" {
+			if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				errc <- err
+			}
+		} else {
+			if err := s.ListenAndServeTLS(certFile, keyFile); err != nil && err != http.ErrServerClosed {
+				errc <- err
+			}
 		}
 	}()
 
