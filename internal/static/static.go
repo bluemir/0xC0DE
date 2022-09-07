@@ -2,12 +2,11 @@ package static
 
 import (
 	"io/fs"
-	"os"
 )
 
 var (
-	Static    fs.FS = os.DirFS("build/static")    // default, when no embed.
-	Templates fs.FS = os.DirFS("build/templates") // default, when no embed.
+	Static    fs.FS
+	Templates fs.FS
 )
 
 func InitFS(rootfs fs.FS) error {

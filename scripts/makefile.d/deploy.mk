@@ -9,6 +9,6 @@ deploy: build/docker-image.pushed ## Deploy webapp
 .PHONY: deploy
 tools: build/tools/kubectl
 build/tools/kubectl:
-	@which $(notdir $@) || (./scripts/makefile.d/install-kubectl.sh)
+	@which $(notdir $@) || (./scripts/tools/install-kubectl.sh)
 	#install kubectl. https://kubernetes.io/docs/tasks/tools/
 

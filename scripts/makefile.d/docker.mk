@@ -23,7 +23,7 @@ build/docker-image.pushed: build/docker-image
 docker-run: build/docker-image ## Run docker container
 	docker run -it --rm -v $(PWD)/runtime:/var/run/config $(shell cat $<) $(APP_NAME) -vvvv server
 
-.watched_sources: Dockerfile
+#WATCHED_FILES+=Dockerfile
 
 tools: build/tools/docker
 build/tools/docker:
