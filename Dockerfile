@@ -1,5 +1,5 @@
 ARG VERSION=dev
-FROM fedora:34 as build-env
+FROM fedora:36 as build-env
 
 RUN echo "fastestmirror=1" >> /etc/dnf/dnf.conf
 RUN dnf install -y \
@@ -42,7 +42,7 @@ RUN make build/0xC0DE
 
 ################################################################################
 # running image
-FROM fedora:34
+FROM fedora:36
 
 WORKDIR /
 COPY --from=build-env /src/build/0xC0DE /bin/
