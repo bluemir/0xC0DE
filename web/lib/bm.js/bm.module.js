@@ -3,18 +3,9 @@
 //
 // Usage
 // import * as $ from "bm.module.js";
-
 export var config = {
 	hook: {
 		preRequest: function(method, url, opt) { return opt }
-	},
-	plugin: {
-		/*
-		import {config} from "../lib/bm.js/bm.module.js";
-		import * as lithtml from 'lit-html';
-
-		config.plugin.lithtml = lithtml;
-		*/
 	},
 }
 
@@ -59,10 +50,20 @@ export async function request(method, url, options) {
 		var opts = o;
 	}
 
-	if (opts.timestamp !== false) {
+	if (opts.timestamp === true) {
 		opts.query = opts.query || {};
 		opts.query["_timestamp"] = Date.now();
 	}
+
+	// parse url
+	const u = new URL(url, location);
+	[...u.searchParams.entries()].reduce((obj, [key, value]) => {
+		obj[key] = value
+		return obj
+	}, opts.query);
+
+	u.search = "";
+	url = u.href
 
 	return new Promise(function(resolve, reject) {
 		var req = new XMLHttpRequest();
@@ -97,9 +98,11 @@ export async function request(method, url, options) {
 			req.open(method, resolveParam(url, opts.params) + queryString(opts.query), true);
 		}
 
-		Object.keys(opts.header || {}).forEach(function(name){
-			req.setRequestHeader(name, opts.header[name]);
+		Object.keys(opts.headers || {}).forEach(function(name){
+			req.setRequestHeader(name, opts.headers[name]);
 		});
+
+		opts.body = opts.body || opts.data;
 
 		switch (typeof opts.body) {
 			case "object":
@@ -155,6 +158,44 @@ export function form(form) {
 		return obj;
 	}, {});
 }
+export function debounce(func, {timeout = 200} = {}) {
+	let timer;
+
+	return function(...args) {
+		clearTimeout(timer);
+		timer = setTimeout(_=> func.apply(this, args), timeout)
+	}
+}
+
+// for await ( let dt of $.frames()){ /* do something */ }
+export function frames({fps = 30} = {}) {
+	var stop = false;
+	var fpsInterval = 1000 / fps;
+	var then = Date.now();
+
+	async function* f() {
+		while(true) {
+			yield new Promise((resolve, reject) => {
+				const animate = () => {
+					var now = Date.now();
+					var elapsed = now - then;
+
+					if (elapsed > fpsInterval) {
+						then = now - (elapsed%fpsInterval);
+
+						resolve(elapsed - (elapsed%fpsInterval))
+					} else {
+						// wait next frame
+						requestAnimationFrame(animate)
+					}
+				}
+				requestAnimationFrame(animate)
+			});
+		}
+	}
+	return f();
+}
+
 export function animateFrame(callback, {fps = 30} = {}) {
 	var stop = false;
 	var fpsInterval = 1000 / fps;
@@ -290,7 +331,7 @@ Object.same = function(x, y) {
 		return false;
 	}
 
-    // if they are dates, they must had equal valueOf
+	// if they are dates, they must had equal valueOf
 	if (x instanceof Date) {
 		return false;
 	}
@@ -311,7 +352,7 @@ Object.same = function(x, y) {
 		return false
 	}
 
-    // recursive object equality check
+	// recursive object equality check
 	return xk.every(i => Object.same(x[i], y[i]))
 }
 
@@ -362,12 +403,10 @@ extend(Element, {
 extend(EventTarget, {
 	on: function(name, handler, opt) {
 		this.addEventListener(name, handler, opt);
-
 		return this;
 	},
 	off: function(name, handler, opt) {
 		this.removeEventListener(name, handler, opt)
-
 		return this;
 	},
 	fireEvent: function(name, detail) {
@@ -414,11 +453,16 @@ extend(Array, {
 
 
 export class CustomElement extends HTMLElement {
-	constructor() {
+	constructor({enableShadow = true} = {}) {
 		super();
 
-		this["--shadow"]  = this.attachShadow({mode: 'open'})
+		if (enableShadow) {
+			//this["--shadow"] = this.attachShadow({mode: 'open'})
+			this.attachShadow({mode: 'open'})
+		}
 		this["--handler"] = {}
+
+		this.render && this.render();
 	}
 	// syntactic sugar
 	attributeChangedCallback(name, oldValue, newValue) {
@@ -432,18 +476,20 @@ export class CustomElement extends HTMLElement {
 			old: oldValue,
 			new: newValue,
 		});
-		this.onAttributeChanged && this.onAttributeChanged();
+		this.onAttributeChanged && this.onAttributeChanged(name, oldValue, newValue);
 	}
 	connectedCallback()  {
-		this.fireEvent("connected")
+		this.render && this.render();
 		this.onConnected && this.onConnected();
+		this.fireEvent("connected")
 	}
 	disconnectedCallback() {
-		this.fireEvent("disconnected")
 		this.onDisconnected && this.onDisconnected();
+		this.fireEvent("disconnected")
 	}
 	get shadow() {
-		return this["--shadow"];
+		return this.shadowRoot;
+		//return this["--shadow"];
 	}
 	handler(h) {
 		var name = h instanceof Function ? h.name : h;
@@ -453,21 +499,6 @@ export class CustomElement extends HTMLElement {
 			this["--handler"][name] = evt => f.call(this, evt.detail);
 		}
 		return this["--handler"][name];
-	}
-	static define(name) {
-		if (!name) {
-			name = transformCamelcaseToElementName(this.name)
-		}
-		// TODO validation check
-		// TODO conflict check
-		console.debug("regitster element", name);
-		customElements.define(name, this);
-	}
-	render() {
-		if(config.plugin.lithtml) {
-			config.plugin.lithtml.render(this.constructor.T(this), this.shadow)
-		}
-		// TODO other template engine
 	}
 }
 
@@ -512,6 +543,7 @@ export class AwaitEventTarget {
 		return this.dispatchEvent(evt);
 	}
 }
+
 export class AwaitQueue {
 	constructor() {
 		this.queue = [];
@@ -548,5 +580,31 @@ export class AwaitQueue {
 	}
 	get length() {
 		return this.queue.length;
+	}
+}
+
+export function logger(opt){
+	return new Logger(opt);
+}
+class Logger {
+	constructor({show, name} = {}) {
+		this.show = show;
+		this.name = name;
+	}
+	debug(message) {
+		if(this.show) return;
+		console.debug.apply(console, arguments);
+	}
+	info(message) {
+		if(this.show) return;
+		console.info.apply(console, arguments);
+	}
+	warn(message) {
+		if(this.show) return;
+		console.warn.apply(console, arguments);
+	}
+	error(message) {
+		if(this.show) return;
+		console.error.apply(console, arguments);
 	}
 }
