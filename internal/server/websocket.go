@@ -12,6 +12,8 @@ import (
 )
 
 func (server *Server) websocket(c *gin.Context) {
+	// consider gin.WrapH
+
 	// c.Header
 
 	websocket.Handler(func(conn *websocket.Conn) {

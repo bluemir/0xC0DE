@@ -4,6 +4,10 @@ set -e
 
 rm -rf .git readme.md
 git init
+
+export GIT_COMMITTER_NAME="init-bot"
+export GIT_COMMITTER_EMAIL="bot@bluemir.me"
+
 git commit -m "Initial commit" --allow-empty --author="init-bot <bot@bluemir.me>"
 
 read -p "Application REPO? " REPO
