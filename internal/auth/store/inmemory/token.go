@@ -1,4 +1,4 @@
-package static
+package inmemory
 
 import "github.com/bluemir/0xC0DE/internal/auth"
 

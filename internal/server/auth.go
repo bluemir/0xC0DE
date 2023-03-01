@@ -6,7 +6,9 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/bluemir/0xC0DE/internal/auth"
+	"github.com/bluemir/0xC0DE/internal/auth/store/composite"
 	"github.com/bluemir/0xC0DE/internal/auth/store/gorm"
+	"github.com/bluemir/0xC0DE/internal/auth/store/inmemory"
 )
 
 const (
@@ -21,10 +23,23 @@ var (
 )
 
 func (server *Server) initAuth() error {
-	store, err := gorm.New(server.db, server.conf.Salt)
+	s1, err := gorm.New(server.db, server.conf.Salt)
 	if err != nil {
 		return err
 	}
+	s2, err := inmemory.New(server.conf.Salt)
+	if err != nil {
+		return err
+	}
+
+	store := composite.Store{
+		AuthUserStore:        s1,
+		AuthTokenStore:       s1,
+		AuthGroupStore:       s1,
+		AuthRoleStore:        s2,
+		AuthRoleBindingStore: s2,
+	}
+
 	m, err := auth.New(store, server.conf.Salt)
 	if err != nil {
 		return err
