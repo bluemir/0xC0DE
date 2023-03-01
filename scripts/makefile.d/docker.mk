@@ -23,8 +23,6 @@ build/docker-image.pushed: build/docker-image
 docker-run: build/docker-image ## Run docker container
 	docker run -it --rm -v $(PWD)/runtime:/var/run/config $(shell cat $<) $(APP_NAME) -vvvv server
 
-#WATCHED_FILES+=Dockerfile
-
 tools: build/tools/docker
 build/tools/docker:
 	@which $(notdir $@) || (echo "see https://docs.docker.com/engine/install/")

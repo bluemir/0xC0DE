@@ -3,24 +3,27 @@
 run: build/$(APP_NAME) runtime/certs/server.crt runtime/certs/server.key ## Run web app
 	$< -vvv server --cert runtime/certs/server.crt --key runtime/certs/server.key
 dev-run: ## Run dev server. If detect file change, automatically rebuild&restart server
-	@$(MAKE) build/tools/entr
-	while true; do \
-		$(MAKE) .watched | \
-		entr -rd $(MAKE) test run ;  \
-		echo "hit ^C again to quit" && sleep 1 \
-	; done
+	@$(MAKE) build/tools/watcher
+	watcher \
+		--include "go.mod" \
+		--include "go.sum" \
+		--include "**.go" \
+		--include "package.json" \
+		--include "yarn.lock" \
+		--include "web/**" \
+		--include "api/proto/**" \
+		--include "Makefile" \
+		--include "scripts/makefile.d/*.mk" \
+		--exclude "build/**" \
+		-- \
+	$(MAKE) test run
 
 
 reset: ## Kill all make process. Use when dev-run stuck.
 	ps -e | grep make | grep -v grep | awk '{print $$1}' | xargs kill
 
-WATCHED_FILES+=$(MAKEFILE_LIST)
+tools: build/tools/watcher
+build/tools/watcher: build/tools/go
+	@which $(notdir $@) || (./scripts/tools/install-go-tool.sh github.com/bluemir/watcher)
 
-.watched:
-	@echo $(WATCHED_FILES) | tr " " "\n"
-
-tools: build/tools/entr
-build/tools/entr:
-	@which $(notdir $@) || (echo "see http://eradman.com/entrproject")
-
-.PHONY: run dev-run reset .watched
+.PHONY: run dev-run reset

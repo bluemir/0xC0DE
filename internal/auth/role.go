@@ -1,65 +1,74 @@
 package auth
 
-import "github.com/sirupsen/logrus"
-
-func (m *Manager) IsAllow(resource Resource, verb Verb, user *User) bool {
-	roles, err := m.GetBindingRoles(user)
-	if err != nil {
-		logrus.Warn(err)
+func (m *Manager) CreateRole(name string, rules []Rule) (*Role, error) {
+	role := &Role{
+		Name:  name,
+		Rules: rules,
 	}
-	for _, role := range roles {
-		if role.IsAllow(resource, verb) {
-			return true
-		}
-	}
-
-	return false
-}
-func (r *Role) IsAllow(resource Resource, verb Verb) bool {
-	for _, rule := range r.Rules {
-		for _, v := range rule.Verbs {
-			if rule.Resource.isSubsetOf(resource) && v == verb {
-				return true
-			}
-		}
-	}
-	return false
-}
-func (m *Manager) GetBindingRoles(user *User) ([]Role, error) {
-	//roles := []Role{}
-	//if err := m.db.Preload("Roles").Where(user).Find(user).Error; err != nil {
-	//	return nil, err
-	//}
-	//return user.Roles, nil
-	// TODO handle Group
-
-	bindings := []RoleBinding{}
-	if err := m.db.Where(RoleBinding{
-		User: user.Name,
-	}).Find(bindings).Error; err != nil {
+	if err := m.store.CreateRole(role); err != nil {
 		return nil, err
 	}
-
-	result := []Role{}
-
-	for _, b := range bindings {
-		result = append(result, m.roles[b.Role])
-	}
-
-	return result, nil
+	return role, nil
 }
-func (m *Manager) BindRole(user *User, role string) error {
-	if err := m.db.Save(&RoleBinding{
-		User: user.Name,
-		Role: role,
-	}).Error; err != nil {
+func (m *Manager) GetRole(name string) (*Role, error) {
+	return m.store.GetRole(name)
+}
+func (m *Manager) ListRole() ([]Role, error) {
+	return m.store.ListRole()
+}
+func (m *Manager) UpdateRole(role *Role) error {
+	return m.store.UpdateRole(role)
+}
+func (m *Manager) DeleteRole(name string) error {
+	return m.store.DeleteRole(name)
+}
+
+func (m *Manager) AssignRole(subject Subject, roleName string) error {
+	binding, err := m.store.GetRoleBinding(subject)
+	if err != nil {
+		return err
+	}
+	binding.RoleNames[roleName] = x
+
+	if err := m.store.UpdateRoleBinding(binding); err != nil {
 		return err
 	}
 	return nil
 }
-func (m *Manager) SetRole(role Role) {
-	m.roles[role.Name] = role
+
+func (m *Manager) DiscardRole(subject Subject, roleName string) error {
+	rb, err := m.store.GetRoleBinding(subject)
+	if err != nil {
+		rb = &RoleBinding{
+			Subject:   subject,
+			RoleNames: Set{roleName: x},
+		}
+		if err = m.store.CreateRoleBinding(rb); err != nil {
+			return err
+		}
+	}
+
+	rb.RoleNames[roleName] = x
+
+	if err := m.store.UpdateRoleBinding(rb); err != nil {
+		return err
+	}
+	return nil
 }
-func (m *Manager) DeleteRole(roleName string) {
-	delete(m.roles, roleName)
+func (m *Manager) ListAssignedRole(subject Subject) ([]Role, error) {
+	rb, err := m.store.GetRoleBinding(subject)
+
+	if err != nil {
+		return nil, err
+
+	}
+	roles := []Role{}
+	for roleName := range rb.RoleNames {
+		role, err := m.store.GetRole(roleName)
+		if err != nil {
+			return nil, err
+		}
+		roles = append(roles, *role)
+	}
+	return roles, nil
 }

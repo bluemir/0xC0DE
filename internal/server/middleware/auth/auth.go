@@ -78,7 +78,7 @@ func Authz(r ResourceGetter, verb Verb) gin.HandlerFunc {
 
 		resource := r(c)
 
-		if !manager(c).IsAllow(resource, verb, user) {
+		if !manager(c).Can(user, verb, resource) {
 			c.AbortWithError(http.StatusForbidden, errors.New("Forbiddend"))
 			return
 		}
@@ -102,7 +102,9 @@ func IssueToken(c *gin.Context) {
 	}
 
 	t := time.Now().Add(6 * time.Hour)
-	token, err := manager(c).NewHTTPToken(user.Name, t)
+
+	key, err := manager(c).GenerateToken(user.Name, auth.ExpiredAt(t))
+	token := auth.ToHTTPToken(user.Name, key)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -114,7 +116,13 @@ func IssueToken(c *gin.Context) {
 	})
 }
 func RevokeToken(c *gin.Context) {
-	if err := manager(c).RevokeHTTPToken(c.Request); err != nil {
+	username, unhashedKey, err := auth.ParseHTTPRequest(c.Request)
+	if err != nil {
+		c.AbortWithError(http.StatusUnauthorized, err)
+		return
+	}
+
+	if err := manager(c).RevokeToken(username, unhashedKey); err != nil {
 		c.AbortWithError(http.StatusUnauthorized, err)
 		return
 	}

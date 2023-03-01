@@ -35,7 +35,6 @@ build/proto_generated: $(PROTO_SOURCE)
 		$(PROTO_SOURCE)
 	touch $@
 
-WATCHED_FILES+=$(PROTO_SOURCE)
 build/docker-image: $(PROTO_SOURCE)
 
 

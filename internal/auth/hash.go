@@ -12,6 +12,6 @@ func hashRawHex(str string) string {
 	io.WriteString(hashed, str)
 	return hex.EncodeToString(hashed.Sum(nil))
 }
-func hash(str string, salt ...string) string {
+func Hash(str string, salt ...string) string {
 	return hashRawHex(strings.Join(append([]string{str}, salt...), "/"))
 }

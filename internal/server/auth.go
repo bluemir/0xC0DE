@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/bluemir/0xC0DE/internal/auth"
+	"github.com/bluemir/0xC0DE/internal/auth/store/gorm"
 )
 
 const (
@@ -20,15 +21,19 @@ var (
 )
 
 func (server *Server) initAuth() error {
-	a, err := auth.New(server.db, server.conf.Salt)
+	store, err := gorm.New(server.db, server.conf.Salt)
 	if err != nil {
 		return err
 	}
-	server.auth = a
+	m, err := auth.New(store, server.conf.Salt)
+	if err != nil {
+		return err
+	}
+	server.auth = m
 
 	for name, key := range server.conf.InitUser {
 		logrus.Tracef("init user: %s %s", name, key)
-		if _, err := server.auth.Register(name, key); err != nil {
+		if _, _, err := server.auth.Register(name, key); err != nil {
 			return err
 		}
 	}

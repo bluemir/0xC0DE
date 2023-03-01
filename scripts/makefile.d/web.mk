@@ -9,7 +9,6 @@ HTML_SOURCES  := $(shell find web/html-templates -type f -name '*.html' -print)
 IMAGES        := $(shell find web/images         -type f                -print)
 WEB_META      := web/manifest.json web/favicon.ico
 
-WATCHED_FILES+=$(JS_SOURCES) $(CSS_SOURCES) $(WEB_LIBS) $(HTML_SOURCES)
 build/docker-image: $(JS_SOURCES) $(CSS_SOURCES) $(WEB_LIBS) $(HTML_SOURCES)
 
 STATICS :=
@@ -58,7 +57,6 @@ build/static/js/%: $(JS_SOURCES) build/yarn-updated
 #	@$(MAKE) build/tools/npx
 #	@mkdir -p $(dir $@)
 #	npx lessc $< $@
-#WATCHED_FILES+=$(LESS_SOURCES)
 
 .PHONY: build-web
 build-web: $(STATICS) $(TEMPLATES) ## Build web-files. (bundle, minify, transpile, etc.)
@@ -75,7 +73,6 @@ build/yarn-updated: package.json
 	yarn install
 	touch $@
 
-WATCHED_FILES+=package.json
 build/docker-image: package.json
 
 build-tools: build/tools/npm build/tools/yarn build/tools/npx

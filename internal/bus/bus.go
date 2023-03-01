@@ -7,12 +7,13 @@ import (
 
 /*
 bus -+- channel
-     |
-	 +- channel
-	 |
-	 +- channel -+- handler
-	             |
-				 +- handler
+
+	     |
+		 +- channel
+		 |
+		 +- channel -+- handler
+		             |
+					 +- handler
 
 pass action to bus no.... diffrent action in same event. like move
 
