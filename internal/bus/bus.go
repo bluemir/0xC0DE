@@ -6,12 +6,11 @@ import (
 )
 
 /*
-bus -+- channel
-
+	bus -+- channel
 	     |
-		 +- channel
-		 |
-		 +- channel -+- handler
+	     +- channel
+	     |
+	     +- channel -+- handler
 		             |
 					 +- handler
 
@@ -26,12 +25,8 @@ type Bus[T any] struct {
 	channels map[string]*Channel[T]
 }
 type Event[T any] struct {
-	Kind    string
-	Context T
-	Detail  interface{}
-}
-type EventListerner[T any] interface {
-	Handle(Event[T])
+	Kind   string
+	Detail T
 }
 
 func NewBus[T any](ctx context.Context) (*Bus[T], error) {
@@ -49,7 +44,7 @@ func NewBus[T any](ctx context.Context) (*Bus[T], error) {
 func (bus *Bus[T]) FireEvent(evt Event[T]) {
 	bus.q <- evt
 }
-func (bus *Bus[T]) AddEventListener(kind string, l EventListerner[T]) {
+func (bus *Bus[T]) AddEventListener(kind string, l chan<- Event[T]) {
 	bus.lock.Lock()
 	defer bus.lock.Unlock()
 
@@ -62,7 +57,7 @@ func (bus *Bus[T]) AddEventListener(kind string, l EventListerner[T]) {
 	bus.channels[kind] = NewChannel[T]()
 	bus.channels[kind].AddEventListener(l)
 }
-func (bus *Bus[T]) RemoveEventListener(kind string, l EventListerner[T]) {
+func (bus *Bus[T]) RemoveEventListener(kind string, l chan<- Event[T]) {
 	bus.lock.Lock()
 	defer bus.lock.Unlock()
 
@@ -71,6 +66,19 @@ func (bus *Bus[T]) RemoveEventListener(kind string, l EventListerner[T]) {
 		return
 	}
 	ch.RemoveEventListener(l)
+}
+func (bus *Bus[T]) WatchEvent(kind string, done <-chan struct{}) (<-chan Event[T], error) {
+	c := make(chan Event[T])
+
+	bus.AddEventListener(kind, c)
+	go func() {
+		<-done
+		bus.RemoveEventListener(kind, c)
+	}()
+	return c, nil
+}
+func (bus *Bus[T]) WatchAllEvent(done <-chan struct{}) (<-chan Event[T], error) {
+	return nil, nil
 }
 func (bus *Bus[T]) runBroadcaster(ctx context.Context, q <-chan Event[T]) {
 	for {

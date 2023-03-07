@@ -20,15 +20,20 @@ type KeyDownEvent struct {
 }
 
 type Any interface{}
-type DumpHandler struct{}
 
-func (DumpHandler) Handle(evt Event[EventContext]) {
-	switch e := evt.Detail.(type) {
-	case ClickEvent:
-		evt.Context.Print("ClickEvent: %#v", e)
-	default:
-		evt.Context.Print("others: %#v", e)
-	}
+func DumpHandler() chan<- Event[EventContext] {
+	ch := make(chan Event[EventContext])
+	go func() {
+		for evt := range ch {
+			switch evt.Kind {
+			case "click":
+				evt.Detail.Print("ClickEvent: %#v", evt)
+			default:
+				evt.Detail.Print("others: %#v", evt)
+			}
+		}
+	}()
+	return ch
 }
 
 func TestBus(t *testing.T) {
@@ -40,17 +45,16 @@ func TestBus(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	bus.AddEventListener("*", DumpHandler{})
+	h := DumpHandler()
+	bus.AddEventListener("*", h)
 
 	bus.FireEvent(Event[EventContext]{
-		Kind:    "click",
-		Context: EventContext{t},
-		Detail:  ClickEvent{},
+		Kind:   "click",
+		Detail: EventContext{t},
 	})
 
 	bus.FireEvent(Event[EventContext]{
-		Kind:    "click",
-		Context: EventContext{t},
-		Detail:  KeyDownEvent{},
+		Kind:   "keydown",
+		Detail: EventContext{t},
 	})
 }
