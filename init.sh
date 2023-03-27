@@ -2,7 +2,7 @@
 
 set -e
 
-rm -rf .git readme.md
+rm -rf .git README.md pkg/api/v1/.gitignore
 git init
 
 export GIT_COMMITTER_NAME="init-bot"
