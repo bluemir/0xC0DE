@@ -18,10 +18,6 @@ const (
 	ContextKeyUser = "user"
 )
 
-var (
-	ErrUnauthroized = auth.ErrUnauthroized
-)
-
 func (server *Server) initAuth() error {
 	s1, err := gorm.New(server.db, server.conf.Salt)
 	if err != nil {

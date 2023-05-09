@@ -60,7 +60,7 @@ func User(c *gin.Context) (*auth.User, error) {
 	// 3. check api token or basic auth
 	user, err := manager(c).HTTP(c.Request)
 	if err != nil {
-		return nil, auth.ErrUnauthroized
+		return nil, auth.ErrUnauthorized
 	}
 	c.Set(ContextKeyUser, user)
 	return user, nil

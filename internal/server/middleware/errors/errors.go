@@ -1,135 +1,87 @@
 package errors
 
 import (
+	"errors"
 	"mime"
 	"net/http"
+	"os"
 	"strings"
 
+	"github.com/bluemir/0xC0DE/internal/auth"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
+	"github.com/go-playground/validator/v10"
+	"github.com/sirupsen/logrus"
 )
 
-type HTTPErrorResponse struct {
-	Message string   `json:"message"`
-	Cause   []string `json:"cause,omitempty"`
-}
+func Middleware(c *gin.Context) {
+	c.Next()
 
-func (e HTTPErrorResponse) String() string {
-	if len(e.Cause) > 0 {
-		return e.Message + "\n" + strings.Join(e.Cause, "\n")
-	}
-	return e.Message
-}
-
-type handlerOpts struct {
-	showStackTrace bool
-}
-type Option func(*handlerOpts)
-
-func ShowStackTrace(o *handlerOpts) {
-	o.showStackTrace = true
-}
-
-func Handler(options ...Option) gin.HandlerFunc {
-	opts := &handlerOpts{}
-	for _, f := range options {
-		f(opts)
+	errs := c.Errors.ByType(gin.ErrorTypeAny)
+	if len(errs) == 0 {
+		return
 	}
 
-	return func(c *gin.Context) {
-		c.Next()
-
-		if len(c.Errors) == 0 {
-			return // skip. no error
-		}
-
-		switch findRequestType(c) {
-		case typeAPI:
-			code, res := getResponse(c, opts)
-			c.JSON(code, res)
-			return
-		case typeHTML:
-			code, res := getResponse(c, opts)
-			c.HTML(code, getHTMLName(code), res)
-			return
-		case typeUnknown:
-			code, res := getResponse(c, opts)
-			c.String(code, "text/plain", res.String())
-		}
-	}
-}
-func getResponse(c *gin.Context, opts *handlerOpts) (int, HTTPErrorResponse) {
-	code := c.Writer.Status()
-	if code < 100 {
-		// find code..
-		if c.Errors.Last().IsType(gin.ErrorTypeBind) {
-			code = http.StatusBadRequest
-		} else {
-			code = findCode(c.Errors.Last())
-		}
+	if c.Writer.Written() && c.Writer.Size() > 0 {
+		logrus.Tracef("response already written: %s", c.Errors.String())
+		return // skip. already written
 	}
 
-	res := HTTPErrorResponse{}
-	res.Message = c.Errors.Last().Err.Error()
+	// Last one is most important
+	err := c.Errors.Last()
+	code := code(err)
 
-	if !opts.showStackTrace {
-		res.Cause = getStackTrace(c.Errors.Last())
-	}
-	return code, res
-}
-
-type reqType int
-
-const (
-	typeUnknown = iota
-	typeAPI
-	typeHTML
-)
-
-func findRequestType(c *gin.Context) reqType {
-	for _, ct := range c.Accepted {
-		mt, _, err := mime.ParseMediaType(ct)
-		if err != nil {
+	// with header or without header, or other processer/ maybe hook? depend on error type? or just code
+	for _, accept := range strings.Split(c.Request.Header.Get("Accept"), ",") {
+		t, _, e := mime.ParseMediaType(accept)
+		if e != nil {
+			logrus.Error(e)
 			continue
 		}
-		switch mt {
-		case "application/json":
-			return typeAPI
-		case "text/html":
-			return typeHTML
-		}
-	}
-	return typeUnknown
-}
-func getHTMLName(code int) string {
-	switch code {
-	case http.StatusUnauthorized:
-		return "/errors/unauthorized.html"
-	case http.StatusNotFound:
-		return "/errors/not-found.html"
-	default:
-		return "/errors/internal-sever-error.html"
-	}
-}
-func getStackTrace(err error) []string {
-	type StackTracer interface {
-		StackTrace() errors.StackTrace
-	}
-	for {
-		if st, ok := err.(StackTracer); ok {
-			result := []string{}
-			for _, f := range st.StackTrace() {
-				// https://github.com/pkg/errors/blob/master/stack.go#L54-L57
-				// https://github.com/pkg/errors/blob/master/stack.go#L86-L94
-				buf, _ := f.MarshalText()
-				result = append(result, string(buf))
-			}
-			return result
-		}
 
-		err = errors.Unwrap(err)
-		if err == nil {
-			return nil
+		switch t {
+		case "application/json":
+			// TODO make response json
+			c.JSON(code, gin.H{
+				"errors": c.Errors,
+			})
+			return
+		case "text/html", "*/*":
+			if code == http.StatusUnauthorized {
+				c.Header(auth.LoginHeader(c.Request))
+			}
+			c.HTML(code, htmlName(err), c.Errors)
+			return
+		case "text/plain":
+			c.String(code, "%#v", c.Errors)
+			return
 		}
 	}
+	c.String(code, "%#v", c.Errors)
+}
+func code(err *gin.Error) int {
+	switch {
+	case errors.Is(err, validator.ValidationErrors{}):
+		return 400
+	case errors.Is(err, auth.ErrUnauthorized):
+		return 401
+	case errors.Is(err, auth.ErrForbidden):
+		return 403
+	case errors.Is(err, os.ErrNotExist):
+		return 404
+	default:
+		return 500
+	}
+}
+func htmlName(err *gin.Error) string {
+	switch {
+	case errors.Is(err, validator.ValidationErrors{}):
+		return "/errors/bad-request.html"
+	case errors.Is(err, auth.ErrUnauthorized):
+		return "/errors/unauthorized.html"
+	case errors.Is(err, auth.ErrForbidden):
+		return "/errors/forbidden.html"
+	case errors.Is(err, os.ErrNotExist):
+		return "/errors/not-found.html"
+	}
+	return "/errors/internal-server-error.html"
 }

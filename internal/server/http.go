@@ -15,7 +15,7 @@ import (
 
 	"github.com/bluemir/0xC0DE/internal/auth"
 	authMiddleware "github.com/bluemir/0xC0DE/internal/server/middleware/auth"
-	errhandler "github.com/bluemir/0xC0DE/internal/server/middleware/errors"
+	errMiddleware "github.com/bluemir/0xC0DE/internal/server/middleware/errors"
 )
 
 func (server *Server) RunHTTPServer(ctx context.Context) func() error {
@@ -46,7 +46,7 @@ func (server *Server) RunHTTPServer(ctx context.Context) func() error {
 
 		app.Use(location.Default(), fixURL)
 
-		app.Use(errhandler.Handler())
+		app.Use(errMiddleware.Middleware)
 
 		app.Use(authMiddleware.Middleware(server.auth))
 

@@ -63,14 +63,14 @@ func New(store AuthStore, salt string) (*Manager, error) {
 
 func (m *Manager) Default(username, unhashedKey string) (*User, error) {
 	if _, err := m.GetToken(username, unhashedKey); err != nil {
-		return nil, ErrUnauthroized
+		return nil, ErrUnauthorized
 	}
 	return m.store.GetUser(username)
 }
 func (m *Manager) HTTP(req *http.Request) (*User, error) {
 	username, key, err := ParseHTTPRequest(req)
 	if err != nil {
-		return nil, ErrUnauthroized
+		return nil, ErrUnauthorized
 	}
 	return m.Default(username, key)
 }

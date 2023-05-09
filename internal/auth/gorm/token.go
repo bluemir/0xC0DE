@@ -11,7 +11,7 @@ func (m *Manager) IssueToken(username, unhashedKey string, expiredAt *time.Time)
 	user := &User{}
 	if err := m.db.Where(&User{Name: username}).Take(user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return auth.ErrUnauthroized
+			return auth.ErrUnauthorized
 		}
 		return err
 	}
@@ -33,7 +33,7 @@ func (m *Manager) RevokeToken(username, unhashedKey string) error {
 	user := &User{}
 	if err := m.db.Where(&User{Name: username}).Take(user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return auth.ErrUnauthroized
+			return auth.ErrUnauthorized
 		}
 		return err
 	}

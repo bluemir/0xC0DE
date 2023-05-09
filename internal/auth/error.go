@@ -5,7 +5,6 @@ import (
 )
 
 var (
-	ErrUnauthroized = errors.Errorf("hashed key not matched")
-	ErrNotFound     = errors.Errorf("not found")
-	ErrNotAllowed   = errors.Errorf("not allowed method")
+	ErrUnauthorized = errors.Errorf("unauthorized")
+	ErrForbidden    = errors.Errorf("forbidden")
 )

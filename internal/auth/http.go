@@ -7,14 +7,15 @@ import (
 )
 
 const (
-	httpAuthorizationHeader = "Authorization"
+	headerAuthorization   = "Authorization"
+	headerWWWAuthenticate = "WWW-Authenticate"
 )
 
 func ToHTTPToken(username, unhashedKey string) string {
 	return base64.StdEncoding.EncodeToString([]byte(strings.Join([]string{username, unhashedKey}, ":")))
 }
 func ParseHTTPRequest(req *http.Request) (string, string, error) {
-	return ParseHTTPHeader(req.Header.Get(httpAuthorizationHeader))
+	return ParseHTTPHeader(req.Header.Get(headerAuthorization))
 }
 
 func split2(str string, sep string) (string, string) {
@@ -39,6 +40,9 @@ func ParseHTTPHeader(header string) (string, string, error) {
 
 		return name, key, nil
 	default:
-		return "", "", ErrUnauthroized // unknown method
+		return "", "", ErrUnauthorized // unknown method
 	}
+}
+func LoginHeader(req *http.Request) (string, string) {
+	return headerWWWAuthenticate, "basic realm=" + req.URL.Host
 }
