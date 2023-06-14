@@ -15,6 +15,7 @@ dev-run: ## Run dev server. If detect file change, automatically rebuild&restart
 		--include "Makefile" \
 		--include "scripts/makefile.d/*.mk" \
 		--exclude "build/**" \
+		--exclude "**.sw*" \
 		-- \
 	$(MAKE) test run
 

@@ -30,8 +30,17 @@ runtime/certs/%.crt: runtime/certs/%.csr runtime/certs/ca.crt runtime/certs/ca.k
 		-CAkey runtime/certs/ca.key \
 		-CAcreateserial \
 		-out $@ \
-		-extfile <(printf "subjectAltName=DNS:$(APP_NAME),DNS:localhost")
+		-extfile <(printf "subjectAltName=DNS:$(APP_NAME),DNS:localhost$(OPTIONAL_SAN)")
+	################################# cert issued #################################
+	# name:         $@
+	# check cert:   openssl x509 -text -noout -in $@
+	# check issuer: openssl x509 -subject -issuer -noout -in $@
+	# check SAN:    openssl x509 -text -noout -in $@ | grep "Subject Alternative Name" -A1
+	################################################################################
 
+# customize SAN via OPTIONAL_SAN
+# eg.
+# runtime/certs/server.crt: export OPTIONAL_SAN=",DNS:dev.0xC0DE.io"
 
 runtime/certs/ca.yaml: runtime/certs/ca.crt
 	@mkdir -p $(dir $@)
