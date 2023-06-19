@@ -1,40 +1,40 @@
 ##@ Web
 ## FE sources
-JS_SOURCES    := $(shell find web/js             -type f -name '*.js'   -print -o \
+JS_SOURCES    := $(shell find assets/js             -type f -name '*.js'   -print -o \
                                                  -type f -name '*.jsx'  -print -o \
                                                  -type f -name '*.json' -print)
-CSS_SOURCES   := $(shell find web/css            -type f -name '*.css'  -print)
-WEB_LIBS      := $(shell find web/lib            -type f                -print)
-HTML_SOURCES  := $(shell find web/html-templates -type f -name '*.html' -print)
-IMAGES        := $(shell find web/images         -type f                -print)
-WEB_META      := web/manifest.json web/favicon.ico
+CSS_SOURCES   := $(shell find assets/css            -type f -name '*.css'  -print)
+WEB_LIBS      := $(shell find assets/lib            -type f                -print)
+HTML_SOURCES  := $(shell find assets/html-templates -type f -name '*.html' -print)
+IMAGES        := $(shell find assets/images         -type f                -print)
+WEB_META      := assets/manifest.json assets/favicon.ico
 
 build/docker-image: $(JS_SOURCES) $(CSS_SOURCES) $(WEB_LIBS) $(HTML_SOURCES)
 
 STATICS :=
 
 ## common static files
-STATICS += $(CSS_SOURCES:web/%=build/static/%)
-STATICS += $(WEB_LIBS:web/%=build/static/%)
-STATICS += $(IMAGES:web/%=build/static/%)
-STATICS += $(WEB_META:web/%=build/static/%)
+STATICS += $(CSS_SOURCES:assets/%=build/static/%)
+STATICS += $(WEB_LIBS:assets/%=build/static/%)
+STATICS += $(IMAGES:assets/%=build/static/%)
+STATICS += $(WEB_META:assets/%=build/static/%)
 
-build/static/%: web/%
+build/static/%: assets/%
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-TEMPLATES += $(HTML_SOURCES:web/html-templates/%=build/templates/%)
-build/templates/%: web/html-templates/%
+TEMPLATES += $(HTML_SOURCES:assets/html-templates/%=build/templates/%)
+build/templates/%: assets/html-templates/%
 	@mkdir -p $(dir $@)
 	cp $< $@
 
 ## esbuild
 STATICS += build/static/js/index.js # entrypoint
-build/static/js/%: export NODE_PATH=web/js:web/lib
+build/static/js/%: export NODE_PATH=assets/js:assets/lib
 build/static/js/%: $(JS_SOURCES) build/yarn-updated
 	@$(MAKE) build/tools/npx
 	@mkdir -p $(dir $@)
-	npx esbuild $(@:build/static/%=web/%) --outdir=$(dir $@) \
+	npx esbuild $(@:build/static/%=assets/%) --outdir=$(dir $@) \
 		--bundle --sourcemap --format=esm $(OPTIONAL_WEB_BUILD_ARGS)
 	#--external:/config.js \
 	#--minify \
@@ -46,14 +46,14 @@ build/static/js/%: $(JS_SOURCES) build/yarn-updated
 #build/static/js/%: $(JS_SOURCES) build/yarn-updated
 #	@$(MAKE) build/tools/npx
 #	@mkdir -p $(dir $@)
-#	npx rollup $(@:build/static/%=web/%) --file $@ --format es -m -p '@rollup/plugin-node-resolve'
+#	npx rollup $(@:build/static/%=assets/%) --file $@ --format es -m -p '@rollup/plugin-node-resolve'
 
 ## less
 ## yarn add --dev less
-#LESS_SOURCES  = $(shell find web/less           -type f -name '*.less' -print)
+#LESS_SOURCES  = $(shell find assets/less           -type f -name '*.less' -print)
 #STATICS := $(filter-out build/static/css/%,$(STATICS)) # remove default css files
-#STATICS += $(LESS_SOURCES:web/less/%=build/static/css/%)
-#build/static/css/%: web/less/% build/yarn-updated
+#STATICS += $(LESS_SOURCES:assets/less/%=build/static/css/%)
+#build/static/css/%: assets/less/% build/yarn-updated
 #	@$(MAKE) build/tools/npx
 #	@mkdir -p $(dir $@)
 #	npx lessc $< $@

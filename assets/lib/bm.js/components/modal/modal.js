@@ -1,10 +1,10 @@
-import * as common from "../common.js"
 import * as $ from "../../bm.module.js";
 import {html, render} from 'lit-html';
+import {css} from "../common.js";
 
 var tmpl = (self) => html`
 	<style>
-		${common.css}
+		${css}
 
 		:host {
 			display: none;

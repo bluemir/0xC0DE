@@ -1,4 +1,3 @@
-
 export const css = `
 /* prevent FOUC */
 *:not(:defined) {
