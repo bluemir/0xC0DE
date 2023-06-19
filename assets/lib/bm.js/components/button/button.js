@@ -1,7 +1,7 @@
 import * as $ from "../../bm.module.js";
 import {html, render} from 'lit-html';
 
-var tmpl = (app) => html`
+var tmpl = (elem) => html`
 	<style>
 		:host {
 			display: inline-block;

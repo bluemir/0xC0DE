@@ -1,7 +1,7 @@
 import * as $ from "../../bm.module.js";
 import {html, render} from 'lit-html';
 
-var tmpl = (app) => html`
+var tmpl = (elem) => html`
 	<style>
 		nav {
 			font-size: 0.8rem;
@@ -18,7 +18,7 @@ var tmpl = (app) => html`
 		}
 	</style>
 	<nav>
-		${app.breadcrumbs.map(item => html`/ <a href="${item.path}">${item.name}</a> `)}
+		${elem.breadcrumbs.map(item => html`/ <a href="${item.path}">${item.name}</a> `)}
 	</nav>
 `;
 
