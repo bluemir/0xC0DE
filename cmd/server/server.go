@@ -20,10 +20,10 @@ func Register(cmd *kingpin.CmdClause) {
 	cmd.Flag("bind", "bind").
 		Default(":8080").
 		StringVar(&conf.Bind)
-	cmd.Flag("key", "key file").
-		StringVar(&conf.KeyFile)
 	cmd.Flag("cert", "cert file").
-		StringVar(&conf.CertFile)
+		StringVar(&conf.Cert.CertFile)
+	cmd.Flag("key", "key file").
+		StringVar(&conf.Cert.KeyFile)
 
 	cmd.Flag("seed", "seed(default: random string)").
 		Default(util.RandomString(16)).PlaceHolder("SEED").

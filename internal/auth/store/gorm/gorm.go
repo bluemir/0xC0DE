@@ -6,6 +6,8 @@ import (
 	"github.com/bluemir/0xC0DE/internal/auth"
 )
 
+type DB = gorm.DB
+
 func New(db *gorm.DB, salt string) (auth.AuthStore, error) {
 	if err := db.AutoMigrate(
 		&auth.User{},

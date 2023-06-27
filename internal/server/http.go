@@ -18,7 +18,7 @@ import (
 	errMiddleware "github.com/bluemir/0xC0DE/internal/server/middleware/errors"
 )
 
-func (server *Server) RunHTTPServer(ctx context.Context, bind string) func() error {
+func (server *Server) RunHTTPServer(ctx context.Context, bind string, certs *CertConfig, extra ...gin.HandlerFunc) func() error {
 	return func() error {
 		// starting http server
 		app := gin.New()
@@ -38,7 +38,7 @@ func (server *Server) RunHTTPServer(ctx context.Context, bind string) func() err
 
 		// sessions
 		gob.Register(&auth.Token{})
-		store := cookie.NewStore([]byte(server.conf.Salt))
+		store := cookie.NewStore([]byte(server.salt))
 		app.Use(sessions.Sessions("0xC0DE_session", store))
 
 		app.Use(gin.LoggerWithWriter(writer))
@@ -54,17 +54,13 @@ func (server *Server) RunHTTPServer(ctx context.Context, bind string) func() err
 		server.routes(app)
 
 		// GRPC Gateway
-		mw, err := server.grpcGatewayMiddleware()
-		if err != nil {
-			return errors.WithStack(err)
-		}
-		app.Use(mw)
+		app.Use(extra...)
 
-		return runGracefulServer(ctx, bind, app, server.conf.CertFile, server.conf.KeyFile)
+		return runGracefulServer(ctx, bind, app, certs)
 	}
 }
 
-func runGracefulServer(ctx context.Context, bind string, handler http.Handler, certFile, keyFile string) error {
+func runGracefulServer(ctx context.Context, bind string, handler http.Handler, certs *CertConfig) error {
 	// setup graceful server
 	// https://github.com/gin-gonic/examples/blob/master/graceful-shutdown/graceful-shutdown/notify-with-context/server.go
 	s := http.Server{
@@ -77,12 +73,12 @@ func runGracefulServer(ctx context.Context, bind string, handler http.Handler, c
 		defer close(errc)
 
 		logrus.Infof("Listening and serving HTTP on '%s'", bind)
-		if certFile == "" && keyFile == "" {
+		if certs == nil {
 			if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				errc <- err
 			}
 		} else {
-			if err := s.ListenAndServeTLS(certFile, keyFile); err != nil && err != http.ErrServerClosed {
+			if err := s.ListenAndServeTLS(certs.CertFile, certs.KeyFile); err != nil && err != http.ErrServerClosed {
 				errc <- err
 			}
 		}

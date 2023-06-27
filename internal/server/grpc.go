@@ -32,6 +32,8 @@ func (server *Server) RunGRPCServer(ctx context.Context, bind string) func() err
 			grpcServer.GracefulStop()
 		}()
 
+		logrus.Infof("grpc server run on %s", bind)
+
 		return grpcServer.Serve(lis)
 	}
 }
@@ -41,19 +43,18 @@ type HelloServiceServer struct {
 	v1.UnimplementedHelloServiceServer
 }
 
-func (server *Server) grpcGatewayMiddleware() (gin.HandlerFunc, error) {
+func (server *Server) grpcGatewayMiddleware(grpcBind string) (gin.HandlerFunc, error) {
 	mux := runtime.NewServeMux()
 
 	registerFuncs := []func(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error{
 		// TODO register GRPC Gateway
 		v1.RegisterHelloServiceHandlerFromEndpoint,
 	}
-	//
 	for _, rf := range registerFuncs {
 		if err := rf(
 			context.Background(),
 			mux,
-			server.conf.GRPCBind,
+			grpcBind,
 			[]grpc.DialOption{grpc.WithInsecure()},
 		); err != nil {
 			return nil, errors.WithStack(err)
@@ -61,13 +62,7 @@ func (server *Server) grpcGatewayMiddleware() (gin.HandlerFunc, error) {
 	}
 	wsmux := wsproxy.WebsocketProxy(mux)
 
-	return func(c *gin.Context) {
-		wsmux.ServeHTTP(c.Writer, c.Request)
-		if c.Writer.Written() {
-			c.Abort()
-			return
-		}
-	}, nil
+	return gin.WrapF(wsmux.ServeHTTP), nil
 }
 
 // import "google.golang.org/grpc/codes"

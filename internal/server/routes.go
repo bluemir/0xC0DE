@@ -40,9 +40,10 @@ func (server *Server) routes(app gin.IRouter) {
 
 		v1.GET("/ping", server.handler.Ping)
 
-		v1.POST("/token", auth.IssueToken)
+		v1.POST("/users", auth.Register)
+		v1.POST("/token", auth.IssueToken) // login?
 		v1.GET("/authn/ping", auth.RequireLogin, server.handler.Ping)
-		v1.GET("/authz/ping", auth.Authz(ResourcePing, VerbCreate), server.handler.Ping)
+		v1.GET("/authz/ping", auth.Can(VerbCreate, ResourcePing), server.handler.Ping)
 		// roles:
 		// - name: admin
 		//   rules:
@@ -50,7 +51,6 @@ func (server *Server) routes(app gin.IRouter) {
 		//       kind: foo
 		//       name: bar
 		//     verb: create
-
 	}
 
 	// WebSocket
@@ -64,7 +64,6 @@ func (server *Server) routes(app gin.IRouter) {
 	{
 		// js, css, etc.
 		app.Group("/static", staticCache(etag())).StaticFS("/", http.FS(static.Static))
-		//app.Group("/lib", server.staticCache).StaticFS("/", static.NodeModules.HTTPBox()) // for css or other web libs. eg. font-awesome
 
 		app.GET("/", markHTML, HTML("/index.html"))
 		// or for SPA(single page application), client side routing

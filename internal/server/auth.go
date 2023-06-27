@@ -18,14 +18,14 @@ const (
 	ContextKeyUser = "user"
 )
 
-func (server *Server) initAuth() error {
-	s1, err := gorm.New(server.db, server.conf.Salt)
+func initAuth(db *gorm.DB, salt string, initUser map[string]string) (*auth.Manager, error) {
+	s1, err := gorm.New(db, salt)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	s2, err := inmemory.New(server.conf.Salt)
+	s2, err := inmemory.New(salt)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	store := composite.Store{
@@ -36,21 +36,20 @@ func (server *Server) initAuth() error {
 		AuthRoleBindingStore: s2,
 	}
 
-	m, err := auth.New(store, server.conf.Salt)
+	m, err := auth.New(store, salt)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	server.auth = m
 
-	for name, key := range server.conf.InitUser {
+	for name, key := range initUser {
 		logrus.Tracef("init user: %s %s", name, key)
-		if _, _, err := server.auth.Register(name, key); err != nil {
-			return err
+		if _, _, err := m.Register(name, key); err != nil {
+			return nil, err
 		}
 	}
 
 	// for session store
 	gob.Register(&auth.User{})
 
-	return nil
+	return m, nil
 }

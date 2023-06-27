@@ -4,7 +4,6 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 	"golang.org/x/sync/errgroup"
-	"gorm.io/gorm"
 
 	"github.com/bluemir/0xC0DE/internal/auth"
 	"github.com/bluemir/0xC0DE/internal/server/handler"
@@ -12,13 +11,16 @@ import (
 
 type Config struct {
 	Bind     string
-	KeyFile  string
-	CertFile string
+	Cert     CertConfig
 	GRPCBind string
 	DBPath   string
 	Salt     string
 	Seed     string
 	InitUser map[string]string
+}
+type CertConfig struct {
+	CertFile string
+	KeyFile  string
 }
 
 func NewConfig() Config {
@@ -28,37 +30,49 @@ func NewConfig() Config {
 }
 
 type Server struct {
-	conf    *Config
-	db      *gorm.DB
+	salt    string
 	auth    *auth.Manager
 	handler *handler.Handler
-	etag    string
 }
 
 func Run(ctx context.Context, conf *Config) error {
-	server := &Server{
-		conf: conf,
-	}
 
 	// init components
-	if err := server.initEtag(); err != nil {
+	db, err := initDB(conf.DBPath)
+	if err != nil {
 		return errors.Wrapf(err, "init server failed")
 	}
-	if err := server.initDB(); err != nil {
+	authManager, err := initAuth(db, conf.Salt, conf.InitUser)
+	if err != nil {
 		return errors.Wrapf(err, "init server failed")
 	}
-	if err := server.initAuth(); err != nil {
-		return errors.Wrapf(err, "init server failed")
+	h, err := handler.New(db)
+	if err != nil {
+		return err
 	}
-	if h, err := handler.New(server.db); err != nil {
-		return errors.Wrapf(err, "init handler failed")
-	} else {
-		server.handler = h
+
+	// option 1. single handler, multiple backend
+	// route -> handler -> backend -> db
+	//                  -> backend -> db
+	// option 2. multiple handler or direct backend
+	// route -> handler -> db
+	//       -> handler -> backend -> db
+	//       -> backend -> db
+	server := &Server{
+		salt: conf.Salt,
+		auth: authManager,
+
+		handler: h,
+	}
+
+	mw, err := server.grpcGatewayMiddleware(conf.GRPCBind)
+	if err != nil {
+		return err
 	}
 
 	// run servers
 	eg, nCtx := errgroup.WithContext(ctx)
-	eg.Go(server.RunHTTPServer(nCtx, conf.Bind))
+	eg.Go(server.RunHTTPServer(nCtx, conf.Bind, conf.GetCertConfig(), mw))
 	eg.Go(server.RunGRPCServer(nCtx, conf.GRPCBind))
 
 	if err := eg.Wait(); err != nil {
@@ -66,4 +80,10 @@ func Run(ctx context.Context, conf *Config) error {
 	}
 
 	return nil
+}
+func (conf *Config) GetCertConfig() *CertConfig {
+	if conf.Cert.CertFile == "" && conf.Cert.KeyFile == "" {
+		return nil
+	}
+	return &conf.Cert
 }

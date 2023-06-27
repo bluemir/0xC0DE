@@ -5,19 +5,21 @@ import (
 	"gorm.io/gorm"
 )
 
-func (server *Server) initDB() error {
-	db, err := gorm.Open(sqlite.Open(server.conf.DBPath), &gorm.Config{})
+func initDB(dbPath string) (*gorm.DB, error) {
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	server.db = db
 
 	sqlDB, err := db.DB()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	sqlDB.SetMaxOpenConns(1)
 
 	// TODO auto migrate
-	return db.AutoMigrate()
+	if err := db.AutoMigrate(); err != nil {
+		return nil, err
+	}
+	return db, err
 }
