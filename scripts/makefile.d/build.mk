@@ -22,6 +22,7 @@ build/$(APP_NAME): $(GO_SOURCES) $(MAKEFILE_LIST) fmt vet
 			-X '$(IMPORT_PATH)/internal/buildinfo.Version=$(VERSION)' \
 			-X '$(IMPORT_PATH)/internal/buildinfo.BuildTime=$(shell date --rfc-3339=ns)' \
 		" \
+		--tags embed \
 		$(OPTIONAL_BUILD_ARGS) \
 		-o $@ .
 
@@ -35,4 +36,4 @@ fmt: ## Run go fmt against code
 
 .PHONY: vet
 vet: ## Run go vet against code
-	go vet -tags noembed ./...
+	go vet ./...

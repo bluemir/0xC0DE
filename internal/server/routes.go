@@ -54,11 +54,11 @@ func (server *Server) routes(app gin.IRouter) {
 	}
 
 	// WebSocket
-	app.GET("/ws", server.websocket)
-	// http2 Server Sent Event
-	app.GET("/stream", server.stream)
+	app.GET("/ws", server.handler.Websocket)
+	// http Server Sent Event
+	app.GET("/stream", server.handler.Stream)
 	// http2 Server Push
-	app.GET("/push", server.push)
+	app.GET("/push", server.handler.Push)
 
 	// Static Pages
 	{

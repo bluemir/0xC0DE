@@ -1,4 +1,4 @@
-package server
+package handler
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-func (server *Server) websocket(c *gin.Context) {
+func (h *Handler) Websocket(c *gin.Context) {
 	// consider gin.WrapH
 
 	// c.Header
@@ -33,7 +33,7 @@ func (server *Server) websocket(c *gin.Context) {
 	}).ServeHTTP(c.Writer, c.Request)
 }
 
-func (server *Server) stream(c *gin.Context) {
+func (h *Handler) Stream(c *gin.Context) {
 	// it is oneway... server -> client
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
@@ -50,7 +50,7 @@ func (server *Server) stream(c *gin.Context) {
 	}
 	// stream = new EventSource("/stream")
 }
-func (server *Server) push(c *gin.Context) {
+func (h *Handler) Push(c *gin.Context) {
 	pusher := c.Writer.Pusher()
 	if pusher == nil {
 		c.JSON(http.StatusBadRequest, "Not supported")
