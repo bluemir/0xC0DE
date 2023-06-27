@@ -14,7 +14,7 @@ import (
 	v1 "github.com/bluemir/0xC0DE/pkg/api/v1"
 )
 
-func (server *Server) RunGRPCServer(ctx context.Context) func() error {
+func (server *Server) RunGRPCServer(ctx context.Context, bind string) func() error {
 	return func() error {
 		grpcServer := grpc.NewServer()
 
@@ -22,7 +22,7 @@ func (server *Server) RunGRPCServer(ctx context.Context) func() error {
 		v1.RegisterHelloServiceServer(grpcServer, &HelloServiceServer{Server: server})
 
 		// Starting grpc Server
-		lis, err := net.Listen("tcp", server.conf.GRPCBind)
+		lis, err := net.Listen("tcp", bind)
 		if err != nil {
 			logrus.Fatalf("failed to listen: %v", err)
 		}

@@ -58,8 +58,8 @@ func Run(ctx context.Context, conf *Config) error {
 
 	// run servers
 	eg, nCtx := errgroup.WithContext(ctx)
-	eg.Go(server.RunHTTPServer(nCtx))
-	eg.Go(server.RunGRPCServer(nCtx))
+	eg.Go(server.RunHTTPServer(nCtx, conf.Bind))
+	eg.Go(server.RunGRPCServer(nCtx, conf.GRPCBind))
 
 	if err := eg.Wait(); err != nil {
 		return errors.WithStack(err)

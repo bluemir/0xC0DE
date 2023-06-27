@@ -63,10 +63,10 @@ func (server *Server) routes(app gin.IRouter) {
 	// Static Pages
 	{
 		// js, css, etc.
-		app.Group("/static", server.staticCache).StaticFS("/", http.FS(static.Static))
+		app.Group("/static", staticCache(etag())).StaticFS("/", http.FS(static.Static))
 		//app.Group("/lib", server.staticCache).StaticFS("/", static.NodeModules.HTTPBox()) // for css or other web libs. eg. font-awesome
 
-		app.GET("/", markHTML, server.static("/index.html"))
+		app.GET("/", markHTML, HTML("/index.html"))
 		// or for SPA(single page application), client side routing
 		// app.Use(AbortIfHasPrefix("/api"), server.static("/index.html"))
 	}

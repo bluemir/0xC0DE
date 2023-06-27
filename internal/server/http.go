@@ -18,7 +18,7 @@ import (
 	errMiddleware "github.com/bluemir/0xC0DE/internal/server/middleware/errors"
 )
 
-func (server *Server) RunHTTPServer(ctx context.Context) func() error {
+func (server *Server) RunHTTPServer(ctx context.Context, bind string) func() error {
 	return func() error {
 		// starting http server
 		app := gin.New()
@@ -60,7 +60,7 @@ func (server *Server) RunHTTPServer(ctx context.Context) func() error {
 		}
 		app.Use(mw)
 
-		return runGracefulServer(ctx, server.conf.Bind, app, server.conf.CertFile, server.conf.KeyFile)
+		return runGracefulServer(ctx, bind, app, server.conf.CertFile, server.conf.KeyFile)
 	}
 }
 

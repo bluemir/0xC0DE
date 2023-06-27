@@ -18,37 +18,36 @@ import (
 	"github.com/bluemir/0xC0DE/internal/buildinfo"
 )
 
-func (server *Server) static(path string) func(c *gin.Context) {
+func HTML(path string) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		c.HTML(http.StatusOK, path, c)
 	}
 }
 
-func (server *Server) initEtag() error {
+func etag() string {
 	hashed := crypto.SHA512.New()
 
 	io.WriteString(hashed, buildinfo.AppName)
 	io.WriteString(hashed, buildinfo.Version)
 	io.WriteString(hashed, buildinfo.BuildTime)
 
-	server.etag = hex.EncodeToString(hashed.Sum(nil))[:20]
-
-	return nil
+	return hex.EncodeToString(hashed.Sum(nil))[:20]
 }
+func staticCache(etag string) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		c.Header("Cache-Control", "no-cache, max-age=86400")
+		c.Header("ETag", etag)
 
-func (server *Server) staticCache(c *gin.Context) {
-	c.Header("Cache-Control", "no-cache, max-age=86400")
-	c.Header("ETag", server.etag)
-
-	if match := c.GetHeader("If-None-Match"); match != "" {
-		if strings.Contains(match, server.etag) {
-			c.Status(http.StatusNotModified)
-			c.Abort()
-			return
+		if match := c.GetHeader("If-None-Match"); match != "" {
+			if strings.Contains(match, etag) {
+				c.Status(http.StatusNotModified)
+				c.Abort()
+				return
+			}
 		}
-	}
 
-	c.Request.Header.Del("If-Modified-Since") // only accept etag
+		c.Request.Header.Del("If-Modified-Since") // only accept etag
+	}
 }
 func (server *Server) AbortIfHasPrefix(prefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
