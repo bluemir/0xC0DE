@@ -46,6 +46,7 @@ func Run(ctx context.Context, conf *Config) error {
 	if err != nil {
 		return errors.Wrapf(err, "init server failed")
 	}
+
 	h, err := handler.New(db)
 	if err != nil {
 		return err
@@ -73,6 +74,7 @@ func Run(ctx context.Context, conf *Config) error {
 	// run servers
 	eg, nCtx := errgroup.WithContext(ctx)
 	eg.Go(server.RunHTTPServer(nCtx, conf.Bind, conf.GetCertConfig(), gwHandler))
+	//eg.Go(server.RunHTTPServer(nCtx, conf.Bind, conf.GetCertConfig()))
 	eg.Go(server.RunGRPCServer(nCtx, conf.GRPCBind))
 
 	if err := eg.Wait(); err != nil {

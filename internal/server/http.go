@@ -55,6 +55,7 @@ func (server *Server) RunHTTPServer(ctx context.Context, bind string, certs *Cer
 
 		// GRPC Gateway
 		app.Use(extra...)
+		// app.Group("/grpc/*any", extra...)
 
 		return runGracefulServer(ctx, bind, app, certs)
 	}
