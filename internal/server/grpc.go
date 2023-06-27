@@ -43,7 +43,7 @@ type HelloServiceServer struct {
 	v1.UnimplementedHelloServiceServer
 }
 
-func (server *Server) grpcGatewayMiddleware(grpcBind string) (gin.HandlerFunc, error) {
+func (server *Server) grpcGatewayHandler(ctx context.Context, grpcBind string) (gin.HandlerFunc, error) {
 	mux := runtime.NewServeMux()
 
 	registerFuncs := []func(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error{
@@ -52,7 +52,7 @@ func (server *Server) grpcGatewayMiddleware(grpcBind string) (gin.HandlerFunc, e
 	}
 	for _, rf := range registerFuncs {
 		if err := rf(
-			context.Background(),
+			ctx,
 			mux,
 			grpcBind,
 			[]grpc.DialOption{grpc.WithInsecure()},

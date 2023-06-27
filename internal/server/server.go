@@ -65,14 +65,14 @@ func Run(ctx context.Context, conf *Config) error {
 		handler: h,
 	}
 
-	mw, err := server.grpcGatewayMiddleware(conf.GRPCBind)
+	gwHandler, err := server.grpcGatewayHandler(ctx, conf.GRPCBind)
 	if err != nil {
 		return err
 	}
 
 	// run servers
 	eg, nCtx := errgroup.WithContext(ctx)
-	eg.Go(server.RunHTTPServer(nCtx, conf.Bind, conf.GetCertConfig(), mw))
+	eg.Go(server.RunHTTPServer(nCtx, conf.Bind, conf.GetCertConfig(), gwHandler))
 	eg.Go(server.RunGRPCServer(nCtx, conf.GRPCBind))
 
 	if err := eg.Wait(); err != nil {
