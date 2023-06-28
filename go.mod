@@ -1,6 +1,6 @@
 module github.com/bluemir/0xC0DE
 
-go 1.19
+go 1.20
 
 require (
 	github.com/gin-contrib/location v0.0.2

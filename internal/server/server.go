@@ -10,7 +10,7 @@ import (
 )
 
 type Config struct {
-	Bind     string
+	HttpBind string
 	Cert     CertConfig
 	GRPCBind string
 	DBPath   string
@@ -73,9 +73,11 @@ func Run(ctx context.Context, conf *Config) error {
 
 	// run servers
 	eg, nCtx := errgroup.WithContext(ctx)
-	eg.Go(server.RunHTTPServer(nCtx, conf.Bind, conf.GetCertConfig(), gwHandler))
+	eg.Go(server.RunHTTPServer(nCtx, conf.HttpBind, conf.GetCertConfig(), gwHandler))
 	//eg.Go(server.RunHTTPServer(nCtx, conf.Bind, conf.GetCertConfig()))
 	eg.Go(server.RunGRPCServer(nCtx, conf.GRPCBind))
+
+	// TODO run grpc, http, https, http2https redirect servers by config
 
 	if err := eg.Wait(); err != nil {
 		return errors.WithStack(err)

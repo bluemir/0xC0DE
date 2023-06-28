@@ -1,6 +1,6 @@
 ##@ Run
 
-run: build/$(APP_NAME) runtime/certs/server.crt runtime/certs/server.key ## Run web app
+run: build/$(APP_NAME) ## Run web app
 	$< -vvv server #--cert runtime/certs/server.crt --key runtime/certs/server.key
 dev-run: ## Run dev server. If detect file change, automatically rebuild&restart server
 	@$(MAKE) build/tools/watcher

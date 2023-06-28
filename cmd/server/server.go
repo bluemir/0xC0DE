@@ -19,7 +19,7 @@ func Register(cmd *kingpin.CmdClause) {
 
 	cmd.Flag("bind", "bind").
 		Default(":8080").
-		StringVar(&conf.Bind)
+		StringVar(&conf.HttpBind)
 	cmd.Flag("cert", "cert file").
 		StringVar(&conf.Cert.CertFile)
 	cmd.Flag("key", "key file").
