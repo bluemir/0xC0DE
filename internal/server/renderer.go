@@ -34,13 +34,17 @@ func NewRenderer() (*template.Template, error) {
 			return err
 		}
 
-		tmpl, err = tmpl.Parse(string(buf))
+		tmpl, err = tmpl.New(path).Parse(string(buf))
 		if err != nil {
 			return err
 		}
 		return nil
 	}); err != nil {
 		return nil, err
+	}
+
+	for _, t := range tmpl.Templates() {
+		logrus.Tracef("there is '%s' template", t.Name())
 	}
 
 	return tmpl, nil

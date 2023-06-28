@@ -10,7 +10,7 @@ dev-run: ## Run dev server. If detect file change, automatically rebuild&restart
 		--include "**.go" \
 		--include "package.json" \
 		--include "yarn.lock" \
-		--include "web/**" \
+		--include "assets/**" \
 		--include "api/proto/**" \
 		--include "Makefile" \
 		--include "scripts/makefile.d/*.mk" \

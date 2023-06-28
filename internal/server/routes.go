@@ -55,7 +55,7 @@ func (server *Server) routes(app gin.IRouter) {
 
 	// WebSocket
 	app.GET("/ws", server.handler.Websocket)
-	// http Server Sent Event
+	// Server Sent Event
 	app.GET("/stream", server.handler.Stream)
 	// http2 Server Push
 	app.GET("/push", server.handler.Push)
