@@ -10,9 +10,9 @@ type Message struct {
 }
 
 func TestChannel(t *testing.T) {
-	channel := NewChannel[Message]()
+	channel := NewChannel()
 
-	forTest := make(chan Event[Message])
+	forTest := make(chan Event)
 
 	channel.AddEventListener(forTest)
 

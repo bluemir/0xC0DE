@@ -103,6 +103,9 @@ export async function request(method, url, options = {}) {
 			req.open(method, resolveParam(url, opts.params) + queryString(opts.query), true);
 		}
 
+		// set default accept
+		req.setRequestHeader("Accept", "application/json,*/*");
+
 		req.withCredentials = opts.withCredentials;
 		Object.keys(opts.headers || {}).forEach(function(name){
 			req.setRequestHeader(name, opts.headers[name]);

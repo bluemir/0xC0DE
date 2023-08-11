@@ -4,19 +4,19 @@ import (
 	"sync"
 )
 
-type Channel[T any] struct {
-	listeners map[chan<- Event[T]]null
+type Channel struct {
+	listeners map[chan<- Event]null
 	lock      sync.RWMutex
 }
 
 type null struct{}
 
-func NewChannel[T any]() *Channel[T] {
-	return &Channel[T]{
-		listeners: map[chan<- Event[T]]null{},
+func NewChannel() *Channel {
+	return &Channel{
+		listeners: map[chan<- Event]null{},
 	}
 }
-func (ch *Channel[T]) broadcastEvent(evt Event[T]) {
+func (ch *Channel) broadcastEvent(evt Event) {
 	ch.lock.RLock()
 	defer ch.lock.RUnlock()
 
@@ -24,13 +24,13 @@ func (ch *Channel[T]) broadcastEvent(evt Event[T]) {
 		l <- evt
 	}
 }
-func (ch *Channel[T]) AddEventListener(l chan<- Event[T]) {
+func (ch *Channel) AddEventListener(l chan<- Event) {
 	ch.lock.Lock()
 	defer ch.lock.Unlock()
 
 	ch.listeners[l] = null{}
 }
-func (ch *Channel[T]) RemoveEventListener(l chan<- Event[T]) {
+func (ch *Channel) RemoveEventListener(l chan<- Event) {
 	ch.lock.Lock()
 	defer ch.lock.Unlock()
 

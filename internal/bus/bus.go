@@ -3,6 +3,9 @@ package bus
 import (
 	"context"
 	"sync"
+	"time"
+
+	"github.com/rs/xid"
 )
 
 /*
@@ -19,32 +22,39 @@ pass action to bus no.... diffrent action in same event. like move
 action do something..
 action has all information for action
 */
-type Bus[T any] struct {
-	q        chan<- Event[T]
+type Bus struct {
+	q        chan<- Event
 	lock     sync.RWMutex
-	channels map[string]*Channel[T]
+	channels map[string]*Channel
 }
-type Event[T any] struct {
+type Event struct {
+	Id     string
+	At     time.Time
 	Kind   string
-	Detail T
+	Detail any
 }
 
-func NewBus[T any](ctx context.Context) (*Bus[T], error) {
-	q := make(chan Event[T])
+func NewBus(ctx context.Context) (*Bus, error) {
+	q := make(chan Event)
 
-	b := &Bus[T]{
+	b := &Bus{
 		q:        q,
-		channels: map[string]*Channel[T]{},
+		channels: map[string]*Channel{},
 	}
 
 	go b.runBroadcaster(ctx, q)
 
 	return b, nil
 }
-func (bus *Bus[T]) FireEvent(evt Event[T]) {
-	bus.q <- evt
+func (bus *Bus) FireEvent(kind string, detail any) {
+	bus.q <- Event{
+		Id:     xid.New().String(),
+		At:     time.Now(),
+		Kind:   kind,
+		Detail: detail,
+	}
 }
-func (bus *Bus[T]) AddEventListener(kind string, l chan<- Event[T]) {
+func (bus *Bus) AddEventListener(kind string, l chan<- Event) {
 	bus.lock.Lock()
 	defer bus.lock.Unlock()
 
@@ -54,10 +64,10 @@ func (bus *Bus[T]) AddEventListener(kind string, l chan<- Event[T]) {
 		return
 	}
 
-	bus.channels[kind] = NewChannel[T]()
+	bus.channels[kind] = NewChannel()
 	bus.channels[kind].AddEventListener(l)
 }
-func (bus *Bus[T]) RemoveEventListener(kind string, l chan<- Event[T]) {
+func (bus *Bus) RemoveEventListener(kind string, l chan<- Event) {
 	bus.lock.Lock()
 	defer bus.lock.Unlock()
 
@@ -67,8 +77,8 @@ func (bus *Bus[T]) RemoveEventListener(kind string, l chan<- Event[T]) {
 	}
 	ch.RemoveEventListener(l)
 }
-func (bus *Bus[T]) WatchEvent(kind string, done <-chan struct{}) (<-chan Event[T], error) {
-	c := make(chan Event[T])
+func (bus *Bus) WatchEvent(kind string, done <-chan struct{}) (<-chan Event, error) {
+	c := make(chan Event)
 
 	bus.AddEventListener(kind, c)
 	go func() {
@@ -77,10 +87,10 @@ func (bus *Bus[T]) WatchEvent(kind string, done <-chan struct{}) (<-chan Event[T
 	}()
 	return c, nil
 }
-func (bus *Bus[T]) WatchAllEvent(done <-chan struct{}) (<-chan Event[T], error) {
+func (bus *Bus) WatchAllEvent(done <-chan struct{}) (<-chan Event, error) {
 	return nil, nil
 }
-func (bus *Bus[T]) runBroadcaster(ctx context.Context, q <-chan Event[T]) {
+func (bus *Bus) runBroadcaster(ctx context.Context, q <-chan Event) {
 	for {
 		select {
 		case evt := <-q:
@@ -91,7 +101,7 @@ func (bus *Bus[T]) runBroadcaster(ctx context.Context, q <-chan Event[T]) {
 		}
 	}
 }
-func (bus *Bus[T]) broadcastEvent(evt Event[T]) {
+func (bus *Bus) broadcastEvent(evt Event) {
 	bus.lock.RLock()
 	defer bus.lock.RUnlock()
 
