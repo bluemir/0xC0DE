@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 )
 
 type EventContext struct {
@@ -46,8 +49,42 @@ func TestBus(t *testing.T) {
 		return
 	}
 	h := DumpHandler()
-	bus.AddEventListener("*", h)
+	bus.AddAllEventListener(h)
 
 	bus.FireEvent("click", EventContext{t})
 	bus.FireEvent("keydown", EventContext{t})
+}
+func TestBusCall(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	bus, err := NewBus(ctx)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	ch := bus.WatchAllEvent(ctx.Done())
+
+	counter := runEventHandler(ch)
+
+	bus.FireEvent("other", nil)
+	bus.FireEvent("other", nil)
+	bus.FireEvent("other", nil)
+
+	time.Sleep(1 * time.Second)
+
+	assert.Equal(t, 3, *counter)
+
+}
+func runEventHandler(ch <-chan Event) *int {
+	c := 0
+	go func() {
+		for evt := range ch {
+			c += 1
+
+			logrus.Trace(evt)
+		}
+	}()
+	return &c
 }

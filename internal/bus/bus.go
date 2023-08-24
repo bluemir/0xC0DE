@@ -26,6 +26,7 @@ type Bus struct {
 	q        chan<- Event
 	lock     sync.RWMutex
 	channels map[string]*Channel
+	all      *Channel
 }
 type Event struct {
 	Id     string
@@ -40,6 +41,7 @@ func NewBus(ctx context.Context) (*Bus, error) {
 	b := &Bus{
 		q:        q,
 		channels: map[string]*Channel{},
+		all:      NewChannel(),
 	}
 
 	go b.runBroadcaster(ctx, q)
@@ -77,18 +79,40 @@ func (bus *Bus) RemoveEventListener(kind string, l chan<- Event) {
 	}
 	ch.RemoveEventListener(l)
 }
-func (bus *Bus) WatchEvent(kind string, done <-chan struct{}) (<-chan Event, error) {
+func (bus *Bus) AddAllEventListener(l chan<- Event) {
+	bus.lock.Lock()
+	defer bus.lock.Unlock()
+
+	bus.all.AddEventListener(l)
+}
+func (bus *Bus) RemoveAllEventListener(l chan<- Event) {
+	bus.lock.Lock()
+	defer bus.lock.Unlock()
+
+	bus.all.RemoveEventListener(l)
+}
+
+func (bus *Bus) WatchEvent(kind string, done <-chan struct{}) <-chan Event {
 	c := make(chan Event)
 
 	bus.AddEventListener(kind, c)
 	go func() {
 		<-done
 		bus.RemoveEventListener(kind, c)
+		close(c)
 	}()
-	return c, nil
+	return c
 }
-func (bus *Bus) WatchAllEvent(done <-chan struct{}) (<-chan Event, error) {
-	return nil, nil
+func (bus *Bus) WatchAllEvent(done <-chan struct{}) <-chan Event {
+	c := make(chan Event)
+
+	bus.AddAllEventListener(c)
+	go func() {
+		<-done
+		bus.RemoveAllEventListener(c)
+		close(c)
+	}()
+	return c
 }
 func (bus *Bus) runBroadcaster(ctx context.Context, q <-chan Event) {
 	for {
@@ -110,5 +134,5 @@ func (bus *Bus) broadcastEvent(evt Event) {
 		ch.broadcastEvent(evt)
 	}
 
-	bus.channels["*"].broadcastEvent(evt)
+	bus.all.broadcastEvent(evt)
 }
