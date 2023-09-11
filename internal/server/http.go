@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/gob"
 	"net/http"
 	"time"
 
@@ -13,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	"github.com/bluemir/0xC0DE/internal/auth"
+	"github.com/bluemir/0xC0DE/internal/server/handler"
 	authMiddleware "github.com/bluemir/0xC0DE/internal/server/middleware/auth"
 	errMiddleware "github.com/bluemir/0xC0DE/internal/server/middleware/errors"
 )
@@ -37,7 +36,6 @@ func (server *Server) RunHTTPServer(ctx context.Context, bind string, certs *Cer
 		defer writer.Close()
 
 		// sessions
-		gob.Register(&auth.Token{})
 		store := cookie.NewStore([]byte(server.salt))
 		app.Use(sessions.Sessions("0xC0DE_session", store))
 
@@ -49,6 +47,11 @@ func (server *Server) RunHTTPServer(ctx context.Context, bind string, certs *Cer
 		app.Use(errMiddleware.Middleware)
 
 		app.Use(authMiddleware.Middleware(server.auth))
+
+		app.Use(handler.Inject(&handler.Backends{
+			Auth:     server.auth,
+			EventBus: server.bus,
+		}))
 
 		// handle routes
 		server.routes(app)

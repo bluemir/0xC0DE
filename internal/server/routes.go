@@ -5,7 +5,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/bluemir/0xC0DE/internal/server/handler"
 	"github.com/bluemir/0xC0DE/internal/server/middleware/auth"
+	"github.com/bluemir/0xC0DE/internal/server/middleware/auth/resource"
+	"github.com/bluemir/0xC0DE/internal/server/middleware/auth/verb"
 	"github.com/bluemir/0xC0DE/internal/server/middleware/prom"
 	"github.com/bluemir/0xC0DE/internal/static"
 
@@ -14,14 +17,6 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
-
-const (
-	VerbCreate auth.Verb = "CREATE"
-)
-
-func ResourcePing(c *gin.Context) auth.Resource {
-	return auth.KeyValues{"kind": "ping"}
-}
 
 // @title 0xC0DE
 // @version 0.1.0
@@ -40,10 +35,11 @@ func (server *Server) routes(app gin.IRouter) {
 
 		v1.GET("/ping", server.handler.Ping)
 
-		v1.POST("/users", auth.Register)
-		v1.POST("/token", auth.IssueToken) // login?
+		v1.GET("/login", auth.Login)
+		v1.GET("/logout", auth.Logout)
+		v1.POST("/users", handler.Register)
 		v1.GET("/authn/ping", auth.RequireLogin, server.handler.Ping)
-		v1.GET("/authz/ping", auth.Can(VerbCreate, ResourcePing), server.handler.Ping)
+		v1.GET("/authz/ping", auth.Can(verb.Create, resource.Server), server.handler.Ping)
 		// roles:
 		// - name: admin
 		//   rules:

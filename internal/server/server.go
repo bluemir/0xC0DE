@@ -5,7 +5,8 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/bluemir/0xC0DE/internal/auth"
+	"github.com/bluemir/0xC0DE/internal/bus"
+	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
 	"github.com/bluemir/0xC0DE/internal/server/handler"
 )
 
@@ -32,11 +33,15 @@ func NewConfig() Config {
 type Server struct {
 	salt    string
 	auth    *auth.Manager
+	bus     *bus.Bus
 	handler *handler.Handler
 }
 
 func Run(ctx context.Context, conf *Config) error {
-
+	events, err := bus.NewBus(ctx)
+	if err != nil {
+		return err
+	}
 	// init components
 	db, err := initDB(conf.DBPath)
 	if err != nil {
@@ -62,6 +67,7 @@ func Run(ctx context.Context, conf *Config) error {
 	server := &Server{
 		salt: conf.Salt,
 		auth: authManager,
+		bus:  events,
 
 		handler: h,
 	}

@@ -1,0 +1,35 @@
+@import "./material/colors/all.css";
+
+:host, :root {
+	/* color */
+	--primary-1: #131A40;
+	--primary-2: #273273;
+	--primary-3: #4E64A6;
+	--primary-4: #829FD9;
+	--primary-5: #99B7F9;
+
+	--black: #000000;
+	--white: #ffffff;
+
+	--natural-1: #2a2a2a;
+	--natural-2: #858585;
+	--natural-3: #7f7f7f;
+	--natural-4: #aaaaaa;
+	--natural-5: #d4d4d4;
+	/* TODO red, green, blue */
+
+	/* layout */
+	--page-max-width: 1280px;
+	/*--page-max-width: 1920px;*/
+}
+
+/*normalize*/
+a {
+	color: var(--fg-color, black);
+}
+table {
+	border-collapse: collapse;
+}
+th, td {
+	border: 1px solid var(--natural-2);
+}

@@ -2,17 +2,12 @@ package auth
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 
-	"github.com/bluemir/0xC0DE/internal/auth"
+	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
 )
-
-type Resource = auth.Resource
-type Verb = auth.Verb
-type KeyValues = auth.KeyValues
 
 func User(c *gin.Context) (*auth.User, error) {
 	// 1. try to get user from context
@@ -40,31 +35,7 @@ func User(c *gin.Context) (*auth.User, error) {
 	c.Set(ContextKeyUser, user)
 	return user, nil
 }
-
-func Register(c *gin.Context) {
-	req := struct {
-		Username string
-		Password string
-	}{}
-
-	if err := c.ShouldBind(&req); err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-
-	u, err := manager(c).CreateUser(req.Username)
-	if err != nil {
-		c.AbortWithError(http.StatusUnauthorized, err)
-		return
-	}
-
-	if _, err := manager(c).IssueToken(req.Username, req.Password); err != nil {
-		c.AbortWithError(http.StatusUnauthorized, err)
-		return
-	}
-	c.JSON(http.StatusOK, u)
-}
-func IssueToken(c *gin.Context) {
+func Login(c *gin.Context) {
 	req := struct {
 		Username string
 		Password string
@@ -81,29 +52,16 @@ func IssueToken(c *gin.Context) {
 		return
 	}
 
-	t := time.Now().Add(6 * time.Hour)
+	session := sessions.Default(c)
+	session.Set(SessionKeyUser, user)
+	session.Save()
 
-	key, err := manager(c).GenerateToken(user.Name, auth.ExpiredAt(t))
-	token := auth.ToHTTPToken(user.Name, key)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"token":     token,
-		"expiredAt": t.Format(time.RFC3339),
-	})
+	c.JSON(http.StatusOK, user)
 }
-func RevokeToken(c *gin.Context) {
-	username, unhashedKey, err := auth.ParseHTTPRequest(c.Request)
-	if err != nil {
-		c.AbortWithError(http.StatusUnauthorized, err)
-		return
-	}
+func Logout(c *gin.Context) {
+	session := sessions.Default(c)
+	session.Delete(SessionKeyUser)
+	session.Save()
 
-	if err := manager(c).RevokeToken(username, unhashedKey); err != nil {
-		c.AbortWithError(http.StatusUnauthorized, err)
-		return
-	}
+	c.JSON(http.StatusOK, gin.H{"message": "ok"})
 }

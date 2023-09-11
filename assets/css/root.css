@@ -1,0 +1,12 @@
+@import "./theme.css";
+@import "./system/grid.css";
+@import "./system/shadow.css";
+@import "./system/padding.css";
+
+/* prevent FOUC */
+*:not(:defined) {
+	display:none;
+}
+:host {
+	display: block;
+}

@@ -7,9 +7,14 @@ var tmpl = (elem) => html`
 	<style>
 		${css}
 
+		:host {
+			display: inline;
+		}
+
 		span.material-symbols-outlined {
 			${elem.size}
 			cursor: default;
+			vertical-align: bottom;
 		}
 	</style>
 
@@ -19,6 +24,16 @@ var tmpl = (elem) => html`
 class Icon extends $.CustomElement {
 	constructor() {
 		super();
+	}
+	onConnected() {
+		if ($.get(document, "head link#icons")) {
+			return
+		}
+		$.get(document, "head").appendChild($.create("link", {
+			href: "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined",
+			rel: "stylesheet",
+			id: "icons",
+		}));
 	}
 	static get observedAttributes() {
 		return ["kind", "size"];
