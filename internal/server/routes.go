@@ -59,9 +59,12 @@ func (server *Server) routes(app gin.IRouter) {
 	// Static Pages
 	{
 		// js, css, etc.
-		app.Group("/static", staticCache(etag())).StaticFS("/", http.FS(static.Static))
+		app.Group("/static", staticCache()).StaticFS("/", http.FS(static.Static))
 
-		app.GET("/", markHTML, HTML("/index.html"))
+		app.GET("/", HTML("index.html"))
+		app.GET("/posts", HTML("posts.html"))
+		app.GET("/admin", HTML("admin.html"))
+		app.GET("/admin/users", HTML("admin/users.html"))
 		// or for SPA(single page application), client side routing
 		// app.Use(AbortIfHasPrefix("/api"), server.static("/index.html"))
 	}

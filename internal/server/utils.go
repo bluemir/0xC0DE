@@ -20,11 +20,12 @@ import (
 
 func HTML(path string) func(c *gin.Context) {
 	return func(c *gin.Context) {
+		markHTML(c)
 		c.HTML(http.StatusOK, path, c)
 	}
 }
 
-func etag() string {
+func getEtag() string {
 	hashed := crypto.SHA512.New()
 
 	io.WriteString(hashed, buildinfo.AppName)
@@ -33,7 +34,8 @@ func etag() string {
 
 	return hex.EncodeToString(hashed.Sum(nil))[:20]
 }
-func staticCache(etag string) func(c *gin.Context) {
+func staticCache() func(c *gin.Context) {
+	etag := getEtag()
 	return func(c *gin.Context) {
 		c.Header("Cache-Control", "no-cache, max-age=86400")
 		c.Header("ETag", etag)

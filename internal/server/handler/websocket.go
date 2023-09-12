@@ -41,9 +41,9 @@ func (h *Handler) Stream(c *gin.Context) {
 	gone := c.Stream(func(w io.Writer) bool {
 		if t, ok := <-ticker.C; ok {
 			c.SSEvent("time", t.Format(time.RFC3339Nano))
-			return true
+			return true // continue
 		}
-		return false
+		return false // disconnect
 	})
 	if gone {
 		logrus.Debug("client gone")

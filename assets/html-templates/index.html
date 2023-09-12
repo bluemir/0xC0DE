@@ -1,11 +1,44 @@
 <html>
 	<head>
+		<style>
+			@import "/static/css/page.css";
+			@import "/static/css/pages/landing.css";
+		</style>
 		<script type="module">
 			import "/static/js/index.js";
 		</script>
 	</head>
 	<body>
-		<h1>Hello world</h1>
-		<app-main></app-main>
+		<landing-page>
+			<section id="hero-contents" grid slot="hero-contents">
+				<section col="7">
+					<h1>Hello World!</h1>
+					<p>
+						this is landing page example!
+					</p>
+					<section>
+						<c-button>Register</c-button>
+					</section>
+				</section>
+				<c-placeholder col="5"></c-placeholder>
+			</section>
+			<section grid id="features">
+				<section col="4">
+					<c-icon kind="sync_saved_locally" size="5rem"></c-icon>
+					<h3>Landing Page</h3>
+					<p>A landing page is a standalone web page that potential customers can “land” on when they click through from an email, ad, or other digital location.</p>
+				</section>
+				<section col="4">
+					<c-icon kind="home" size="5rem;"></c-icon>
+					<h3>Default Page</h3>
+					<p>Default layout page</p>
+				</section>
+				<section col="4">
+					<c-icon kind="settings_applications" size="5rem"></c-icon>
+					<h3>Admin Page</h3>
+					<p>Rich Layout for complicated menu and side menu</p>
+				</section>
+			</section>
+		</landing-page>
 	</body>
 </html>
