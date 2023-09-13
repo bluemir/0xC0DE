@@ -7,7 +7,7 @@ import (
 
 	"github.com/bluemir/0xC0DE/internal/bus"
 	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
-	"github.com/bluemir/0xC0DE/internal/server/handler"
+	"github.com/bluemir/0xC0DE/internal/server/backend/posts"
 )
 
 type Config struct {
@@ -31,10 +31,10 @@ func NewConfig() Config {
 }
 
 type Server struct {
-	salt    string
-	auth    *auth.Manager
-	bus     *bus.Bus
-	handler *handler.Handler
+	salt  string
+	auth  *auth.Manager
+	bus   *bus.Bus
+	posts *posts.Manager
 }
 
 func Run(ctx context.Context, conf *Config) error {
@@ -52,9 +52,9 @@ func Run(ctx context.Context, conf *Config) error {
 		return errors.Wrapf(err, "init server failed")
 	}
 
-	h, err := handler.New(db)
+	postManager, err := posts.New(db, events)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "init post manager failed")
 	}
 
 	// option 1. single handler, multiple backend
@@ -65,11 +65,10 @@ func Run(ctx context.Context, conf *Config) error {
 	//       -> handler -> backend -> db
 	//       -> backend -> db
 	server := &Server{
-		salt: conf.Salt,
-		auth: authManager,
-		bus:  events,
-
-		handler: h,
+		salt:  conf.Salt,
+		auth:  authManager,
+		bus:   events,
+		posts: postManager,
 	}
 
 	gwHandler, err := server.grpcGatewayHandler(ctx, conf.GRPCBind)

@@ -489,8 +489,6 @@ export class CustomElement extends HTMLElement {
 			this.attachShadow({mode: 'open'})
 		}
 		this["--handler"] = {}
-
-		this.render && this.render();
 	}
 	// syntactic sugar
 	attributeChangedCallback(name, oldValue, newValue) {

@@ -11,7 +11,7 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-func (h *Handler) Websocket(c *gin.Context) {
+func Websocket(c *gin.Context) {
 	// consider gin.WrapH
 
 	// c.Header
@@ -33,10 +33,13 @@ func (h *Handler) Websocket(c *gin.Context) {
 	}).ServeHTTP(c.Writer, c.Request)
 }
 
-func (h *Handler) Stream(c *gin.Context) {
+func Stream(c *gin.Context) {
 	// it is oneway... server -> client
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
+
+	c.SSEvent("time", time.Now().Format(time.RFC3339Nano))
+	c.Writer.Flush()
 
 	gone := c.Stream(func(w io.Writer) bool {
 		if t, ok := <-ticker.C; ok {
@@ -50,7 +53,7 @@ func (h *Handler) Stream(c *gin.Context) {
 	}
 	// stream = new EventSource("/stream")
 }
-func (h *Handler) Push(c *gin.Context) {
+func Push(c *gin.Context) {
 	pusher := c.Writer.Pusher()
 	if pusher == nil {
 		c.JSON(http.StatusBadRequest, "Not supported")

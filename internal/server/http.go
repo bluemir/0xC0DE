@@ -51,6 +51,7 @@ func (server *Server) RunHTTPServer(ctx context.Context, bind string, certs *Cer
 		app.Use(handler.Inject(&handler.Backends{
 			Auth:     server.auth,
 			EventBus: server.bus,
+			Posts:    server.posts,
 		}))
 
 		// handle routes

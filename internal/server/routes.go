@@ -33,14 +33,9 @@ func (server *Server) routes(app gin.IRouter) {
 	{
 		v1 := app.Group("/api/v1", markAPI)
 
-		v1.GET("/ping", server.handler.Ping)
-
-		v1.GET("/login", auth.Login)
-		v1.GET("/logout", auth.Logout)
-		v1.POST("/users", handler.Register)
-		v1.GET("/users/me", handler.Me)
-		v1.GET("/authn/ping", auth.RequireLogin, server.handler.Ping)
-		v1.GET("/authz/ping", auth.Can(verb.Create, resource.Server), server.handler.Ping)
+		v1.GET("/ping", handler.Ping)
+		v1.GET("/authn/ping", auth.RequireLogin, handler.Ping)
+		v1.GET("/authz/ping", auth.Can(verb.Create, resource.Server), handler.Ping)
 		// roles:
 		// - name: admin
 		//   rules:
@@ -48,14 +43,23 @@ func (server *Server) routes(app gin.IRouter) {
 		//       kind: foo
 		//       name: bar
 		//     verb: create
-	}
 
-	// WebSocket
-	app.GET("/ws", server.handler.Websocket)
-	// Server Sent Event
-	app.GET("/stream", server.handler.Stream)
-	// http2 Server Push
-	app.GET("/push", server.handler.Push)
+		v1.POST("/login", auth.Login)
+		v1.GET("/logout", auth.Logout)
+		v1.POST("/users", handler.Register)
+		v1.GET("/users/me", handler.Me)
+
+		v1.POST("/posts", handler.CreatePost)
+		v1.GET("/posts", handler.ListPost)
+		v1.GET("/posts/stream", handler.StreamPost)
+
+		// WebSocket
+		v1.GET("/ws", handler.Websocket)
+		// Server Sent Event
+		v1.GET("/stream", handler.Stream)
+		// http2 Server Push
+		v1.GET("/push", handler.Push)
+	}
 
 	// Static Pages
 	{

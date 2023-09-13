@@ -37,7 +37,11 @@ var tmpl = (elem) => html`
 			top: 0;
 		}
 	</style>
-	<input id="input" type="${elem.attr("type")}" name="${elem.name}" placeholder="${elem.attr("placeholder") || " " }" @input="${ evt => elem._internal.setFormValue(evt.target.value)}" />
+	<input
+		id="input" type="${elem.attr("type")}" name="${elem.name}" placeholder="${elem.attr("placeholder") || " " }"
+		@input="${ evt => elem._internal.setFormValue(evt.target.value)}"
+		@submit="${ evt => {console.log(evt); elem.dispatchEvent(evt)} }"
+	/>
 	<label for="input">${elem.attr("label")}</label>
 `;
 

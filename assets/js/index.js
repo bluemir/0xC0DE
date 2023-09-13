@@ -13,4 +13,6 @@ import "./layout/GNB.js";
 import "./users/register.js";
 import "./users/login.js";
 
-import "./events.js";
+import "./posts/create.js";
+import "./posts/list.js";
+

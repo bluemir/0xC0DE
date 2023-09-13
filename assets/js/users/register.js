@@ -37,6 +37,10 @@ class RegisterForm extends $.CustomElement {
 		evt.preventDefault();
 
 		let fd = new FormData($.get(this.shadowRoot, "form"));
+
+		let res = await $.request("POST", `/api/v1/users`, {body:fd});
+
+		location.href = "/"
 	}
 }
 customElements.define("register-form", RegisterForm);

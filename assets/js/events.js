@@ -1,4 +1,5 @@
-let events = new EventSource("/stream");
+let events = new EventSource("/api/v1/stream");
+
 events.on("message", evt => {
 	console.log(evt);
 })
