@@ -4,6 +4,14 @@
 			@import "/static/css/page.css";
 			@import "/static/css/pages/landing.css";
 		</style>
+		<script type="importmap">
+			{
+				"imports": {
+					"bm.js/": "/static/lib/bm.js/",
+					"lit-html": "https://unpkg.com/lit-html@2.8.0/lit-html.js"
+				}
+			}
+		</script>
 		<script type="module">
 			import "/static/js/index.js";
 		</script>
@@ -17,7 +25,7 @@
 						this is landing page example!
 					</p>
 					<section>
-						<c-button>Register</c-button>
+						<c-button><a href="/users/register">Register</a></c-button>
 					</section>
 				</section>
 				<c-placeholder col="5"></c-placeholder>
@@ -31,12 +39,12 @@
 				<section col="4">
 					<c-icon kind="home" size="5rem;"></c-icon>
 					<h3>Default Page</h3>
-					<p>Default layout page</p>
+					<p>Default layout is used in plain pages. It has simple header and contents.</p>
 				</section>
 				<section col="4">
 					<c-icon kind="settings_applications" size="5rem"></c-icon>
 					<h3>Admin Page</h3>
-					<p>Rich Layout for complicated menu and side menu</p>
+					<p>Rich Layout for complicated header, footer and side menu</p>
 				</section>
 			</section>
 		</landing-page>

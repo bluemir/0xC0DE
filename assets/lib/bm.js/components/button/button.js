@@ -8,7 +8,6 @@ var tmpl = (elem) => html`
 
 		:host {
 			display: inline-block;
-			padding: 0.3rem 0.8rem;
 
 			color: var(--button-fg-color, black);
 			background: var(--button-bg-color, white);
@@ -19,17 +18,37 @@ var tmpl = (elem) => html`
 			background: var(--button-hover-bg-color, #343434);
 			border: 1px solid var(--button--hover-border-color, #343434);
 		}
-		::slotted(*) {
+		::slotted(a) {
 			color: inherit;
-			--fg-color: reset;
 			text-decoration: none;
 			white-space: nowrap;
 		}
 		::slotted(a:hover) {
 		}
+		::slotted(button) {
+			background: none;
+			font: inherit;
+			border: 0;
+			padding: 0;
+		}
+		:host(:hover) ::slotted(button) {
+			color: var(--button-hover-fg-color, white);
+		}
+
+		/* ':host(:has(a, button))' is not available for chrome & firefox. it seems bug.
+		 * see also: https://github.com/w3c/webcomponents-cg/issues/5#issuecomment-1220786480
+		 */
+		:host([pure]) {
+			padding: 0.3rem 0.8rem;
+		}
+		::slotted(a), ::slotted(button) {
+			display: inline-block;
+			padding: 0.3rem 0.8rem;
+		}
 	</style>
 	<slot></slot>
 `;
+
 
 class Button extends $.CustomElement {
 	constructor() {
@@ -37,6 +56,11 @@ class Button extends $.CustomElement {
 	}
 	async render() {
 		render(tmpl(this), this.shadow);
+	}
+	onConnected() {
+		if(!$.get(this, "a, button")) {
+			this.setAttribute("pure", "");
+		}
 	}
 }
 customElements.define("c-button", Button);

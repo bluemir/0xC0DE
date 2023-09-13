@@ -35,7 +35,7 @@ func (h *Handler) Websocket(c *gin.Context) {
 
 func (h *Handler) Stream(c *gin.Context) {
 	// it is oneway... server -> client
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
 	gone := c.Stream(func(w io.Writer) bool {

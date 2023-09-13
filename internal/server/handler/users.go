@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/bluemir/0xC0DE/internal/server/middleware/auth"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,5 +29,14 @@ func Register(c *gin.Context) {
 		return
 	}
 
+	c.JSON(http.StatusOK, u)
+}
+func Me(c *gin.Context) {
+	u, err := auth.User(c)
+
+	if err != nil {
+		c.Error(err)
+		return
+	}
 	c.JSON(http.StatusOK, u)
 }

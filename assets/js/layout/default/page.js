@@ -12,6 +12,22 @@ var tmpl = (elem) => html`
 			max-width: 1280px;
 			margin: auto;
 		}
+		global-navigation-bar {
+			--fg-color: white;
+			padding: 0.3rem 1rem;
+		}
+		::slotted(*) {
+			padding: 0 1rem;
+		}
+
+		header {
+			display: fixed;
+			background: var(--blue-alt-700);
+		}
+
+		main {
+			padding-top: 1rem;
+		}
 	</style>
 	<header>
 		<global-navigation-bar></global-navigation-bar>

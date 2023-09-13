@@ -42,6 +42,12 @@ class GlobalNavigationBar extends $.CustomElement {
 	async render() {
 		render(tmpl(this), this.shadow);
 	}
+
+	async onConnected() {
+		let res = await $.request("GET", `/api/v1/user/me`);
+
+		this.user = res.json;
+	}
 }
 customElements.define("global-navigation-bar", GlobalNavigationBar);
 

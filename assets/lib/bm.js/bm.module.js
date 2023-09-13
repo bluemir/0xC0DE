@@ -504,7 +504,10 @@ export class CustomElement extends HTMLElement {
 			old: oldValue,
 			new: newValue,
 		});
-		this.onAttributeChanged && this.onAttributeChanged(name, oldValue, newValue);
+		this.onAttributeChanged(name, oldValue, newValue);
+	}
+	onAttributeChanged() {
+		this.render && this.render();
 	}
 	connectedCallback()  {
 		this.render && this.render();
@@ -517,7 +520,6 @@ export class CustomElement extends HTMLElement {
 	}
 	get shadow() {
 		return this.shadowRoot;
-		//return this["--shadow"];
 	}
 	handler(h) {
 		var name = h instanceof Function ? h.name : h;

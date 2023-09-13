@@ -38,6 +38,7 @@ func (server *Server) routes(app gin.IRouter) {
 		v1.GET("/login", auth.Login)
 		v1.GET("/logout", auth.Logout)
 		v1.POST("/users", handler.Register)
+		v1.GET("/users/me", handler.Me)
 		v1.GET("/authn/ping", auth.RequireLogin, server.handler.Ping)
 		v1.GET("/authz/ping", auth.Can(verb.Create, resource.Server), server.handler.Ping)
 		// roles:
@@ -62,9 +63,11 @@ func (server *Server) routes(app gin.IRouter) {
 		app.Group("/static", staticCache()).StaticFS("/", http.FS(static.Static))
 
 		app.GET("/", HTML("index.html"))
+		app.GET("/users/register", HTML("register.html"))
+		app.GET("/users/login", HTML("login.html"))
 		app.GET("/posts", HTML("posts.html"))
 		app.GET("/admin", HTML("admin.html"))
-		app.GET("/admin/users", HTML("admin/users.html"))
+
 		// or for SPA(single page application), client side routing
 		// app.Use(AbortIfHasPrefix("/api"), server.static("/index.html"))
 	}

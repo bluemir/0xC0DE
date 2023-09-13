@@ -1,10 +1,10 @@
 let events = new EventSource("/stream");
-events.on("message", function(evt) {
+events.on("message", evt => {
 	console.log(evt);
 })
-events.onmessage = (evt) => {
+events.on("time", evt => {
 	console.log(evt);
-}
-events.on("time", function(evt) {
-	console.log(evt);
+})
+events.on("error", evt => {
+	events.close();
 })

@@ -35,7 +35,9 @@ build/static/js/%: $(JS_SOURCES) build/yarn-updated
 	@$(MAKE) build/tools/npx
 	@mkdir -p $(dir $@)
 	npx esbuild $(@:build/static/%=assets/%) --outdir=$(dir $@) \
-		--bundle --sourcemap --format=esm $(OPTIONAL_WEB_BUILD_ARGS)
+		--bundle --sourcemap --format=esm \
+		--external:bm.js --external:lit-html \
+		$(OPTIONAL_WEB_BUILD_ARGS)
 	#--external:/config.js \
 	#--minify \
 
