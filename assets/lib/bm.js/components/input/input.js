@@ -7,6 +7,7 @@ var tmpl = (elem) => html`
 		${css}
 
 		:host {
+			display: inline-block;
 			position: relative;
 			padding-top: 0.5rem;
 		}
@@ -15,9 +16,9 @@ var tmpl = (elem) => html`
 			outline: none;
 			height: 2rem;
 			border: 0;
-			border-bottom: 1px solid var(--gray-200);
+			border-bottom: 1px solid var(--gray-300);
 		}
-		input:focus {
+		input:focus, input:not(:placeholder-shown) {
 			border-bottom: 1px solid var(--gray-800);
 		}
 
@@ -39,8 +40,8 @@ var tmpl = (elem) => html`
 	</style>
 	<input
 		id="input" type="${elem.attr("type")}" name="${elem.name}" placeholder="${elem.attr("placeholder") || " " }"
-		@input="${ evt => elem._internal.setFormValue(evt.target.value)}"
-		@submit="${ evt => {console.log(evt); elem.dispatchEvent(evt)} }"
+		@input="${ evt => elem.value = evt.target.value}"
+		@keypress="${ evt => elem.onKeyPress(evt)}"
 	/>
 	<label for="input">${elem.attr("label")}</label>
 `;
@@ -59,10 +60,11 @@ class Input extends $.CustomElement {
 		return ["name", "label", "placeholder", "type"];
 	}
 
+	#internal = this.attachInternals();
+	#value
+
 	constructor() {
 		super();
-
-		this._internal = this.attachInternals();
 	}
 	async render() {
 		render(tmpl(this), this.shadow);
@@ -70,6 +72,22 @@ class Input extends $.CustomElement {
 
 	get name(){
 		return this.attr("name");
+	}
+	get value(){
+		return this.#value;
+	}
+	set value(v){
+		this.#value = v;
+		this.#internal.setFormValue(v);
+	}
+	formResetCallback() {
+		$.get(this.shadowRoot, "input").value = "";
+		this.value = "";
+	}
+	onKeyPress(evt) {
+		if (evt.code == "Enter" && this.#internal.form) {
+			this.#internal.form.requestSubmit();
+		}
 	}
 }
 customElements.define("c-input", Input);

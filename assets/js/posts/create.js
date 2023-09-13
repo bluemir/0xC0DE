@@ -9,10 +9,11 @@ var tmpl = (elem) => html`
 		}
 		::slotted(*) {
 		}
+
 	</style>
 	<form @submit="${evt => elem.onSubmit(evt)}">
-		<input label="message" name="message" />
-		<button>Send</button>
+		<c-input label="message" name="message"></c-input>
+		<c-button><button>Send</button></c-button>
 	</form>
 `;
 
@@ -28,11 +29,14 @@ class PostCreate extends $.CustomElement {
 	async onSubmit(evt) {
 		evt.preventDefault();
 
-		let fd = new FormData($.get(this.shadowRoot, "form"));
+		let $form = evt.target;
+		let fd = new FormData($form);
 
 		let res = await $.request("POST", `/api/v1/posts`, {body:fd});
 
 		console.log(res)
+
+		$form.reset();
 	}
 }
 customElements.define("post-create", PostCreate);

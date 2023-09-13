@@ -481,6 +481,9 @@ extend(Array, {
 
 
 export class CustomElement extends HTMLElement {
+	// private
+	#handler = {}
+
 	constructor({enableShadow = true} = {}) {
 		super();
 
@@ -488,7 +491,6 @@ export class CustomElement extends HTMLElement {
 			//this["--shadow"] = this.attachShadow({mode: 'open'})
 			this.attachShadow({mode: 'open'})
 		}
-		this["--handler"] = {}
 	}
 	// syntactic sugar
 	attributeChangedCallback(name, oldValue, newValue) {
@@ -523,10 +525,10 @@ export class CustomElement extends HTMLElement {
 		var name = h instanceof Function ? h.name : h;
 		var f = h instanceof Function ? h : this[h];
 
-		if (!this["--handler"][name]) {
-			this["--handler"][name] = evt => f.call(this, evt.detail);
+		if (!this.#handler[name]) {
+			this.#handler[name] = evt => f.call(this, evt.detail);
 		}
-		return this["--handler"][name];
+		return this.#handler[name];
 	}
 }
 
