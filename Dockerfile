@@ -1,5 +1,5 @@
 ARG VERSION=dev
-FROM fedora:36 as build-env
+FROM fedora:38 as build-env
 
 RUN echo "fastestmirror=1" >> /etc/dnf/dnf.conf
 RUN dnf install -y \
@@ -14,8 +14,8 @@ ENV PATH=$PATH:/root/go/bin
 # pre build
 WORKDIR /pre-build
 
-ADD go.mod go.sum package.json yarn.lock Makefile  ./
-ADD scripts/ scripts/
+COPY go.mod go.sum package.json yarn.lock Makefile  ./
+COPY scripts/ scripts/
 
 ## install build tools
 RUN make build-tools
@@ -36,13 +36,13 @@ ENV OPTIONAL_WEB_BUILD_ARGS="--minify"
 ARG VERSION
 
 ## copy source
-ADD . /src
+COPY . /src
 
 RUN make build/0xC0DE
 
 ################################################################################
 # running image
-FROM fedora:36
+FROM fedora:38
 
 WORKDIR /
 COPY --from=build-env /src/build/0xC0DE /bin/
