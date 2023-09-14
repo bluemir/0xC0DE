@@ -31,7 +31,8 @@ func NewConfig() Config {
 }
 
 type Server struct {
-	salt  string
+	salt string
+
 	auth  *auth.Manager
 	bus   *bus.Bus
 	posts *posts.Manager
@@ -65,7 +66,9 @@ func Run(ctx context.Context, conf *Config) error {
 	//       -> handler -> backend -> db
 	//       -> backend -> db
 	server := &Server{
-		salt:  conf.Salt,
+		salt: conf.Salt,
+
+		// backends
 		auth:  authManager,
 		bus:   events,
 		posts: postManager,

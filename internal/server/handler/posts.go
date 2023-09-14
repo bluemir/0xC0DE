@@ -59,7 +59,7 @@ func StreamPost(c *gin.Context) {
 		c.Writer.Flush() //will write header.
 	}
 
-	ch := backends(c).EventBus.WatchEvent("posts/created", c.Request.Context().Done())
+	ch := backends(c).Events.WatchEvent("posts/created", c.Request.Context().Done())
 
 	gone := c.Stream(func(w io.Writer) bool {
 		if evt, ok := <-ch; ok {

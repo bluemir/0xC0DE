@@ -23,8 +23,8 @@ func backends(c *gin.Context) *Backends {
 }
 
 type Backends struct {
-	Auth     *auth.Manager
-	EventBus *bus.Bus
+	Auth   *auth.Manager
+	Events *bus.Bus
 
 	Posts *posts.Manager
 }
