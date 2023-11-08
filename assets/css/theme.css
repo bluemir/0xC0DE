@@ -4,13 +4,4 @@
 
 }
 
-/*normalize*/
-a {
-	color: var(--fg-color, black);
-}
-table {
-	border-collapse: collapse;
-}
-th, td {
-	border: 1px solid var(--gray-200);
-}
+
