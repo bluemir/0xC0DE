@@ -37,8 +37,8 @@ func User(c *gin.Context) (*auth.User, error) {
 }
 func Login(c *gin.Context) {
 	req := struct {
-		Username string
-		Password string
+		Username string `form:"username"`
+		Password string `form:"password"`
 	}{}
 
 	if err := c.ShouldBind(&req); err != nil {

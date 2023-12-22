@@ -8,7 +8,10 @@ func (s *Store) CreateToken(token *auth.Token) error {
 	return s.db.Create(token).Error
 }
 func (s *Store) GetToken(username, hashedKey string) (*auth.Token, error) {
-	token := &auth.Token{}
+	token := &auth.Token{
+		Username:  username,
+		HashedKey: hashedKey,
+	}
 	if err := s.db.Take(token).Error; err != nil {
 		return nil, err
 	}
