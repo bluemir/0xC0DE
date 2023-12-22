@@ -20,6 +20,9 @@ func Register(cmd *kingpin.CmdClause) {
 	cmd.Flag("bind", "bind").
 		Default(":8080").
 		StringVar(&conf.HttpBind)
+	cmd.Flag("pprof-bind", "bind for pprof").
+		Default(":4000").
+		StringVar(&conf.PprofBind)
 	cmd.Flag("cert", "cert file").
 		StringVar(&conf.Cert.CertFile)
 	cmd.Flag("key", "key file").

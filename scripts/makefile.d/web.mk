@@ -23,11 +23,6 @@ build/static/%: assets/%
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-TEMPLATES += $(HTML_SOURCES:assets/html-templates/%=build/templates/%)
-build/templates/%: assets/html-templates/%
-	@mkdir -p $(dir $@)
-	cp $< $@
-
 ## esbuild
 STATICS += build/static/js/index.js # entrypoint
 build/static/js/%: export NODE_PATH=assets/js:assets/lib
@@ -61,9 +56,9 @@ build/static/js/%: $(JS_SOURCES) build/yarn-updated
 #	npx lessc $< $@
 
 .PHONY: build-web
-build-web: $(STATICS) $(TEMPLATES) ## Build web-files. (bundle, minify, transpile, etc.)
+build-web: $(STATICS) ## Build web-files. (bundle, minify, transpile, etc.)
 
-build/$(APP_NAME): $(STATICS) $(TEMPLATES)
+build/$(APP_NAME): $(STATICS)
 
 ## resolve depandancy
 OPTIONAL_CLEAN += node_modules

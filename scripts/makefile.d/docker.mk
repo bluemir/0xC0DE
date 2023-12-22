@@ -27,4 +27,12 @@ tools: build/tools/docker
 build/tools/docker:
 	@which $(notdir $@) || (echo "see https://docs.docker.com/engine/install/")
 
+tools: tools/bin/img
+
+tools/bin/img: OS?=$(shell go env GOOS)
+tools/bin/img: ARCH?=$(shell go env GOARCH)
+tools/bin/img: VERSION=v0.5.11
+tools/bin/img:
+	@which $(notdir $@) || (mkdir -p $(dir $@) && curl -fSL "https://github.com/genuinetools/img/releases/download/$(VERSION)/img-$(OS)-$(ARCH)" -o "$@" && chmod +x "$@")
+
 .PHONY: docker docker-push docker-run

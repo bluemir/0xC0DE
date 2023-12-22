@@ -8,7 +8,9 @@ func (s *Store) CreateRole(role *auth.Role) error {
 	return s.db.Create(role).Error
 }
 func (s *Store) GetRole(name string) (*auth.Role, error) {
-	role := &auth.Role{}
+	role := &auth.Role{
+		Name: name,
+	}
 	if err := s.db.Take(role).Error; err != nil {
 		return nil, err
 	}

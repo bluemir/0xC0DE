@@ -9,7 +9,7 @@ import (
 )
 
 //go:embed build/static
-//go:embed build/templates
+//go:embed assets/html-templates
 var embedFS embed.FS
 
 func init() {

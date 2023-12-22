@@ -11,13 +11,14 @@ import (
 )
 
 type Config struct {
-	HttpBind string
-	Cert     CertConfig
-	GRPCBind string
-	DBPath   string
-	Salt     string
-	Seed     string
-	InitUser map[string]string
+	HttpBind  string
+	Cert      CertConfig
+	GRPCBind  string
+	PprofBind string
+	DBPath    string
+	Salt      string
+	Seed      string
+	InitUser  map[string]string
 }
 type CertConfig struct {
 	CertFile string
@@ -84,6 +85,7 @@ func Run(ctx context.Context, conf *Config) error {
 	eg.Go(server.RunHTTPServer(nCtx, conf.HttpBind, conf.GetCertConfig(), gwHandler))
 	//eg.Go(server.RunHTTPServer(nCtx, conf.Bind, conf.GetCertConfig()))
 	eg.Go(server.RunGRPCServer(nCtx, conf.GRPCBind))
+	eg.Go(server.RunPprofServer(nCtx, conf.PprofBind))
 
 	// TODO run grpc, http, https, http2https redirect servers by config
 

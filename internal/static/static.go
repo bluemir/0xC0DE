@@ -16,7 +16,7 @@ func InitFS(rootfs fs.FS) error {
 	if err != nil {
 		return err
 	}
-	Templates, err = fs.Sub(rootfs, "build/templates")
+	Templates, err = fs.Sub(rootfs, "assets/html-templates")
 	if err != nil {
 		return err
 	}

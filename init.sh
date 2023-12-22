@@ -12,7 +12,7 @@ git commit -m "Initial commit" --allow-empty --author="init-bot <bot@bluemir.me>
 
 read -p "Application REPO? " REPO
 echo $REPO
-read -p "Application NAME?(default: $(basename $REPO))" NAME
+read -p "Application NAME?(default: $(basename $REPO)) " NAME
 
 if [ "$NAME" =  "" ] ; then
 	NAME=$(basename $REPO)
@@ -22,7 +22,7 @@ echo $NAME
 find . -name init.sh -o -name Makefile -prune -o -type f -print | xargs -n 1 sed -i "s#github.com/bluemir/0xC0DE#$REPO#g"
 find . -name init.sh -o -name Makefile -prune -o -type f -print | xargs -n 1 sed -i "s#0xC0DE#$NAME#g"
 
-read -p "Do you wish to remove init.sh(Y/n)?" yn
+read -p "Do you wish to remove init.sh(Y/n)? " yn
 case $yn in
 	[Nn]* ) exit;;
 	* ) rm init.sh ;;
