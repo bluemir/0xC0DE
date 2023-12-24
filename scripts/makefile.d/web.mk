@@ -1,8 +1,8 @@
 ##@ Web
 ## FE sources
 JS_SOURCES    := $(shell find assets/js             -type f -name '*.js'   -print -o \
-                                                 -type f -name '*.jsx'  -print -o \
-                                                 -type f -name '*.json' -print)
+                                                    -type f -name '*.jsx'  -print -o \
+                                                    -type f -name '*.json' -print)
 CSS_SOURCES   := $(shell find assets/css            -type f -name '*.css'  -print)
 WEB_LIBS      := $(shell find assets/lib            -type f                -print)
 HTML_SOURCES  := $(shell find assets/html-templates -type f -name '*.html' -print)
@@ -22,6 +22,12 @@ STATICS += $(WEB_META:assets/%=build/static/%)
 build/static/%: assets/%
 	@mkdir -p $(dir $@)
 	cp $< $@
+
+## js import helper
+build/static/js/index.js: assets/js/elements/index.js assets/js/layout/index.js assets/js/components/index.js
+assets/js/%/index.js: $(shell find assets/js/% -type f -name '*.js' -print) scripts/tools/import-helper.sh
+	 scripts/tools/import-helper.sh $(dir $@) > $@
+OPTIONAL_CLEAN += assets/js/elements/index.js assets/js/layout/index.js assets/js/components/index.js
 
 ## esbuild
 STATICS += build/static/js/index.js # entrypoint
@@ -55,10 +61,10 @@ build/static/js/%: $(JS_SOURCES) build/yarn-updated
 #	@mkdir -p $(dir $@)
 #	npx lessc $< $@
 
-.PHONY: build-web
-build-web: $(STATICS) ## Build web-files. (bundle, minify, transpile, etc.)
+.PHONY: web
+web: $(STATICS) ## Build web-files. (bundle, minify, transpile, etc.)
 
-build/$(APP_NAME): $(STATICS)
+build/$(APP_NAME): $(STATICS) $(HTML_SOURCES)
 
 ## resolve depandancy
 OPTIONAL_CLEAN += node_modules
