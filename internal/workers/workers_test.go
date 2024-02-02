@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bluemir/0xC0DE/internal/workers"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/bluemir/0xC0DE/internal/workers"
 )
 
 func TestSimpleWorker(t *testing.T) {
@@ -98,11 +99,34 @@ func TestWorkerWithDelay(t *testing.T) {
 	assert.Nil(t, ctx.Err())
 }
 func TestManyJob(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	in, out := workers.Run[int, int](ctx, func(ctx context.Context, a int) (int, error) {
 		return a * a, nil
 	}, 5) // 10 jobs per second
+
+	go func() {
+		for i := 0; i < 128; i++ {
+			in <- i
+		}
+		close(in)
+	}() // goroutine 으로 실행 하지 않으면, read buf 가 가득차서 block 됨
+
+	response := []int{}
+
+	for ret := range out {
+		response = append(response, ret)
+	}
+
+	assert.Len(t, response, 128)
+	assert.Nil(t, ctx.Err())
+}
+func TestOptionReadBufSize(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	in, out := workers.Run[int, int](ctx, func(ctx context.Context, a int) (int, error) {
+		return a * a, nil
+	}, 5, workers.ReadBufferSize(128)) // 10 jobs per second, with big read buffer
 
 	for i := 0; i < 128; i++ {
 		in <- i
@@ -117,4 +141,5 @@ func TestManyJob(t *testing.T) {
 
 	assert.Len(t, response, 128)
 	assert.Nil(t, ctx.Err())
+
 }

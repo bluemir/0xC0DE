@@ -6,12 +6,24 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const bufSize = 64
+type option struct {
+	readBufSize  int
+	writeBufSize int
+}
+type OptionFn func(*option)
 
-// TODO Add test
-func Run[InT any, OutT any](ctx context.Context, fn func(context.Context, InT) (OutT, error), workerNum int) (chan<- InT, <-chan OutT) {
-	ich := make(chan InT, bufSize)
-	och := make(chan OutT, bufSize)
+func Run[InT any, OutT any](ctx context.Context, fn func(context.Context, InT) (OutT, error), workerNum int, opts ...OptionFn) (chan<- InT, <-chan OutT) {
+	opt := option{
+		readBufSize:  16,
+		writeBufSize: 16,
+	} // default
+
+	for _, optFn := range opts {
+		optFn(&opt)
+	}
+
+	ich := make(chan InT, opt.readBufSize)
+	och := make(chan OutT, opt.writeBufSize)
 
 	doneCh := make(chan struct{})
 
@@ -21,7 +33,6 @@ func Run[InT any, OutT any](ctx context.Context, fn func(context.Context, InT) (
 
 	go func() {
 		defer close(och)
-		defer close(doneCh)
 
 		count := 0
 		for {
@@ -43,7 +54,7 @@ func worker[InT any, OutT any](ctx context.Context, fn func(context.Context, InT
 	for inV := range in {
 		outV, err := fn(ctx, inV)
 		if err != nil {
-			// TODO option? log?
+			// TODO option? log? err ch?
 			logrus.Trace(err)
 			return
 		}
@@ -52,4 +63,9 @@ func worker[InT any, OutT any](ctx context.Context, fn func(context.Context, InT
 	}
 
 	doneCh <- struct{}{}
+}
+func ReadBufferSize(n int) OptionFn {
+	return func(opt *option) {
+		opt.readBufSize = n
+	}
 }
