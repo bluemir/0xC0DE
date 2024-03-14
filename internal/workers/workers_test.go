@@ -2,6 +2,7 @@ package workers_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -82,7 +83,7 @@ func TestWorkerWithDelay(t *testing.T) {
 	in, out := workers.Run[int, int](ctx, func(ctx context.Context, a int) (int, error) {
 		time.Sleep(500 * time.Millisecond)
 		return a * a, nil
-	}, 5) // 10 jobs per second
+	}, 5)
 
 	for i := 0; i < 30; i++ {
 		in <- i
@@ -103,7 +104,7 @@ func TestManyJob(t *testing.T) {
 	defer cancel()
 	in, out := workers.Run[int, int](ctx, func(ctx context.Context, a int) (int, error) {
 		return a * a, nil
-	}, 5) // 10 jobs per second
+	}, 5)
 
 	go func() {
 		for i := 0; i < 128; i++ {
@@ -126,7 +127,7 @@ func TestOptionReadBufSize(t *testing.T) {
 	defer cancel()
 	in, out := workers.Run[int, int](ctx, func(ctx context.Context, a int) (int, error) {
 		return a * a, nil
-	}, 5, workers.ReadBufferSize(128)) // 10 jobs per second, with big read buffer
+	}, 5, workers.ReadBufferSize(128)) // with big read buffer
 
 	for i := 0; i < 128; i++ {
 		in <- i
@@ -142,4 +143,54 @@ func TestOptionReadBufSize(t *testing.T) {
 	assert.Len(t, response, 128)
 	assert.Nil(t, ctx.Err())
 
+}
+
+func TestErrorOnWorker(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	in, out := workers.Run[int, int](ctx, func(ctx context.Context, a int) (int, error) {
+		if a == 13 {
+			return 0, errors.New("dummy error")
+		}
+		return a * a, nil
+	}, 5)
+
+	for i := 0; i < 20; i++ {
+		in <- i
+	}
+	close(in)
+
+	response := []int{}
+
+	for ret := range out {
+		response = append(response, ret)
+	}
+
+	assert.Len(t, response, 19)
+	assert.Nil(t, ctx.Err())
+}
+
+func TestMultipleErrorOnWorker(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	in, out := workers.Run[int, int](ctx, func(ctx context.Context, a int) (int, error) {
+		if a < 15 {
+			return 0, errors.New("dummy error")
+		}
+		return a * a, nil
+	}, 5)
+
+	for i := 0; i < 20; i++ {
+		in <- i
+	}
+	close(in)
+
+	response := []int{}
+
+	for ret := range out {
+		response = append(response, ret)
+	}
+
+	assert.Len(t, response, 5)
+	assert.Nil(t, ctx.Err())
 }

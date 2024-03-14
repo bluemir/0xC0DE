@@ -51,18 +51,20 @@ func Run[InT any, OutT any](ctx context.Context, fn func(context.Context, InT) (
 	return ich, och
 }
 func worker[InT any, OutT any](ctx context.Context, fn func(context.Context, InT) (OutT, error), in <-chan InT, out chan<- OutT, doneCh chan<- struct{}) {
+	defer func() {
+		doneCh <- struct{}{}
+	}()
+
 	for inV := range in {
 		outV, err := fn(ctx, inV)
 		if err != nil {
 			// TODO option? log? err ch?
 			logrus.Trace(err)
-			return
+			continue
 		}
 
 		out <- outV
 	}
-
-	doneCh <- struct{}{}
 }
 func ReadBufferSize(n int) OptionFn {
 	return func(opt *option) {
