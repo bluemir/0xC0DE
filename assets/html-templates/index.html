@@ -1,20 +1,7 @@
 <html>
 	<head>
-		<style>
-			@import "/static/css/page.css";
-			@import "/static/css/pages/landing.css";
-		</style>
-		<script type="importmap">
-			{
-				"imports": {
-					"bm.js/": "/static/lib/bm.js/",
-					"lit-html": "https://unpkg.com/lit-html@2.8.0/lit-html.js"
-				}
-			}
-		</script>
-		<script type="module">
-			import "/static/js/index.js";
-		</script>
+		<title>0xC0DE - Admin Page</title>
+		{{ template "snippet/header.html"}}
 	</head>
 	<body>
 		<landing-page>
