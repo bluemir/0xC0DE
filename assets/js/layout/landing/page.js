@@ -40,13 +40,13 @@ var tmpl = (elem) => html`
 	</main>
 `;
 
-		class LandingPage  extends $.CustomElement {
-			constructor() {
-				super();
-			}
+class CustomElement  extends $.CustomElement {
+	constructor() {
+		super();
+	}
 
-			async render() {
-				render(tmpl(this), this.shadow);
-			}
-		}
-customElements.define("landing-page", LandingPage);
+	async render() {
+		render(tmpl(this), this.shadow);
+	}
+}
+customElements.define("landing-page", CustomElement);

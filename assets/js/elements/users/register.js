@@ -14,9 +14,15 @@ var tmpl = (elem) => html`
 		}
 	</style>
 	<form @submit=${ evt => elem.onSubmit(evt) }>
-		<c-input label="username"          name="username" type="text"     placeholder="your nickname. eg) bluemir" ></c-input>
-		<c-input label="password"          name="password" type="password" placeholder="min-length: 6" ></c-input>
-		<c-input label="password confirm"  name="confirm"  type="password" placeholder="same as password" ></c-input>
+		<div>
+			<c-input label="username"          name="username" type="text"     placeholder="your nickname. eg) bluemir" ></c-input>
+		</div>
+		<div>
+			<c-input label="password"          name="password" type="password" placeholder="min-length: 6" ></c-input>
+		</div>
+		<div>
+			<c-input label="password confirm"  name="confirm"  type="password" placeholder="same as password" ></c-input>
+		</div>
 		<section>
 			<input type="checkbox" id="terms"/>
 			<label for="terms"> I read and agree to terms &amp; conditions.

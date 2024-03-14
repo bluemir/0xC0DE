@@ -281,6 +281,30 @@ export function merge(...args) {
 	}, {})
 }
 
+export function parsePathParam(pattern) {
+	let ptn = pattern.split("/").filter( str => str.length > 0);
+
+	let paths = location.pathname.split("/").filter( str => str.length > 0);
+
+	return ptn.reduce((obj, current, index) => {
+		if (obj === null) {
+			return obj;
+		}
+		if (current.startsWith(":")) {
+			let name = current.substring(1);
+			obj[name] = paths[index]
+		} else {
+			if (current != paths[index]) {
+				// not matched
+				return null;
+			}
+		}
+		return obj
+	}, {});
+}
+
+
+
 class ExtendedError extends Error {
 	constructor(message, error){
 		super(message)

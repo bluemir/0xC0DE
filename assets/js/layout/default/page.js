@@ -16,9 +16,7 @@ var tmpl = (elem) => html`
 			--fg-color: white;
 			padding: 0.3rem 1rem;
 		}
-		::slotted(*) {
-			padding: 0 1rem;
-		}
+
 
 		header {
 			display: fixed;
@@ -27,13 +25,19 @@ var tmpl = (elem) => html`
 
 		main {
 			padding-top: 1rem;
+
+			& > section {
+				padding: 0 1rem;
+			}
 		}
 	</style>
 	<header>
 		<global-navigation-bar></global-navigation-bar>
 	</header>
 	<main>
-		<slot></slot>
+		<section>
+			<slot></slot>
+		</section>
 	</main>
 `;
 

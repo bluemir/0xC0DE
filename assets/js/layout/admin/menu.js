@@ -18,13 +18,10 @@ var tmpl = (app) => html`
 		a.selected {
 			background: var(--green-100);
 		}
-
 	</style>
-	<a part="item" href="/admin/users" >Users</a>
-	<a part="item" href="/admin/groups">Group</a>
-	<a part="item" href="/admin/roles" >Role</a>
-	<a part="item" href="/admin/server">Server</a>
-	<a part="item" href="/admin/events">Events</a>
+	<a href="/admin/users" >IAM</a>
+	<a href="/admin/server">Server</a>
+	<a href="/admin/events">Events</a>
 `;
 
 class AdminMenu extends $.CustomElement {
@@ -37,8 +34,9 @@ class AdminMenu extends $.CustomElement {
 	}
 
 	onConnected() {
-		console.log(location.pathname)
-		$.all(this.shadowRoot, "a").filter( elem => elem.attr("href") == location.pathname).forEach(elem => elem.classList.add("selected"));
+		$.all(this.shadowRoot, "a").
+			filter((elem, index) => elem.hasAttribute("exact") ? elem.attr("href") == location.pathname: location.pathname.startsWith(elem.attr("href"))).
+			forEach(elem => elem.classList.add("selected"));
 	}
 }
 customElements.define("admin-menu", AdminMenu);

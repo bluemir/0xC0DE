@@ -14,7 +14,7 @@ var tmpl = (elem) => html`
 	<slot></slot>
 `;
 
-class ExampleElement extends $.CustomElement {
+class CustomElement extends $.CustomElement {
 	constructor() {
 		super();
 	}
@@ -23,4 +23,4 @@ class ExampleElement extends $.CustomElement {
 		render(tmpl(this), this.shadow);
 	}
 }
-customElements.define("example-element", ExampleElement);
+customElements.define("example-element", CustomElement);

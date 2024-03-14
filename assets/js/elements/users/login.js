@@ -8,20 +8,28 @@ var tmpl = (elem) => html`
 		:host {
 		}
 		::slotted(*) {
-
 		}
 		c-input {
 			margin: 1rem 0;
 		}
 	</style>
 	<form @submit="${evt => elem.onSubmit(evt)}">
-		<c-input label="username" name="username" type="text"    ></c-input>
-		<c-input label="password" name="password" type="password"></c-input>
-		<c-button><button>Login</button></c-button>
+		<div>
+			<c-input label="username" name="username" type="text"    ></c-input>
+		</div>
+		<div>
+			<c-input label="password" name="password" type="password"></c-input>
+		</div>
+		<div>
+			<c-button><button>Login</button></c-button>
+		</div>
 	</form>
+	<dialog>
+		<h1>Register Failed</h1>
+	</dialog>
 `;
 
-class LoginForm extends $.CustomElement {
+class CustomElement extends $.CustomElement {
 	constructor() {
 		super();
 	}
@@ -39,4 +47,4 @@ class LoginForm extends $.CustomElement {
 		location.href = "/posts"
 	}
 }
-customElements.define("login-form", LoginForm);
+customElements.define("login-form", CustomElement);
