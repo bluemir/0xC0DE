@@ -90,6 +90,14 @@ func ExpiredAfter(d time.Duration) func(*Token) {
 
 type Set map[string]struct{}
 
+func setFromArray(arr []string) Set {
+	s := Set{}
+	for _, v := range arr {
+		s[v] = struct{}{}
+	}
+	return s
+}
+
 type Labels map[string]string
 
 func (role *Role) IsAllow(ctx Context) bool {

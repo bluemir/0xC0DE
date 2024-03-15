@@ -26,7 +26,7 @@ type IManager interface {
 
 	// Token
 	IssueToken(username, unhashedKey string, opts ...TokenOpt) (*Token, error)
-	GenerateToken(username string, opts ...TokenOpt) (string, error)
+	GenerateToken(username string, opts ...TokenOpt) (*Token, string, error)
 	GetToken(username, unhashedKey string) (*Token, error)
 	ListToken(username string) ([]Token, error)
 	RevokeToken(username, unhashedKey string) error

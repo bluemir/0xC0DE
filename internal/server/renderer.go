@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"html/template"
 	"io/fs"
 	"path/filepath"
@@ -13,7 +14,13 @@ import (
 )
 
 func NewRenderer() (*template.Template, error) {
-	tmpl := template.New("__root__")
+	tmpl := template.New("__root__").Funcs(template.FuncMap{
+		"join": strings.Join,
+		"json": json.Marshal,
+		"toString": func(buf []byte) string {
+			return string(buf)
+		},
+	})
 
 	if err := fs.WalkDir(static.Templates, ".", func(path string, info fs.DirEntry, err error) error {
 		if err != nil {

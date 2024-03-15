@@ -1,180 +1,112 @@
 package store
 
 import (
-	"bytes"
-	"encoding/gob"
+	"context"
+	"errors"
+	"reflect"
+	"regexp"
+	"strings"
+	"time"
 
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
-func New(db *gorm.DB) (*Store, error) {
-	if err := db.AutoMigrate(
-		&Pair{},
-		&Label{},
-		&TempKV{},
-	); err != nil {
+// assumption
+//   all obj must have primary key
+//   list operation must full scan, just filtering
+
+// orm but based on etcd
+type IStore interface {
+	Create(ctx context.Context, obj any) error
+	Load(ctx context.Context, obj any) error
+	List(ctx context.Context, t any, condition func(any) bool) ([]any, error)
+	Stream(ctx context.Context, t any, condition func(any) bool) (<-chan any, error)
+	Update(ctx context.Context, obj any) error
+	Save(ctx context.Context, obj any) error
+	Delete(ctx context.Context, obj any) error
+}
+
+func New(ctx context.Context, endpoint string, opts ...OptionFn) (IStore, error) {
+	opt := &Option{
+		Endpoint: endpoint,
+	}
+
+	for _, fn := range opts {
+		fn(opt)
+	}
+
+	cli, err := clientv3.New(clientv3.Config{
+		Endpoints:   []string{endpoint},
+		DialTimeout: 5 * time.Second,
+	})
+	if err != nil {
 		return nil, err
 	}
-	return &Store{db}, nil
-
-}
-
-type Store struct {
-	db *gorm.DB
-}
-
-type Pair struct {
-	Kind      string `gorm:"primary_key"`
-	Id        string `gorm:"primary_key"`
-	Namespace string `gorm:"primary_key"`
-	Rev       int
-	Value     []byte
-}
-type Label struct {
-	Kind  string `gorm:"primary_key"`
-	Id    string `gorm:"primary_key"`
-	Key   string `gorm:"primary_key"`
-	Value string
-}
-type TempKV struct {
-	Key   string
-	Value string
-}
-
-func (s *Store) Save(obj Object) error {
-	logrus.Tracef("%#v", obj)
-
-	meta := obj.GetMetadata()
-
-	var err error
-	txn := s.db.Begin()
-	defer func() {
-		if err != nil {
-			txn.Rollback()
-		}
+	go func() {
+		<-ctx.Done()
+		cli.Close()
 	}()
 
-	pair := &Pair{}
-
-	err = txn.Where(&Pair{Kind: meta.Kind, Id: meta.Id, Namespace: meta.Namespace}).Take(pair).Error
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			err = nil
-			logrus.Tracef("recode not found")
-		} else {
-			txn.Rollback()
-			return err
-		}
-	}
-
-	if pair.Rev > meta.Rev {
-		txn.Rollback()
-		return errors.Errorf("conflict")
-	}
-
-	meta.Rev += 1
-
-	buf := bytes.NewBuffer(nil)
-	if err := gob.NewEncoder(buf).Encode(obj); err != nil {
-		return err
-	}
-
-	err = txn.Save(&Pair{
-		Kind:      meta.Kind,
-		Id:        meta.Id,
-		Namespace: meta.Namespace,
-		Rev:       meta.Rev,
-		Value:     buf.Bytes(),
-	}).Error
-	if err != nil {
-		return err
-	}
-
-	for k, v := range meta.Labels {
-		err = txn.Save(&Label{
-			Key:   k,
-			Value: v,
-			Kind:  meta.Kind,
-			Id:    meta.Id,
-		}).Error
-		if err != nil {
-			return err
-		}
-	}
-
-	return txn.Commit().Error
-}
-func (s *Store) Load(meta *Metadata, obj Object) error {
-	logrus.Tracef("%#v", meta)
-
-	if meta.Id == "" {
-		return gorm.ErrRecordNotFound
-	}
-	if meta.Namespace == "" {
-		return gorm.ErrRecordNotFound
-	}
-	pair := &Pair{}
-
-	if err := s.db.Where(&Pair{
-		Kind:      meta.Kind,
-		Id:        meta.Id,
-		Namespace: meta.Namespace,
-	}).Take(pair).Error; err != nil {
-		return err
-	}
-
-	if err := gob.NewDecoder(bytes.NewReader(pair.Value)).Decode(obj); err != nil {
-		return err
-	}
-	return nil
+	return &Store{cli}, nil
 }
 
-func (s *Store) Find(kind string, namespace string, labels map[string]string) ([]Metadata, error) {
-	logrus.Tracef("%s %s %#v", kind, namespace, labels)
+type OptionFn func(*Option)
 
-	txn := s.db.Begin()
-	defer txn.Rollback()
-
-	for k, v := range labels {
-		txn.Create(&TempKV{k, v})
-	}
-
-	result := []Metadata{}
-	pairs := []Pair{}
-
-	switch len(labels) {
-	case 0:
-		if err := txn.Table("pairs").
-			Where(`namespace=? AND kind=?`, namespace, kind).
-			Find(&pairs).Error; err != nil {
-			return nil, err
+type Option struct {
+	Endpoint string
+	TLS      struct {
+		Cert struct {
+			Cert string
+			Key  string
 		}
-	default:
-		if err := txn.Table("pairs").
-			Joins("LEFT JOIN labels ON pairs.kind = labels.kind AND pairs.id = labels.id").
-			Where(`(labels.key, labels.value) in (select * from temp_kvs) AND namespace=? AND pairs.kind=?`, namespace, kind).
-			Group(`pairs.kind, pairs.id`).
-			Having("count(*) = ?", len(labels)).
-			Find(&pairs).Error; err != nil {
-			return nil, err
-		}
+		CA string
 	}
-
-	for _, pair := range pairs {
-		result = append(result, Metadata{
-			Id:        pair.Id,
-			Kind:      pair.Kind,
-			Rev:       pair.Rev,
-			Namespace: pair.Namespace,
-			Labels:    labels,
-		})
-	}
-
-	return result, nil
+}
+type Store struct {
+	client *clientv3.Client
 }
 
-func IsNotFoundError(err error) bool {
-	return err == gorm.ErrRecordNotFound
+var ErrNotImplements = errors.New("not implements")
+
+func (s *Store) Load(ctx context.Context, obj any) error {
+	return ErrNotImplements
+}
+func (s *Store) Create(ctx context.Context, obj any) error {
+	return ErrNotImplements
+}
+func (s *Store) List(ctx context.Context, t any, condition func(any) bool) ([]any, error) {
+	return nil, ErrNotImplements
+}
+func (s *Store) Stream(ctx context.Context, t any, condition func(any) bool) (<-chan any, error) {
+	return nil, ErrNotImplements
+}
+func (s *Store) Update(ctx context.Context, obj any) error {
+	return ErrNotImplements
+}
+func (s *Store) Save(ctx context.Context, obj any) error {
+	return ErrNotImplements
+}
+func (s *Store) Delete(ctx context.Context, obj any) error {
+	return ErrNotImplements
+}
+
+func GetTypeString(obj any) string {
+	// TODO https://github.com/go-gorm/gorm/blob/master/schema/schema.go#L121-L145
+	tname := reflect.TypeOf(obj).String()
+	name := TakeLastName(tname)
+	return CamelCaseToKebabCase(name)
+}
+
+func TakeLastName(str string) string {
+	arr := strings.Split(str, ".")
+	return arr[len(arr)-1]
+}
+
+var matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
+var matchAllCap = regexp.MustCompile("([a-z0-9])([A-Z])")
+
+func CamelCaseToKebabCase(str string) string {
+	snake := matchFirstCap.ReplaceAllString(str, "${1}-${2}")
+	snake = matchAllCap.ReplaceAllString(snake, "${1}-${2}")
+	return strings.ToLower(snake)
 }

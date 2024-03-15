@@ -1,21 +1,15 @@
-package server
+package backends
 
 import (
-	"encoding/gob"
-
-	"github.com/sirupsen/logrus"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
-
 	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
 	"github.com/bluemir/0xC0DE/internal/server/backend/auth/store"
 	"github.com/bluemir/0xC0DE/internal/server/middleware/auth/verb"
+	"github.com/sirupsen/logrus"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 func initAuth(db *gorm.DB, salt string, initUser map[string]string) (*auth.Manager, error) {
-	// for session store
-	gob.Register(&auth.User{})
-
 	s, err := store.Gorm(db, salt)
 	if err != nil {
 		return nil, err

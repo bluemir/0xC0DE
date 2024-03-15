@@ -9,13 +9,17 @@ import (
 type option struct {
 	readBufSize  int
 	writeBufSize int
+	errorBufSize int
+	workerNum    int
 }
 type OptionFn func(*option)
 
-func Run[InT any, OutT any](ctx context.Context, fn func(context.Context, InT) (OutT, error), workerNum int, opts ...OptionFn) (chan<- InT, <-chan OutT) {
+func Run[InT any, OutT any](ctx context.Context, fn func(context.Context, InT) (OutT, error), opts ...OptionFn) (chan<- InT, <-chan OutT, <-chan error) {
 	opt := option{
 		readBufSize:  16,
 		writeBufSize: 16,
+		errorBufSize: 0,
+		workerNum:    4,
 	} // default
 
 	for _, optFn := range opts {
@@ -24,15 +28,17 @@ func Run[InT any, OutT any](ctx context.Context, fn func(context.Context, InT) (
 
 	ich := make(chan InT, opt.readBufSize)
 	och := make(chan OutT, opt.writeBufSize)
+	ech := make(chan error, opt.errorBufSize)
 
 	doneCh := make(chan struct{})
 
-	for i := 0; i < workerNum; i++ {
-		go worker(ctx, fn, ich, och, doneCh)
+	for i := 0; i < opt.workerNum; i++ {
+		go worker(ctx, fn, ich, och, ech, doneCh)
 	}
 
 	go func() {
 		defer close(och)
+		defer close(ech)
 
 		count := 0
 		for {
@@ -41,16 +47,21 @@ func Run[InT any, OutT any](ctx context.Context, fn func(context.Context, InT) (
 				return
 			case <-doneCh:
 				count++
-				if count >= workerNum {
+				if count >= opt.workerNum {
 					return
 				}
+				// case <- ech:
+				//   if opt.exitOnError { return }
+				//    send to out side? or collect and result.Errs()?
 			}
 		}
 	}()
 
-	return ich, och
+	return ich, och, ech
+
+	// result.Out, result.In, result.Err, result.Add(array...), return result.Collect(), result.Errs()
 }
-func worker[InT any, OutT any](ctx context.Context, fn func(context.Context, InT) (OutT, error), in <-chan InT, out chan<- OutT, doneCh chan<- struct{}) {
+func worker[InT any, OutT any](ctx context.Context, fn func(context.Context, InT) (OutT, error), in <-chan InT, out chan<- OutT, errc chan<- error, doneCh chan<- struct{}) {
 	defer func() {
 		doneCh <- struct{}{}
 	}()
@@ -58,8 +69,11 @@ func worker[InT any, OutT any](ctx context.Context, fn func(context.Context, InT
 	for inV := range in {
 		outV, err := fn(ctx, inV)
 		if err != nil {
-			// TODO option? log? err ch?
-			logrus.Trace(err)
+			select {
+			case errc <- err:
+			default:
+				logrus.Error(err)
+			}
 			continue
 		}
 
@@ -69,5 +83,10 @@ func worker[InT any, OutT any](ctx context.Context, fn func(context.Context, InT
 func ReadBufferSize(n int) OptionFn {
 	return func(opt *option) {
 		opt.readBufSize = n
+	}
+}
+func WorkerNum(n int) OptionFn {
+	return func(opt *option) {
+		opt.workerNum = n
 	}
 }

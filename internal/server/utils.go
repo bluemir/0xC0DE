@@ -18,10 +18,15 @@ import (
 	"github.com/bluemir/0xC0DE/internal/buildinfo"
 )
 
-func HTML(path string) func(c *gin.Context) {
+func html(path string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		markHTML(c)
 		c.HTML(http.StatusOK, path, c)
+	}
+}
+func redirect(path string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Redirect(http.StatusSeeOther, path)
 	}
 }
 
@@ -59,7 +64,7 @@ func (server *Server) AbortIfHasPrefix(prefix string) gin.HandlerFunc {
 	}
 }
 
-func (server *Server) proxy(headerKey string, targetURL *url.URL) gin.HandlerFunc {
+func (server *Server) proxy(targetURL *url.URL) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rid := xid.New().String()
 

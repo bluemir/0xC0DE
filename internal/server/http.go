@@ -46,16 +46,12 @@ func (server *Server) RunHTTPServer(ctx context.Context, bind string, certs *Cer
 
 		app.Use(errMiddleware.Middleware)
 
-		app.Use(authMiddleware.Middleware(server.auth))
+		app.Use(authMiddleware.Middleware(server.backends.Auth))
 
-		app.Use(handler.Inject(&handler.Backends{
-			Auth:   server.auth,
-			Events: server.bus,
-			Posts:  server.posts,
-		}))
+		app.Use(handler.Inject(server.backends))
 
 		// handle routes
-		server.routes(app)
+		server.routes(app, app.NoRoute)
 
 		// GRPC Gateway
 		app.Use(extra...)

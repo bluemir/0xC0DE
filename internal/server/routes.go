@@ -21,7 +21,7 @@ import (
 // @title 0xC0DE
 // @version 0.1.0
 // @description
-func (server *Server) routes(app gin.IRouter) {
+func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) {
 	// prometheus for monitoring
 	app.GET("/metric", prom.Handler())
 	app.Use(prom.Metrics())
@@ -49,6 +49,10 @@ func (server *Server) routes(app gin.IRouter) {
 		v1.POST("/users", handler.Register)
 		v1.GET("/users/me", handler.Me)
 
+		v1.GET("/users", handler.ListUsers)
+		v1.GET("/groups", handler.ListGroups)
+		v1.GET("/roles", handler.ListRoles)
+
 		v1.POST("/posts", handler.CreatePost)
 		v1.GET("/posts", handler.ListPost)
 		v1.GET("/posts/stream", handler.StreamPost)
@@ -66,11 +70,15 @@ func (server *Server) routes(app gin.IRouter) {
 		// js, css, etc.
 		app.Group("/static", staticCache()).StaticFS("/", http.FS(static.Static))
 
-		app.GET("/", HTML("index.html"))
-		app.GET("/users/register", HTML("register.html"))
-		app.GET("/users/login", HTML("login.html"))
-		app.GET("/posts", HTML("posts.html"))
-		app.GET("/admin", HTML("admin.html"))
+		app.GET("/", html("index.html"))
+		app.GET("/users/register", html("register.html"))
+		app.GET("/users/login", html("login.html"))
+		app.GET("/posts", html("posts.html"))
+		app.GET("/admin", html("admin.html"))
+		app.GET("/admin/iam", redirect("/admin/iam/users"))
+		app.GET("/admin/iam/users", html("admin/iam/users.html"))
+		app.GET("/admin/iam/groups", html("admin/iam/groups.html"))
+		app.GET("/admin/iam/roles", html("admin/iam/roles.html"))
 
 		// or for SPA(single page application), client side routing
 		// app.Use(AbortIfHasPrefix("/api"), server.static("/index.html"))

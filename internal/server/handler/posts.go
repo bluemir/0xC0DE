@@ -8,12 +8,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
+	"github.com/bluemir/0xC0DE/internal/server/backend/meta"
 	"github.com/bluemir/0xC0DE/internal/server/backend/posts"
 )
-
-type ListResponse[T any] struct {
-	Items []T
-}
 
 func CreatePost(c *gin.Context) {
 	req := struct {
@@ -24,7 +21,7 @@ func CreatePost(c *gin.Context) {
 		return
 	}
 
-	post, err := backends(c).Posts.Create(req.Message)
+	post, err := backends(c).Posts.Create(c.Request.Context(), req.Message)
 	if err != nil {
 		c.Error(err)
 		return
@@ -33,9 +30,7 @@ func CreatePost(c *gin.Context) {
 	c.JSON(http.StatusOK, post)
 }
 func ListPost(c *gin.Context) {
-	items, err := backends(c).Posts.List(posts.ListOption{
-		Limit: 20,
-	})
+	items, err := backends(c).Posts.List(c.Request.Context(), meta.Limit(20))
 	if err != nil {
 		c.Error(err)
 		return
@@ -47,9 +42,7 @@ func ListPost(c *gin.Context) {
 }
 
 func StreamPost(c *gin.Context) {
-	items, err := backends(c).Posts.List(posts.ListOption{
-		Limit: 20,
-	})
+	items, err := backends(c).Posts.List(c.Request.Context())
 	if err != nil && err != gorm.ErrRecordNotFound {
 		c.Error(err)
 		return

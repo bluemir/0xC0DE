@@ -5,9 +5,7 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/bluemir/0xC0DE/internal/bus"
-	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
-	"github.com/bluemir/0xC0DE/internal/server/backend/posts"
+	backends "github.com/bluemir/0xC0DE/internal/server/backend"
 )
 
 type Config struct {
@@ -15,10 +13,8 @@ type Config struct {
 	Cert      CertConfig
 	GRPCBind  string
 	PprofBind string
-	DBPath    string
-	Salt      string
-	Seed      string
-	InitUser  map[string]string
+
+	backends.Args
 }
 type CertConfig struct {
 	CertFile string
@@ -27,36 +23,20 @@ type CertConfig struct {
 
 func NewConfig() Config {
 	return Config{
-		InitUser: map[string]string{},
+		Args: backends.NewArgs(),
 	}
 }
 
 type Server struct {
 	salt string
 
-	auth  *auth.Manager
-	bus   *bus.Bus
-	posts *posts.Manager
+	backends *backends.Backends
 }
 
 func Run(ctx context.Context, conf *Config) error {
-	events, err := bus.NewBus(ctx)
+	bs, err := backends.Initialize(ctx, &conf.Args)
 	if err != nil {
 		return err
-	}
-	// init components
-	db, err := initDB(conf.DBPath)
-	if err != nil {
-		return errors.Wrapf(err, "init server failed")
-	}
-	authManager, err := initAuth(db, conf.Salt, conf.InitUser)
-	if err != nil {
-		return errors.Wrapf(err, "init server failed")
-	}
-
-	postManager, err := posts.New(db, events)
-	if err != nil {
-		return errors.Wrapf(err, "init post manager failed")
 	}
 
 	// option 1. single handler, multiple backend
@@ -70,9 +50,7 @@ func Run(ctx context.Context, conf *Config) error {
 		salt: conf.Salt,
 
 		// backends
-		auth:  authManager,
-		bus:   events,
-		posts: postManager,
+		backends: bs,
 	}
 
 	gwHandler, err := server.grpcGatewayHandler(ctx, conf.GRPCBind)

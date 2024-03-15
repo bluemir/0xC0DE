@@ -4,17 +4,21 @@ import (
 	"time"
 
 	"github.com/rs/xid"
+	"golang.org/x/net/context"
 	"gorm.io/gorm"
 
-	"github.com/bluemir/0xC0DE/internal/bus"
+	"github.com/bluemir/0xC0DE/internal/events"
+	"github.com/bluemir/0xC0DE/internal/server/backend/meta"
 )
 
+type Config struct {
+}
 type Manager struct {
 	db     *gorm.DB
-	events *bus.Bus
+	events *events.Hub
 }
 
-func New(db *gorm.DB, events *bus.Bus) (*Manager, error) {
+func New(ctx context.Context, conf *Config, db *gorm.DB, events *events.Hub) (*Manager, error) {
 	if err := db.AutoMigrate(&Post{}); err != nil {
 		return nil, err
 	}
@@ -27,7 +31,7 @@ type Post struct {
 	Message string    `json:"message"`
 }
 
-func (m *Manager) Create(message string) (*Post, error) {
+func (m *Manager) Create(ctx context.Context, message string) (*Post, error) {
 	post := &Post{
 		Id:      xid.New().String(),
 		At:      time.Now(),
@@ -37,16 +41,23 @@ func (m *Manager) Create(message string) (*Post, error) {
 		return nil, err
 	}
 
-	m.events.FireEvent("posts/created", post)
+	m.events.FireEvent("posts.created", post)
 
 	return post, nil
 }
 
-type ListOption struct {
-	Limit int
-}
+func (m *Manager) List(ctx context.Context, opts ...meta.ListOptionFn) ([]Post, error) {
+	opt := meta.ListOption{
+		Limit: 20,
+	}
 
-func (m *Manager) List(opt ListOption) ([]Post, error) {
+	for _, fn := range opts {
+		fn(&opt)
+	}
+
+	return m.ListWithOption(ctx, &opt)
+}
+func (m *Manager) ListWithOption(ctx context.Context, opt *meta.ListOption) ([]Post, error) {
 	if opt.Limit == 0 {
 		opt.Limit = 20
 	}

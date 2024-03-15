@@ -13,30 +13,23 @@ func (m *Manager) IssueToken(username, unhashedKey string, opts ...TokenOpt) (*T
 		HashedKey: Hash(unhashedKey, user.Salt, m.salt),
 		RevokeKey: xid.New().String(),
 	}
+	for _, fn := range opts {
+		fn(token)
+	}
 
 	if err := m.store.CreateToken(token); err != nil {
 		return nil, err
 	}
 	return token, nil
 }
-func (m *Manager) GenerateToken(username string, opts ...TokenOpt) (string, error) {
-	user, err := m.store.GetUser(username)
-	if err != nil {
-		return "", err
-	}
-
+func (m *Manager) GenerateToken(username string, opts ...TokenOpt) (*Token, string, error) {
 	unhashedKey := Hash(xid.New().String(), m.salt)
-	token := &Token{
-		Username:  username,
-		HashedKey: Hash(unhashedKey, user.Salt, m.salt),
-		RevokeKey: xid.New().String(),
-	}
 
-	if err := m.store.CreateToken(token); err != nil {
-		return unhashedKey, err
+	t, err := m.IssueToken(username, unhashedKey, opts...)
+	if err != nil {
+		return nil, "", err
 	}
-
-	return unhashedKey, nil
+	return t, unhashedKey, nil
 }
 func (m *Manager) GetToken(username, unhashedKey string) (*Token, error) {
 	user, err := m.store.GetUser(username)

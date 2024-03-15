@@ -56,8 +56,8 @@ func Middleware(c *gin.Context) {
 				c.Header(auth.LoginHeader(c.Request))
 			}
 			*/
-			logrus.Trace(htmlName(err))
-			c.HTML(code, htmlName(err), c.Errors)
+			logrus.Trace(htmlName(code, err))
+			c.HTML(code, htmlName(code, err), c.Errors)
 			return
 		case "text/plain":
 			c.String(code, "%#v", c.Errors)
@@ -67,12 +67,7 @@ func Middleware(c *gin.Context) {
 	c.String(code, "%#v", c.Errors)
 }
 func code(err *gin.Error) int {
-	if e := (sqlite3.Error{}); errors.As(err, &e) == true {
-		switch e.Code {
-		case sqlite3.ErrConstraint:
-			return http.StatusBadRequest
-		}
-	}
+	// errors.Is check same value, but errors.As check only its type.
 
 	switch {
 	case errors.Is(err, validator.ValidationErrors{}):
@@ -85,20 +80,48 @@ func code(err *gin.Error) int {
 		return http.StatusForbidden
 	case errors.Is(err, os.ErrNotExist):
 		return http.StatusNotFound
-	default:
-		return http.StatusInternalServerError
+	case errors.As(err, &sqlite3.Error{}):
+		e := sqlite3.Error{}
+		errors.As(err, &e)
+		switch e.Code {
+		case sqlite3.ErrConstraint:
+			switch e.ExtendedCode {
+			case sqlite3.ErrConstraintUnique:
+				return http.StatusConflict
+			}
+			return http.StatusBadRequest
+		}
+		return http.StatusNotImplemented
 	}
-}
-func htmlName(err *gin.Error) string {
+
+	// finally check string match
+	logrus.Trace(err.Error())
 	switch {
+	case strings.HasPrefix(err.Error(), "html/template: ") && strings.HasSuffix(err.Error(), " is undefined"):
+		//html/template: ".*" is undefined
+		return http.StatusNotImplemented
+	}
+
+	return http.StatusInternalServerError
+}
+
+func htmlName(code int, err *gin.Error) string {
+	switch {
+	//override
 	case errors.Is(err, validator.ValidationErrors{}):
 		return "errors/bad-request.html"
-	case errors.Is(err, auth.ErrUnauthorized):
+	}
+
+	switch code {
+	case http.StatusBadRequest:
+		return "errors/bad-request.html"
+	case http.StatusUnauthorized:
 		return "errors/unauthorized.html"
-	case errors.Is(err, auth.ErrForbidden):
+	case http.StatusForbidden:
 		return "errors/forbidden.html"
-	case errors.Is(err, os.ErrNotExist):
+	case http.StatusNotFound:
 		return "errors/not-found.html"
 	}
+
 	return "errors/internal-server-error.html"
 }

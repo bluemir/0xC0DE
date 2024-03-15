@@ -18,11 +18,22 @@ func (m *Manager) Register(username, unhashedKey string) (*User, *Token, error) 
 	return user, token, nil
 }
 
-func (m *Manager) CreateUser(username string) (*User, error) {
+type CreateUserOption func(u *User)
+
+func WithGroup(groups ...string) func(*User) {
+	return func(u *User) {
+		u.Groups = setFromArray(groups)
+	}
+}
+
+func (m *Manager) CreateUser(username string, opts ...CreateUserOption) (*User, error) {
 	u := User{
 		Name:   username,
 		Salt:   xid.New().String(),
 		Groups: Set{},
+	}
+	for _, fn := range opts {
+		fn(&u)
 	}
 	if err := m.store.CreateUser(&u); err != nil {
 		return nil, err
