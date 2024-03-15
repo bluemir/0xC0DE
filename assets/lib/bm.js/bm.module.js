@@ -303,8 +303,6 @@ export function parsePathParam(pattern) {
 	}, {});
 }
 
-
-
 class ExtendedError extends Error {
 	constructor(message, error){
 		super(message)

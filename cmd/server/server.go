@@ -28,11 +28,6 @@ func Register(cmd *kingpin.CmdClause) {
 	cmd.Flag("key", "key file").
 		StringVar(&conf.Cert.KeyFile)
 
-	cmd.Flag("seed", "seed(default: random string)").
-		Default(util.RandomString(16)).PlaceHolder("SEED").
-		Envar(strings.ToUpper(buildinfo.AppName) + "_SEED").
-		StringVar(&conf.Seed)
-
 	cmd.Flag("db-path", "db path").
 		Default(":memory:").
 		StringVar(&conf.DBPath)
