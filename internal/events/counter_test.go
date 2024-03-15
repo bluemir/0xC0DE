@@ -1,0 +1,23 @@
+package events_test
+
+import (
+	"sync"
+
+	"github.com/bluemir/0xC0DE/internal/events"
+)
+
+type CounterHandler struct {
+	lock  sync.RWMutex
+	count int
+}
+
+func (h *CounterHandler) Handle(ctx events.Context, evt events.Event) {
+	h.lock.Lock()
+	defer h.lock.Unlock()
+	h.count++
+}
+func (h *CounterHandler) GetCount() int {
+	h.lock.RLock()
+	defer h.lock.RUnlock()
+	return h.count
+}
