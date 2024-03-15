@@ -16,7 +16,7 @@ type Handler interface {
 	Handle(ctx Context, evt Event)
 }
 
-//type Listener chan<- Event
+type Listener chan<- Event
 
 type Context interface {
 	Context() context.Context
@@ -36,13 +36,13 @@ type IHub interface {
 	AddAllEventHandler(h Handler)
 	RemoveAllEventHandler(h Handler)
 
-	//AddEventListener(kind string, l Listener)
-	//RemoveEventListener(kind string, l Listener)
-	//AddAllEventListener(l Listener)
-	//RemoveAllEventListener(l Listener)
+	AddEventListener(kind string, l Listener)
+	RemoveEventListener(kind string, l Listener)
+	AddAllEventListener(l Listener)
+	RemoveAllEventListener(l Listener)
 
 	WatchEvent(kind string, done <-chan struct{}) <-chan Event
 	WatchAllEvent(done <-chan struct{}) <-chan Event
 }
 
-//var _ IHub = Hub{}
+var _ IHub = &Hub{}

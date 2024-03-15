@@ -1,9 +1,9 @@
 package events
 
-type ChanEventHandler struct {
+type chanEventHandler struct {
 	ch chan<- Event
 }
 
-func (h ChanEventHandler) Handle(ctx Context, evt Event) {
+func (h chanEventHandler) Handle(ctx Context, evt Event) {
 	h.ch <- evt
 }

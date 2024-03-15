@@ -10,13 +10,29 @@ import (
 )
 
 func NewHub(ctx context.Context) (*Hub, error) {
-	return &Hub{
+	in := make(chan Event)
+	go func() {
+		<-ctx.Done()
+		close(in)
+	}()
+
+	q := queue(in)
+
+	hub := &Hub{
 		ctx:      ctx,
 		values:   datastruct.Map[any, any]{},
 		handlers: datastruct.Map[string, datastruct.Set[Handler]]{},
 		all:      datastruct.NewSet[Handler](),
-	}, nil
+		in:       in,
+	}
 
+	go func() {
+		for evt := range q {
+			hub.broadcast(evt)
+		}
+	}()
+
+	return hub, nil
 }
 
 type Hub struct {
@@ -26,32 +42,33 @@ type Hub struct {
 
 	handlers datastruct.Map[string, datastruct.Set[Handler]]
 	all      datastruct.Set[Handler]
+
+	in chan<- Event
 }
 
 func (h *Hub) FireEvent(kind string, detail any) {
 	logrus.Tracef("fire event: %s - %#v", kind, detail)
 
-	handlers, _ := h.handlers.GetOrSet(kind, datastruct.NewSet[Handler]())
+	h.in <- Event{
+		Id:     xid.New().String(),
+		At:     time.Now(),
+		Kind:   kind,
+		Detail: detail,
+	}
+}
+func (h *Hub) broadcast(evt Event) {
+	handlers, _ := h.handlers.GetOrSet(evt.Kind, datastruct.NewSet[Handler]())
 
 	for _, handler := range handlers.List() {
-		handler.Handle(h, Event{
-			Id:     xid.New().String(),
-			At:     time.Now(),
-			Kind:   kind,
-			Detail: detail,
-		})
+		handler.Handle(h, evt)
 	}
 
 	for _, handler := range h.all.List() {
-		handler.Handle(h, Event{
-			Id:     xid.New().String(),
-			At:     time.Now(),
-			Kind:   kind,
-			Detail: detail,
-		})
+		handler.Handle(h, evt)
 	}
-
-	// TODO
+}
+func (h *Hub) Close() {
+	close(h.in)
 }
 
 func (h *Hub) AddEventHandler(kind string, handler Handler) {
@@ -74,13 +91,25 @@ func (h *Hub) AddAllEventHandler(handler Handler) {
 func (h *Hub) RemoveAllEventHandler(handler Handler) {
 	h.all.Remove(handler)
 }
+func (h *Hub) AddEventListener(kind string, l Listener) {
+	h.AddEventHandler(kind, chanEventHandler{l})
+}
+func (h *Hub) RemoveEventListener(kind string, l Listener) {
+	h.RemoveEventHandler(kind, chanEventHandler{l})
+}
+func (h *Hub) AddAllEventListener(l Listener) {
+	h.AddAllEventHandler(chanEventHandler{l})
+}
+func (h *Hub) RemoveAllEventListener(l Listener) {
+	h.RemoveAllEventHandler(chanEventHandler{l})
+}
 
 func (h *Hub) WatchEvent(kind string, done <-chan struct{}) <-chan Event {
 	c := make(chan Event)
-	h.AddEventHandler(kind, ChanEventHandler{c})
+	h.AddEventListener(kind, c)
 	go func() {
 		<-done
-		h.RemoveEventHandler(kind, ChanEventHandler{c})
+		h.RemoveEventListener(kind, c)
 		close(c)
 	}()
 
@@ -88,10 +117,10 @@ func (h *Hub) WatchEvent(kind string, done <-chan struct{}) <-chan Event {
 }
 func (h *Hub) WatchAllEvent(done <-chan struct{}) <-chan Event {
 	c := make(chan Event)
-	h.AddAllEventHandler(ChanEventHandler{c})
+	h.AddAllEventListener(c)
 	go func() {
 		<-done
-		h.RemoveAllEventHandler(ChanEventHandler{c})
+		h.RemoveAllEventListener(c)
 		close(c)
 	}()
 

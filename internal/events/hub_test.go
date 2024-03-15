@@ -128,3 +128,27 @@ func TestFireEventInsideEventHandler(t *testing.T) {
 		"click",
 	}, recoder.History())
 }
+
+func TestAddHandlerInsideEventHandler(t *testing.T) {
+	ctx, cancel := testContext(t, 1*time.Second)
+	defer cancel()
+
+	hub, err := events.NewHub(ctx)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	recoder := NewRecoder(ctx, hub)
+	hub.AddEventHandler("do", ReplaceSelfHandler{})
+	hub.FireEvent("do", nil)
+	hub.FireEvent("do", nil)
+
+	time.Sleep(10 * time.Millisecond)
+
+	assert.Equal(t, []string{
+		"do",
+		"do",
+		"done",
+	}, recoder.History())
+}
