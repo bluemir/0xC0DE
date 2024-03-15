@@ -25,7 +25,7 @@ build/static/%: assets/%
 
 ## js import helper
 build/static/js/index.js: assets/js/elements/index.js assets/js/layout/index.js assets/js/components/index.js
-assets/js/%/index.js: $(shell find assets/js/% -type f -name '*.js' -print) scripts/tools/import-helper.sh
+assets/js/%/index.js: $(shell find assets/js/ -type f -name '*.js' -print) scripts/tools/import-helper.sh
 	 scripts/tools/import-helper.sh $(dir $@) > $@
 OPTIONAL_CLEAN += assets/js/elements/index.js assets/js/layout/index.js assets/js/components/index.js
 

@@ -19,6 +19,22 @@ dev-run: ## Run dev server. If detect file change, automatically rebuild&restart
 		-- \
 	$(MAKE) test run
 
+test-run: ## Run test. If detect file change, automatically run test
+	@$(MAKE) build/tools/watcher
+	watcher \
+		--include "go.mod" \
+		--include "go.sum" \
+		--include "**.go" \
+		--include "package.json" \
+		--include "yarn.lock" \
+		--include "assets/**" \
+		--include "api/proto/**" \
+		--include "Makefile" \
+		--include "scripts/makefile.d/*.mk" \
+		--exclude "build/**" \
+		--exclude "**.sw*" \
+		-- \
+	$(MAKE) test
 
 reset: ## Kill all make process. Use when dev-run stuck.
 	ps -e | grep make | grep -v grep | awk '{print $$1}' | xargs kill

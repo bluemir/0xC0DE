@@ -9,6 +9,8 @@ certs: $(CERT_DIR)/local/etcd/server.crt
 # customize SAN via OPTIONAL_SAN
 # eg.
 # $(CERT_DIR)/local/server.crt: export OPTIONAL_SAN=",DNS:dev.0xC0DE.io"
+$(CERT_DIR)/local/etcd/server.crt: export OPTIONAL_SAN=",DNS:local.bluemir.me,IP:127.0.0.1"
+$(CERT_DIR)/local/etcd/client.crt: export OPTIONAL_SAN=",IP:127.0.0.1"
 
 
 cert-secrets: ## make k8s secret file
@@ -31,10 +33,10 @@ $(CERT_DIR)/%/ca.crt: $(CERT_DIR)/%/ca.key
 
 .PRECIOUS: $(CERT_DIR)/%.key $(CERT_DIR)/%.csr $(CERT_DIR)/%.crt
 .PRECIOUS: $(CERT_DIR)/%.bundle.crt
-$(CERT_DIR)/%.key:
+$(CERT_DIR)/%.key: $(MAKEFILES)
 	@mkdir -p $(dir $@)
 	openssl genrsa -out $@ 2048
-$(CERT_DIR)/%.csr: $(CERT_DIR)/%.key
+$(CERT_DIR)/%.csr: $(CERT_DIR)/%.key $(MAKEFILES)
 	@mkdir -p $(dir $@)
 	openssl req -new -key $< \
 		-subj "/C=AU/CN=$(APP_NAME)" \
