@@ -26,7 +26,9 @@ type IStore interface {
 	Delete(ctx context.Context, obj any) error
 }
 
-func New(ctx context.Context, endpoint string, opts ...OptionFn) (IStore, error) {
+var _ IStore = &Store{}
+
+func New(ctx context.Context, endpoint string, opts ...OptionFn) (*Store, error) {
 	opt := &Option{
 		Endpoint: endpoint,
 	}

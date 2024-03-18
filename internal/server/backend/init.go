@@ -1,4 +1,4 @@
-package backends
+package backend
 
 import (
 	"github.com/bluemir/0xC0DE/internal/server/backend/auth"

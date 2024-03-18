@@ -5,7 +5,7 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/sync/errgroup"
 
-	backends "github.com/bluemir/0xC0DE/internal/server/backend"
+	"github.com/bluemir/0xC0DE/internal/server/backend"
 )
 
 type Config struct {
@@ -14,7 +14,7 @@ type Config struct {
 	GRPCBind  string
 	PprofBind string
 
-	backends.Args
+	backend.Args
 }
 type CertConfig struct {
 	CertFile string
@@ -23,18 +23,18 @@ type CertConfig struct {
 
 func NewConfig() Config {
 	return Config{
-		Args: backends.NewArgs(),
+		Args: backend.NewArgs(),
 	}
 }
 
 type Server struct {
 	salt string
 
-	backends *backends.Backends
+	backends *backend.Backends
 }
 
 func Run(ctx context.Context, conf *Config) error {
-	bs, err := backends.Initialize(ctx, &conf.Args)
+	bs, err := backend.Initialize(ctx, &conf.Args)
 	if err != nil {
 		return err
 	}

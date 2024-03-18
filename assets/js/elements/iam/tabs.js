@@ -1,6 +1,5 @@
 import * as $ from "bm.js/bm.module.js";
 import {html, render} from 'lit-html';
-import {parsePathParam} from "util/path-param.js";
 
 var tmpl = (elem, param) => html`
 	<style>
