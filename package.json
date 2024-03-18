@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "@grpc/grpc-js": "^1.4.4",
     "lit-html": "^2.8.0"
   },
   "devDependencies": {
