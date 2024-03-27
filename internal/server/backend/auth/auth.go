@@ -18,7 +18,7 @@ type IManager interface {
 	Register(username, unhashedKey string) (*User, *Token, error)
 
 	// User
-	CreateUser(username string) (*User, error)
+	CreateUser(username string, opts ...CreateUserOption) (*User, error)
 	GetUser(username string) (*User, error)
 	ListUser() ([]User, error)
 	UpdateUser(user *User) error

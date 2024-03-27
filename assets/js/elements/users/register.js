@@ -7,8 +7,7 @@ var tmpl = (elem) => html`
 
 		:host {
 		}
-		::slotted(*) {
-		}
+
 		c-input, section {
 			margin: 1rem 0;
 		}
@@ -25,7 +24,7 @@ var tmpl = (elem) => html`
 		</div>
 		<section>
 			<input type="checkbox" id="terms"/>
-			<label for="terms"> I read and agree to terms &amp; conditions.
+			<label for="terms"> I read and agree to terms &amp; conditions.</label>
 		</section>
 		<c-button><button>Create Account</button></c-button>
 	</form>
