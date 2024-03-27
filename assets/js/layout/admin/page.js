@@ -64,7 +64,7 @@ class AdminPage extends $.CustomElement {
 	}
 
 	async render() {
-		render(tmpl(this), this.shadow);
+		render(tmpl(this), this.shadowRoot);
 	}
 }
 customElements.define("admin-page", AdminPage);

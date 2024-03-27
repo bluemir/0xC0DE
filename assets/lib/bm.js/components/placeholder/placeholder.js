@@ -34,7 +34,7 @@ class Placeholder extends $.CustomElement {
 		this.render();
 	}
 	async render() {
-		render(tmpl(this), this.shadow);
+		render(tmpl(this), this.shadowRoot);
 	}
 	get width() {
 		let w = this.attr("width");

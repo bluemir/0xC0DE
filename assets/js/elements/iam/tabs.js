@@ -21,7 +21,7 @@ class CustomElement extends $.CustomElement {
 	}
 
 	async render() {
-		render(tmpl(this, this.params), this.shadow);
+		render(tmpl(this, this.params), this.shadowRoot);
 	}
 
 	get params() {

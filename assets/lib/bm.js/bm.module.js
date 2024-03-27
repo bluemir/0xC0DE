@@ -510,7 +510,6 @@ export class CustomElement extends HTMLElement {
 		super();
 
 		if (enableShadow) {
-			//this["--shadow"] = this.attachShadow({mode: 'open'})
 			this.attachShadow({mode: 'open'})
 		}
 	}
@@ -539,9 +538,6 @@ export class CustomElement extends HTMLElement {
 	disconnectedCallback() {
 		this.onDisconnected && this.onDisconnected();
 		this.fireEvent("disconnected")
-	}
-	get shadow() {
-		return this.shadowRoot;
 	}
 	handler(h) {
 		var name = h instanceof Function ? h.name : h;

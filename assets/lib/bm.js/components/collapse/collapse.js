@@ -43,7 +43,7 @@ class Collapse extends $.CustomElement {
 		return ["title", "state"];
 	}
 	async render() {
-		render(tmpl(this), this.shadow);
+		render(tmpl(this), this.shadowRoot);
 	}
 	onAttributeChanged(name, old, v) {
 		this.render();

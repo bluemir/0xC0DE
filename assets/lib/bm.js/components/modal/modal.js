@@ -57,7 +57,7 @@ class Modal extends $.CustomElement {
 		this.on("click", evt => this.close())
 	}
 	async render() {
-		render(tmpl(this), this.shadow);
+		render(tmpl(this), this.shadowRoot);
 	}
 	open(){
 		console.log("open")

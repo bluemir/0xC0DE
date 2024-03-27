@@ -58,7 +58,7 @@ class FullPage extends $.CustomElement {
 	}
 
 	async render() {
-		render(tmpl(this), this.shadow);
+		render(tmpl(this), this.shadowRoot);
 	}
 }
 customElements.define("c-layout-full-page", FullPage);

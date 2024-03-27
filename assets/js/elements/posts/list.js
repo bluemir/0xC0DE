@@ -23,7 +23,7 @@ class PostList extends $.CustomElement {
 	}
 
 	async render() {
-		render(tmpl(this), this.shadow);
+		render(tmpl(this), this.shadowRoot);
 	}
 	onConnected() {
 		let events = new EventSource("/api/v1/posts/stream");

@@ -34,7 +34,7 @@ class Card extends $.CustomElement {
 		super();
 	}
 	async render() {
-		render(tmpl(this), this.shadow);
+		render(tmpl(this), this.shadowRoot);
 	}
 }
 customElements.define("c-card", Card);

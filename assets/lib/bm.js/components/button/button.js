@@ -55,7 +55,7 @@ class Button extends $.CustomElement {
 		super();
 	}
 	async render() {
-		render(tmpl(this), this.shadow);
+		render(tmpl(this), this.shadowRoot);
 	}
 	onConnected() {
 		if(!$.get(this, "a, button")) {

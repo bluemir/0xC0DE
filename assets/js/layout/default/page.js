@@ -47,7 +47,7 @@ class DefaultPage  extends $.CustomElement {
 	}
 
 	async render() {
-		render(tmpl(this), this.shadow);
+		render(tmpl(this), this.shadowRoot);
 	}
 }
 customElements.define("default-page", DefaultPage);

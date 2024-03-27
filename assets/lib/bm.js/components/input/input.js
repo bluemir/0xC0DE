@@ -67,7 +67,7 @@ class Input extends $.CustomElement {
 		super();
 	}
 	async render() {
-		render(tmpl(this), this.shadow);
+		render(tmpl(this), this.shadowRoot);
 	}
 
 	get name(){

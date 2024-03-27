@@ -65,7 +65,7 @@ class Tabs extends $.CustomElement {
 		}
 	}
 	async render() {
-		render(tmpl(this), this.shadow);
+		render(tmpl(this), this.shadowRoot);
 	}
 	async handleTabHeaderClick(evt) {
 		let role = evt.target.attr("role");

@@ -27,7 +27,7 @@ class Alert extends $.CustomElement {
 		return ["text"];
 	}
 	async render() {
-		render(tmpl(this), this.shadow);
+		render(tmpl(this), this.shadowRoot);
 	}
 }
 customElements.define("c-alert", Alert);
