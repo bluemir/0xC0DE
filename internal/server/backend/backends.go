@@ -38,7 +38,7 @@ type Backends struct {
 func Initialize(ctx context.Context, args *Args) (*Backends, error) {
 	conf, err := readCofigFile(args.ConfigFilePath)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "config file not exist. path: %s", args.ConfigFilePath)
 	}
 	events, err := events.NewHub(ctx)
 	if err != nil {

@@ -40,6 +40,8 @@ func Register(cmd *kingpin.CmdClause) {
 		StringVar(&conf.GRPCBind)
 	cmd.Flag("init-user", "initial user").
 		StringMapVar(&conf.InitUser)
+	cmd.Flag("config", "config file").
+		Short('c').StringVar(&conf.ConfigFilePath)
 	cmd.Action(func(*kingpin.ParseContext) error {
 		logrus.Trace("called")
 

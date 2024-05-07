@@ -1,7 +1,7 @@
 ##@ Run
 
 run: build/$(APP_NAME) ## Run web app
-	$< -vvv server #--cert runtime/certs/server.crt --key runtime/certs/server.key
+	$< -vvv server --config runtime/config.yaml #--cert runtime/certs/server.crt --key runtime/certs/server.key
 dev-run: ## Run dev server. If detect file change, automatically rebuild&restart server
 	@$(MAKE) build/tools/watcher
 	watcher \
@@ -41,6 +41,6 @@ reset: ## Kill all make process. Use when dev-run stuck.
 
 tools: build/tools/watcher
 build/tools/watcher: build/tools/go
-	@which $(notdir $@) || (./scripts/tools/install-go-tool.sh github.com/bluemir/watcher)
+	@which $(notdir $@) || (./scripts/tools/install/go-tool.sh github.com/bluemir/watcher)
 
 .PHONY: run dev-run reset

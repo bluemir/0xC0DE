@@ -3,13 +3,13 @@ package workers
 import (
 	"context"
 
+	"github.com/bluemir/0xC0DE/internal/events/queue"
 	"github.com/sirupsen/logrus"
 )
 
 type option struct {
 	readBufSize  int
 	writeBufSize int
-	errorBufSize int
 	workerNum    int
 }
 type OptionFn func(*option)
@@ -18,7 +18,6 @@ func Run[InT any, OutT any](ctx context.Context, fn func(context.Context, InT) (
 	opt := option{
 		readBufSize:  16,
 		writeBufSize: 16,
-		errorBufSize: 0,
 		workerNum:    4,
 	} // default
 
@@ -28,7 +27,7 @@ func Run[InT any, OutT any](ctx context.Context, fn func(context.Context, InT) (
 
 	ich := make(chan InT, opt.readBufSize)
 	och := make(chan OutT, opt.writeBufSize)
-	ech := make(chan error, opt.errorBufSize)
+	ech := make(chan error)
 
 	doneCh := make(chan struct{})
 
@@ -57,7 +56,7 @@ func Run[InT any, OutT any](ctx context.Context, fn func(context.Context, InT) (
 		}
 	}()
 
-	return ich, och, ech
+	return ich, och, queue.Queue(ech)
 
 	// result.Out, result.In, result.Err, result.Add(array...), return result.Collect(), result.Errs()
 }

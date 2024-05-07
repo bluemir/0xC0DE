@@ -197,7 +197,9 @@ func TestErrorHandler(t *testing.T) {
 				}
 				response = append(response, ret)
 			case err := <-errc:
-				errs = append(errs, err)
+				if err != nil {
+					errs = append(errs, err)
+				}
 				// exit on error
 				// return response, errs
 			}

@@ -8,7 +8,7 @@ var tmpl = (elem) => html`
 		:host {
 		}
 
-		global-navigation-bar, ::slotted(*) {
+		global-navigation-bar, main > section {
 			max-width: 1280px;
 			margin: auto;
 		}
