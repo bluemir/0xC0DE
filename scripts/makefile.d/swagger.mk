@@ -24,7 +24,7 @@ internal/swagger/docs.go: $(filter ./internal/server/%.go,$(GO_SOURCES))
 
 
 install-swaggo: ## install swaggo
-	./scripts/tools/install-go-tool.sh github.com/swaggo/swag/cmd/swag
+	./scripts/tools/install/go-tool.sh github.com/swaggo/swag/cmd/swag
 build/tools/swag:
 	@$(MAKE) build/tools/go
 	@which $(notdir $@) || ($(MAKE) install-swaggo)

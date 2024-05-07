@@ -1,8 +1,8 @@
 package client
 
 import (
+	"github.com/alecthomas/kingpin/v2"
 	"github.com/bluemir/0xC0DE/internal/client"
-	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 func Register(cmd *kingpin.CmdClause) {

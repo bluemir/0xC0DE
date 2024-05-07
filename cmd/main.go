@@ -3,9 +3,9 @@ package cmd
 import (
 	"os"
 
+	"github.com/alecthomas/kingpin/v2"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/alecthomas/kingpin.v2"
 
 	clientCmd "github.com/bluemir/0xC0DE/cmd/client"
 	serverCmd "github.com/bluemir/0xC0DE/cmd/server"

@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/antonmedv/expr"
+	"github.com/expr-lang/expr"
 )
 
 type Condition string

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/alecthomas/kingpin/v2"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/bluemir/0xC0DE/internal/buildinfo"
 	"github.com/bluemir/0xC0DE/internal/server"
