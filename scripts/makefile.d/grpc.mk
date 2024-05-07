@@ -39,22 +39,21 @@ build/docker-image: $(PROTO_SOURCE)
 
 
 export PATH:=./build/tools/protobuf/bin:$(PATH)
-install-protoc: ## install protoc
-	./scripts/tools/install-protoc.sh
+
 ## grpc
 build-tools: build/tools/protoc build/tools/protoc-gen-go build/tools/protoc-gen-go-grpc
 build/tools/protoc:
-	@which $(notdir $@) || ($(MAKE) install-protoc)
+	@which $(notdir $@) || (./scripts/tools/install/protoc.sh)
 build/tools/protoc-gen-go: build/tools/go
-	@which $(notdir $@) || (./scripts/tools/install-go-tool.sh google.golang.org/protobuf/cmd/protoc-gen-go)
+	@which $(notdir $@) || (./scripts/tools/install/go-tool.sh google.golang.org/protobuf/cmd/protoc-gen-go)
 build/tools/protoc-gen-go-grpc: build/tools/go
-	@which $(notdir $@) || (./scripts/tools/install-go-tool.sh google.golang.org/grpc/cmd/protoc-gen-go-grpc)
+	@which $(notdir $@) || (./scripts/tools/install/go-tool.sh google.golang.org/grpc/cmd/protoc-gen-go-grpc)
 
 build-tools: build/tools/protoc-gen-grpc-gateway
 build/tools/protoc-gen-grpc-gateway: build/tools/go
-	@which $(notdir $@) || (./scripts/tools/install-go-tool.sh github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway)
+	@which $(notdir $@) || (./scripts/tools/install/go-tool.sh github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway)
 
 build-tools: build/tools/protoc-gen-openapiv2
 build/tools/protoc-gen-openapiv2: build/tools/go
-	@which $(notdir $@) || (./scripts/tools/install-go-tool.sh github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2)
+	@which $(notdir $@) || (./scripts/tools/install/go-tool.sh github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2)
 

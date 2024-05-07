@@ -29,7 +29,7 @@ run-etcd-client: runtime/certs/local/etcd/ca.crt
 
 build-tools: build/tools/etcd
 build/tools/etcd: build/tools/go
-	@which $(notdir $@) || (./scripts/tools/install-etcd.sh v3.5.11)
+	@which $(notdir $@) || (./scripts/tools/install/etcd.sh v3.5.11)
 
 build/tools/etcdctl: build/tools/go
-	@which $(notdir $@) || (./scripts/tools/install-etcd.sh v3.5.11)
+	@which $(notdir $@) || (./scripts/tools/install/etcd.sh v3.5.11)

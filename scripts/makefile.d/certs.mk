@@ -5,6 +5,7 @@ CERT_DIR=runtime/certs
 certs: ## Generate self signed certs
 certs: $(CERT_DIR)/local/app/server.crt $(CERT_DIR)/local/app/server.bundle.crt
 certs: $(CERT_DIR)/local/etcd/server.crt
+certs: $(CERT_DIR)/local/buildkitd/server.crt
 
 # customize SAN via OPTIONAL_SAN
 # eg.

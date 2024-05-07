@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/bluemir/0xC0DE/internal/datastruct"
+	"github.com/bluemir/0xC0DE/internal/events/queue"
 	"github.com/rs/xid"
 	"github.com/sirupsen/logrus"
 )
@@ -16,7 +17,7 @@ func NewHub(ctx context.Context) (*Hub, error) {
 		close(in)
 	}()
 
-	q := queue(in)
+	q := queue.Queue(in)
 
 	hub := &Hub{
 		ctx:      ctx,

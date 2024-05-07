@@ -1,8 +1,8 @@
-package events
+package queue
 
 import "github.com/bluemir/0xC0DE/internal/datastruct"
 
-func queue[T any](in <-chan T) <-chan T {
+func Queue[T any](in <-chan T) <-chan T {
 	out := make(chan T)
 
 	go func() {
