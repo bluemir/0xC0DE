@@ -1,5 +1,5 @@
 ARG VERSION=dev
-FROM fedora:39 as build-env
+FROM fedora:40 as build-env
 
 RUN echo "fastestmirror=1" >> /etc/dnf/dnf.conf
 RUN dnf install -y \
