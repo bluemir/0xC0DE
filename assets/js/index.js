@@ -1,3 +1,4 @@
+import "./common.js";
 import "./elements/iam/groups/list.js";
 import "./elements/iam/roles/list.js";
 import "./elements/iam/tabs.js";

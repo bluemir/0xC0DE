@@ -3,6 +3,7 @@ DOCKER_IMAGE_NAME=$(shell echo $(APP_NAME)| tr A-Z a-z)
 
 docker: build/docker-image ## Build docker image
 
+#build/docker-image: export DOCKER_BUILDKIT=1
 build/docker-image: Dockerfile $(MAKEFILE_LIST)
 	@$(MAKE) build/tools/docker
 	@mkdir -p $(dir $@)
