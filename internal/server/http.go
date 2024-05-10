@@ -13,18 +13,20 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/bluemir/0xC0DE/internal/server/handler"
-	authMiddleware "github.com/bluemir/0xC0DE/internal/server/middleware/auth"
-	errMiddleware "github.com/bluemir/0xC0DE/internal/server/middleware/errors"
+	"github.com/bluemir/0xC0DE/internal/server/middleware/auth"
+	"github.com/bluemir/0xC0DE/internal/server/middleware/errs"
+	"github.com/bluemir/0xC0DE/internal/server/middleware/prom"
 )
 
 func (server *Server) RunHTTPServer(ctx context.Context, bind string, certs *CertConfig, extra ...gin.HandlerFunc) func() error {
+
 	return func() error {
 		// starting http server
 		app := gin.New()
 
 		// add template
 		if html, err := NewRenderer(); err != nil {
-			return errors.WithStack(err)
+			return err
 		} else {
 			app.SetHTMLTemplate(html)
 		}
@@ -34,21 +36,24 @@ func (server *Server) RunHTTPServer(ctx context.Context, bind string, certs *Cer
 			WithFields(logrus.Fields{}).
 			WriterLevel(logrus.DebugLevel)
 		defer writer.Close()
+		app.Use(gin.LoggerWithWriter(writer))
 
 		// sessions
 		store := cookie.NewStore([]byte(server.salt))
 		app.Use(sessions.Sessions("0xC0DE_session", store))
 
-		app.Use(gin.LoggerWithWriter(writer))
 		app.Use(gin.Recovery())
 
 		app.Use(location.Default(), fixURL)
 
-		app.Use(errMiddleware.Middleware)
+		app.Use(errs.Middleware)
 
-		app.Use(authMiddleware.Middleware(server.backends.Auth))
+		app.Use(auth.Middleware(server.backends.Auth))
 
 		app.Use(handler.Inject(server.backends))
+
+		// prometheus for monitoring
+		app.Use(prom.Metrics())
 
 		// handle routes
 		server.routes(app, app.NoRoute)

@@ -9,10 +9,11 @@ import (
 )
 
 type Config struct {
-	HttpBind  string
-	Cert      CertConfig
-	GRPCBind  string
-	PprofBind string
+	HttpBind   string
+	Cert       CertConfig
+	GRPCBind   string
+	PprofBind  string
+	ManageBind string
 
 	backend.Args
 }
@@ -61,6 +62,7 @@ func Run(ctx context.Context, conf *Config) error {
 	// run servers
 	eg, nCtx := errgroup.WithContext(ctx)
 	eg.Go(server.RunHTTPServer(nCtx, conf.HttpBind, conf.GetCertConfig(), gwHandler))
+	eg.Go(server.RunManageServer(nCtx, conf.ManageBind))
 	//eg.Go(server.RunHTTPServer(nCtx, conf.Bind, conf.GetCertConfig()))
 	eg.Go(server.RunGRPCServer(nCtx, conf.GRPCBind))
 	eg.Go(server.RunPprofServer(nCtx, conf.PprofBind))

@@ -9,25 +9,13 @@ import (
 	"github.com/bluemir/0xC0DE/internal/server/middleware/auth"
 	"github.com/bluemir/0xC0DE/internal/server/middleware/auth/resource"
 	"github.com/bluemir/0xC0DE/internal/server/middleware/auth/verb"
-	"github.com/bluemir/0xC0DE/internal/server/middleware/prom"
 	"github.com/bluemir/0xC0DE/internal/static"
-
-	// swagger
-	_ "github.com/bluemir/0xC0DE/internal/swagger"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // @title 0xC0DE
 // @version 0.1.0
 // @description
 func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) {
-	// prometheus for monitoring
-	app.GET("/metric", prom.Handler())
-	app.Use(prom.Metrics())
-
-	// swagger
-	app.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("/swagger/doc.json")))
 
 	// API
 	{
