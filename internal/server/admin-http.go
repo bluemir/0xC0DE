@@ -9,6 +9,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/bluemir/0xC0DE/internal/server/graceful"
+	"github.com/bluemir/0xC0DE/internal/server/handler"
 	"github.com/bluemir/0xC0DE/internal/server/middleware/prom"
 
 	// swagger
@@ -19,6 +20,9 @@ func (server *Server) RunAdminHTTPServer(ctx context.Context, bind string) func(
 	return func() error {
 		// starting http server
 		app := gin.New()
+
+		// ping
+		app.GET("/ping", handler.Ping)
 
 		// prometheus for monitoring
 		app.GET("/metric", prom.Handler())
