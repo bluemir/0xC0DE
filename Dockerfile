@@ -11,8 +11,6 @@ RUN dnf install -y \
 
 ENV GOPATH=/root/go
 ENV PATH=$PATH:/root/go/bin
-# for alpine
-ENV CC=musl-gcc
 
 # pre build
 WORKDIR /src
@@ -43,6 +41,9 @@ ARG VERSION
 
 ## copy source
 COPY . /src
+
+# for alpine
+ENV CC=musl-gcc
 
 RUN make build/0xC0DE
 
