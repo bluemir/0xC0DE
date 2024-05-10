@@ -3,7 +3,7 @@ deploy: build/docker-image.pushed ## Deploy webapp
 	#@$(MAKE) build/tools/kubectl
 	# deploy code
 	# example:
-	#   cat deploy.yaml | DEPLOY_IMAGE=$(shell cat $<) envsubst | kubectl apply -f -
+	#   cat deployment/server.yaml | DEPLOY_IMAGE=$(shell cat $<) envsubst | kubectl apply -f -
 	#   kubectl kustermize deploy | kubectl apply -f -
 
 .PHONY: deploy
