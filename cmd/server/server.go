@@ -19,14 +19,14 @@ func Register(cmd *kingpin.CmdClause) {
 
 	cmd.Flag("bind", "bind").
 		Default(":8080").
-		StringVar(&conf.HttpBind)
-	cmd.Flag("pprof-bind", "bind for pprof").
-		Default(":4000").
-		StringVar(&conf.PprofBind)
+		StringVar(&conf.ServiceHttpBind)
 	cmd.Flag("cert", "cert file").
 		StringVar(&conf.Cert.CertFile)
 	cmd.Flag("key", "key file").
 		StringVar(&conf.Cert.KeyFile)
+	cmd.Flag("admin-bind", "bind for admin endpoint(metric, swagger, pprof)").
+		Default(":8000").
+		StringVar(&conf.AdminHttpBind)
 
 	cmd.Flag("db-path", "db path").
 		Default(":memory:").

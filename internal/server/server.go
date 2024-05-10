@@ -6,21 +6,18 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/bluemir/0xC0DE/internal/server/backend"
+	"github.com/bluemir/0xC0DE/internal/server/graceful"
 )
 
 type Config struct {
-	HttpBind   string
-	Cert       CertConfig
-	GRPCBind   string
-	PprofBind  string
-	ManageBind string
+	ServiceHttpBind string
+	Cert            CertConfig
+	GRPCBind        string
+	AdminHttpBind   string
 
 	backend.Args
 }
-type CertConfig struct {
-	CertFile string
-	KeyFile  string
-}
+type CertConfig = graceful.CertConfig
 
 func NewConfig() Config {
 	return Config{
@@ -61,11 +58,10 @@ func Run(ctx context.Context, conf *Config) error {
 
 	// run servers
 	eg, nCtx := errgroup.WithContext(ctx)
-	eg.Go(server.RunHTTPServer(nCtx, conf.HttpBind, conf.GetCertConfig(), gwHandler))
-	eg.Go(server.RunManageServer(nCtx, conf.ManageBind))
+	eg.Go(server.RunServiceHTTPServer(nCtx, conf.ServiceHttpBind, conf.GetCertConfig(), gwHandler))
+	eg.Go(server.RunAdminHTTPServer(nCtx, conf.AdminHttpBind))
 	//eg.Go(server.RunHTTPServer(nCtx, conf.Bind, conf.GetCertConfig()))
 	eg.Go(server.RunGRPCServer(nCtx, conf.GRPCBind))
-	eg.Go(server.RunPprofServer(nCtx, conf.PprofBind))
 
 	// TODO run grpc, http, https, http2https redirect servers by config
 
