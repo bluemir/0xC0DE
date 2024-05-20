@@ -77,7 +77,7 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  name: 0xC0DE-app
+  name: 0xC0DE
   namespace: n3r
 spec:
   selector:

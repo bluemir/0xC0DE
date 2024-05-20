@@ -20,7 +20,7 @@ var tmpl = (elem) => html`
 		}
 	</style>
 	<section id="logo">
-		<a href="/">LOGO</a>
+		<a href="/">0xC0DE</a>
 		${elem.hasAttribute("admin") ? html`
 			 <a href="/admin">Admin</a>
 		 `:""}

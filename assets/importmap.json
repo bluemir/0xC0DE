@@ -1,6 +1,0 @@
-{
-	"imports": {
-		"lit-html": "https://unpkg.com/lit-html@2.8.0/lit-html.js",
-		"bm.js": "/asserts/lib/bm.js"
-	}
-}
