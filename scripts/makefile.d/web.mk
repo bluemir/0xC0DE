@@ -14,7 +14,6 @@ build/docker-image: $(JS_SOURCES) $(CSS_SOURCES) $(WEB_LIBS) $(HTML_SOURCES)
 STATICS :=
 
 ## common static files
-STATICS += $(CSS_SOURCES:assets/%=build/static/%)
 STATICS += $(WEB_LIBS:assets/%=build/static/%)
 STATICS += $(IMAGES:assets/%=build/static/%)
 STATICS += $(WEB_META:assets/%=build/static/%)
@@ -42,24 +41,13 @@ build/static/js/%: $(JS_SOURCES) build/yarn-updated
 	#--external:/config.js \
 	#--minify \
 
-## rollup & js
-## yarn add --dev rollup '@rollup/plugin-node-resolve'
-#STATICS := $(filter-out build/static/js/%.js,$(STATICS)) # remove not entrypoint
-#STATICS += build/static/js/index.js                      # entrypoint
-#build/static/js/%: $(JS_SOURCES) build/yarn-updated
-#	@$(MAKE) build/tools/npx
-#	@mkdir -p $(dir $@)
-#	npx rollup $(@:build/static/%=assets/%) --file $@ --format es -m -p '@rollup/plugin-node-resolve'
-
-## less
-## yarn add --dev less
-#LESS_SOURCES  = $(shell find assets/less           -type f -name '*.less' -print)
-#STATICS := $(filter-out build/static/css/%,$(STATICS)) # remove default css files
-#STATICS += $(LESS_SOURCES:assets/less/%=build/static/css/%)
-#build/static/css/%: assets/less/% build/yarn-updated
-#	@$(MAKE) build/tools/npx
-#	@mkdir -p $(dir $@)
-#	npx lessc $< $@
+STATICS += build/static/css/page.css build/static/css/element.css
+build/static/css/%: $(CSS_SOURCES)
+	@$(MAKE) build/tools/npx
+	@mkdir -p $(dir $@)
+	npx esbuild $(@:build/static/%=assets/%) --outdir=$(dir $@) \
+		--bundle --sourcemap \
+		$(OPTIONAL_WEB_BUILD_ARGS)
 
 .PHONY: web
 web: $(STATICS) ## Build web-files. (bundle, minify, transpile, etc.)
