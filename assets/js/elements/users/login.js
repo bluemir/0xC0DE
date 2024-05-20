@@ -1,6 +1,6 @@
 import * as $ from "bm.js/bm.module.js";
 import {html, render} from 'lit-html';
-import {css} from "common.js";
+import {css, closeDialog} from "common.js";
 
 var tmpl = (elem) => html`
 	<style>
@@ -25,8 +25,8 @@ var tmpl = (elem) => html`
 			<c-button><button>Login</button></c-button>
 		</div>
 	</form>
-	<dialog>
-		<h1>Register Failed</h1>
+	<dialog @click="${closeDialog}">
+		<h1>Login Failed</h1>
 	</dialog>
 `;
 
@@ -40,12 +40,16 @@ class CustomElement extends $.CustomElement {
 	}
 	async onSubmit(evt) {
 		evt.preventDefault();
+		try {
+			let fd = new FormData($.get(this.shadowRoot, "form"));
 
-		let fd = new FormData($.get(this.shadowRoot, "form"));
+			let res = await $.request("POST", `/api/v1/login`, {body:fd});
 
-		let res = await $.request("POST", `/api/v1/login`, {body:fd});
-
-		location.href = "/posts"
+			location.href = "/posts"
+		} catch(e) {
+			console.log(e);
+			$.get(this.shadowRoot, "dialog").showModal();
+		}
 	}
 }
 customElements.define("login-form", CustomElement);

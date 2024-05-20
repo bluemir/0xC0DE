@@ -3,7 +3,7 @@ import * as $ from "bm.js/bm.module.js";
 import {html, render} from 'lit-html';
 import {css} from "common.js";
 
-var tmpl = (elem) => html`
+let tmpl = () => html`
 	<style>
 		${css}
 
@@ -21,7 +21,7 @@ class CustomElement extends $.CustomElement {
 	}
 
 	async render() {
-		render(tmpl(this), this.shadowRoot);
+		render(tmpl.call(this), this.shadowRoot);
 	}
 }
 customElements.define("example-element", CustomElement);

@@ -1,8 +1,8 @@
 import * as $ from "bm.js/bm.module.js";
 import {html, render} from 'lit-html';
-import {css} from "common.js";
+import {css, closeDialog} from "common.js";
 
-var tmpl = (elem) => html`
+let tmpl = (elem) => html`
 	<style>
 		${css}
 
@@ -29,6 +29,9 @@ var tmpl = (elem) => html`
 		</section>
 		<c-button><button>Create Account</button></c-button>
 	</form>
+	<dialog @click="${closeDialog}">
+		<h1>Login Failed</h1>
+	</dialog>
 `;
 
 class RegisterForm extends $.CustomElement {
@@ -42,11 +45,17 @@ class RegisterForm extends $.CustomElement {
 	async onSubmit(evt) {
 		evt.preventDefault();
 
-		let fd = new FormData($.get(this.shadowRoot, "form"));
+		try {
 
-		let res = await $.request("POST", `/api/v1/users`, {body:fd});
+			let fd = new FormData($.get(this.shadowRoot, "form"));
 
-		location.href = "/"
+			let res = await $.request("POST", `/api/v1/users`, {body:fd});
+
+			location.href = "/"
+		} catch(e) {
+			console.log(e)
+			$.get(this.shadowRoot, "dialog").showModal();
+		}
 	}
 }
 customElements.define("register-form", RegisterForm);
