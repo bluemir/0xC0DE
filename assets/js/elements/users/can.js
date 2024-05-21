@@ -3,7 +3,7 @@ import * as $ from "bm.js/bm.module.js";
 import {html, render} from 'lit-html';
 import {css} from "common.js";
 
-function tmpl(elem) {
+function tmpl(can) {
 	return html`
 		<style>
 			${css}
@@ -13,7 +13,7 @@ function tmpl(elem) {
 			::slotted(*) {
 			}
 		</style>
-		${this.can ? html`<slot></slot>`:html``}
+		${can ? html`<slot></slot>`:html``}
 	`;
 }
 

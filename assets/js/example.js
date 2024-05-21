@@ -3,17 +3,19 @@ import * as $ from "bm.js/bm.module.js";
 import {html, render} from 'lit-html';
 import {css} from "common.js";
 
-let tmpl = () => html`
-	<style>
-		${css}
+function tmpl() {
+	return html`
+		<style>
+			${css}
 
-		:host {
-		}
-		::slotted(*) {
-		}
-	</style>
-	<slot></slot>
-`;
+			:host {
+			}
+			::slotted(*) {
+			}
+		</style>
+		<slot></slot>
+	`;
+}
 
 class CustomElement extends $.CustomElement {
 	constructor() {
