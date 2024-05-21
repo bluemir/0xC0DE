@@ -5,6 +5,7 @@ import "./elements/iam/tabs.js";
 import "./elements/iam/users/list.js";
 import "./elements/posts/create.js";
 import "./elements/posts/list.js";
+import "./elements/users/can.js";
 import "./elements/users/login.js";
 import "./elements/users/register.js";
 import "./events.js";

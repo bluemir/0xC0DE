@@ -91,3 +91,22 @@ func ListRoles(c *gin.Context) {
 
 	c.JSON(http.StatusOK, roles)
 }
+
+func Can(c *gin.Context) {
+	verb := c.Param("verb")
+	resource := c.Param("resource")
+
+	user, err := me(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	// TODO Setup HTTP cache..
+
+	if backends(c).Auth.Can(user, auth.Verb(verb), auth.KeyValues{"name": resource}) {
+		c.Status(http.StatusOK)
+	} else {
+		c.Status(http.StatusForbidden)
+	}
+}
