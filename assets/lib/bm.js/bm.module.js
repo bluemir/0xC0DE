@@ -631,28 +631,3 @@ export class AwaitQueue {
 	}
 }
 
-export function logger(opt){
-	return new Logger(opt);
-}
-class Logger {
-	constructor({show, name} = {}) {
-		this.show = show;
-		this.name = name;
-	}
-	debug(message) {
-		if(this.show) return;
-		console.debug.apply(console, arguments);
-	}
-	info(message) {
-		if(this.show) return;
-		console.info.apply(console, arguments);
-	}
-	warn(message) {
-		if(this.show) return;
-		console.warn.apply(console, arguments);
-	}
-	error(message) {
-		if(this.show) return;
-		console.error.apply(console, arguments);
-	}
-}
