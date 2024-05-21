@@ -19,7 +19,7 @@ func Register(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, err)
 	}
 
-	u, err := backends(c).Auth.CreateUser(req.Username)
+	u, err := backends(c).Auth.CreateUser(req.Username, auth.WithGroup("user"))
 	if err != nil {
 		c.Error(err)
 		return
@@ -96,15 +96,11 @@ func Can(c *gin.Context) {
 	verb := c.Param("verb")
 	resource := c.Param("resource")
 
-	user, err := me(c)
-	if err != nil {
-		c.Error(err)
-		return
-	}
+	user, _ := me(c)
 
 	// TODO Setup HTTP cache..
 
-	if backends(c).Auth.Can(user, auth.Verb(verb), auth.KeyValues{"name": resource}) {
+	if backends(c).Auth.Can(user, auth.Verb(verb), auth.KeyValues{"kind": resource}) {
 		c.Status(http.StatusOK)
 	} else {
 		c.Status(http.StatusForbidden)

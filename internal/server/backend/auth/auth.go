@@ -67,13 +67,17 @@ func (m *Manager) Default(username, unhashedKey string) (*User, error) {
 }
 
 func (m *Manager) Can(user *User, verb Verb, res Resource) bool {
+	logger := logrus.WithField("user", user).WithField("verb", verb).WithField("resource", res)
+
+	logger.Trace(user.Subjects())
 	for _, subject := range user.Subjects() {
+
 		roles, err := m.ListAssignedRole(subject)
 		if err != nil {
 			logrus.Warn(err)
 			continue // skip
 		}
-		logrus.Tracef("%#v", roles)
+		logger.Tracef("%#v", roles)
 
 		for _, role := range roles {
 			if role.IsAllow(Context{

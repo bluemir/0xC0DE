@@ -1,5 +1,5 @@
 export let css = `
-@import url("/-/static/css/color.css");
+@import url("/static/css/element.css");
 `;
 
 

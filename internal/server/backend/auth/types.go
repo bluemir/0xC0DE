@@ -54,6 +54,7 @@ type Subject struct {
 const (
 	KindUser  = "user"
 	KindGroup = "group"
+	KindGuest = "guest"
 )
 
 type Verb string
@@ -140,6 +141,14 @@ func (rule *Rule) isVerbMatched(verb Verb) bool {
 var x = struct{}{}
 
 func (u *User) Subjects() []Subject {
+
+	if u == nil {
+		return []Subject{
+			{
+				Kind: KindGuest,
+			},
+		}
+	}
 	ret := []Subject{
 		{
 			Kind: KindUser,

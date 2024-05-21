@@ -4,8 +4,8 @@ import (
 	"github.com/rs/xid"
 )
 
-func (m *Manager) Register(username, unhashedKey string) (*User, *Token, error) {
-	user, err := m.CreateUser(username)
+func (m *Manager) Register(username, unhashedKey string, opts ...CreateUserOption) (*User, *Token, error) {
+	user, err := m.CreateUser(username, opts...)
 	if err != nil {
 		return nil, nil, err
 	}

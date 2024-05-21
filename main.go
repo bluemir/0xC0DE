@@ -10,7 +10,7 @@ import (
 
 func main() {
 	if err := cmd.Run(); err != nil {
-		logrus.Fatal(err)
+		logrus.Fatalf("%+v", err)
 		os.Exit(1)
 	}
 }

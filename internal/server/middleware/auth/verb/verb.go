@@ -3,7 +3,7 @@ package verb
 const (
 	// CRUD
 	Create = "create"
-	Get    = "get"
+	Read   = "read"
 	List   = "list"
 	Update = "update"
 	Delete = "delete"

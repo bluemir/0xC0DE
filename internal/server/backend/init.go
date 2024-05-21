@@ -3,13 +3,19 @@ package backend
 import (
 	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
 	"github.com/bluemir/0xC0DE/internal/server/backend/auth/store"
-	"github.com/bluemir/0xC0DE/internal/server/middleware/auth/verb"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+
+	_ "embed"
 )
 
+//go:embed policy.yaml
+var defaultPolicy string
+
 func initAuth(db *gorm.DB, salt string, initUser map[string]string) (*auth.Manager, error) {
+	logrus.Trace("default policy: \n", defaultPolicy)
 	s, err := store.Gorm(db, salt)
 	if err != nil {
 		return nil, err
@@ -21,51 +27,41 @@ func initAuth(db *gorm.DB, salt string, initUser map[string]string) (*auth.Manag
 	}
 
 	if _, err := m.CreateGroup("admin"); err != nil {
-		return nil, err
+		logrus.Warn(err)
 	}
+
+	policy := struct {
+		Roles    []auth.Role
+		Bindings []struct {
+			Subject auth.Subject
+			Role    string
+		}
+	}{}
 
 	for name, key := range initUser {
 		logrus.Tracef("init user: %s %s", name, key)
-		u, _, err := m.Register(name, key)
-		if err != nil {
-			return nil, err
-		}
-		u.Groups.Add("admin", "user")
-		if err := m.UpdateUser(u); err != nil {
-			return nil, err
+		if _, _, err := m.Register(name, key, auth.WithGroup("admin", "user")); err != nil {
+			logrus.Warn(err)
 		}
 	}
 
-	m.CreateRole("admin", []auth.Rule{
-		{
-			Resource: auth.KeyValues{
-				"kind": "admin-page",
-			},
-		},
-		{
-			Resource: auth.KeyValues{
-				"kind": "server",
-			},
-		},
-		{
-			Resource: auth.KeyValues{
-				"kind": "user",
-			},
-		},
-	})
-	m.CreateRole("user", []auth.Rule{
-		{
-			Verbs: []auth.Verb{
-				verb.Update,
-			},
-			Resource: auth.KeyValues{
-				"kind": "user",
-			},
-			Conditions: []auth.Condition{
-				`user.name == resource.name`,
-			},
-		},
-	})
+	if err := yaml.Unmarshal([]byte(defaultPolicy), &policy); err != nil {
+		return nil, err
+	}
+
+	for _, role := range policy.Roles {
+		if _, err := m.CreateRole(role.Name, role.Rules); err != nil {
+			logrus.Warn(err)
+		}
+	}
+
+	for _, binding := range policy.Bindings {
+		if err := m.AssignRole(binding.Subject, binding.Role); err != nil {
+			logrus.Warn(err)
+		} else {
+			logrus.Info("add binding", binding.Subject, binding.Role)
+		}
+	}
 
 	return m, nil
 }

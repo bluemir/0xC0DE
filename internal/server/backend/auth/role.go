@@ -2,6 +2,7 @@ package auth
 
 import (
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
 	"gorm.io/gorm"
 )
@@ -32,8 +33,15 @@ func (m *Manager) DeleteRole(name string) error {
 func (m *Manager) AssignRole(subject Subject, roleName string) error {
 	binding, err := m.store.GetRoleBinding(subject)
 	if err != nil {
-		return err
+		binding = &RoleBinding{
+			Subject:   subject,
+			RoleNames: Set{roleName: x},
+		}
+		if err = m.store.CreateRoleBinding(binding); err != nil {
+			return err
+		}
 	}
+
 	binding.RoleNames[roleName] = x
 
 	if err := m.store.UpdateRoleBinding(binding); err != nil {
@@ -45,16 +53,10 @@ func (m *Manager) AssignRole(subject Subject, roleName string) error {
 func (m *Manager) DiscardRole(subject Subject, roleName string) error {
 	rb, err := m.store.GetRoleBinding(subject)
 	if err != nil {
-		rb = &RoleBinding{
-			Subject:   subject,
-			RoleNames: Set{roleName: x},
-		}
-		if err = m.store.CreateRoleBinding(rb); err != nil {
-			return err
-		}
+		return err
 	}
 
-	rb.RoleNames[roleName] = x
+	delete(rb.RoleNames, roleName)
 
 	if err := m.store.UpdateRoleBinding(rb); err != nil {
 		return err
@@ -71,6 +73,8 @@ func (m *Manager) ListAssignedRole(subject Subject) ([]Role, error) {
 	} else {
 		maps.Copy(roleNames, rb.RoleNames)
 	}
+
+	logrus.Trace(roleNames)
 
 	if subject.Kind == "group" {
 		roleNames.Add(subject.Name)
