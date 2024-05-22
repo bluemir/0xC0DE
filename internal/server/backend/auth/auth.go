@@ -59,7 +59,13 @@ type Manager struct {
 }
 
 func New(store AuthStore, salt string) (*Manager, error) {
-	return &Manager{store, salt}, nil
+	m := &Manager{store, salt}
+
+	if err := m.addDefault(); err != nil {
+		return nil, err
+	}
+
+	return m, nil
 }
 
 func (m *Manager) Default(username, unhashedKey string) (*User, error) {

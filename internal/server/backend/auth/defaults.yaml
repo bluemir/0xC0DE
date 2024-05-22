@@ -1,0 +1,34 @@
+roles:
+- name: admin
+  rules:
+  - resource:
+      kind: page.admin
+  - resource:
+      kind: server
+  - resource:
+      kind: user
+- name: user
+  rules:
+  - verbs: [read, update]
+    resource:
+      kind: user
+    conditions:
+    - 'user.name == resource.name'
+  - verbs: [read]
+    resource:
+      kind: page.user
+- name: guest
+  rules:
+  - verbs: [read]
+    resource:
+      kind: page.guest
+bindings:
+- subject:
+    kind: guest
+  role: guest
+- subject:
+    kind: user
+  role: user
+groups:
+- user
+- admin

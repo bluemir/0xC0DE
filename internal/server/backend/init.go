@@ -4,7 +4,6 @@ import (
 	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
 	"github.com/bluemir/0xC0DE/internal/server/backend/auth/store"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v3"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
@@ -26,43 +25,10 @@ func initAuth(db *gorm.DB, salt string, initUser map[string]string) (*auth.Manag
 		return nil, err
 	}
 
-	policy := struct {
-		Roles    []auth.Role
-		Bindings []struct {
-			Subject auth.Subject
-			Role    string
-		}
-		Groups []string
-	}{}
-
-	if err := yaml.Unmarshal([]byte(defaultPolicy), &policy); err != nil {
-		return nil, err
-	}
-
-	for _, group := range policy.Groups {
-		if _, err := m.EnsureGroup(group); err != nil {
-			logrus.Warn(err)
-		}
-	}
-
 	for name, key := range initUser {
 		logrus.Tracef("init user: %s %s", name, key)
 		if _, _, err := m.Register(name, key, auth.WithGroup("admin", "user")); err != nil {
 			logrus.Warn(err)
-		}
-	}
-
-	for _, role := range policy.Roles {
-		if _, err := m.CreateRole(role.Name, role.Rules); err != nil {
-			logrus.Warn(err)
-		}
-	}
-
-	for _, binding := range policy.Bindings {
-		if err := m.AssignRole(binding.Subject, binding.Role); err != nil {
-			logrus.Warn(err)
-		} else {
-			logrus.Info("add binding", binding.Subject, binding.Role)
 		}
 	}
 

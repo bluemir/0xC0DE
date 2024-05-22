@@ -14,37 +14,10 @@ func TestUserUpdateUser(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	user, err := m.CreateUser("bluemir")
+	user, err := m.CreateUser("bluemir", auth.WithGroup("user"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	group, err := m.CreateGroup("user")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	user.Groups.Add(group.Name)
-
-	if err := m.UpdateUser(user); err != nil {
-		t.Fatal(err)
-	}
-
-	role, err := m.CreateRole("user", []auth.Rule{
-		{
-			Resource: auth.Resource{
-				"kind": "user",
-			},
-			Verbs: []auth.Verb{"update"},
-			Conditions: []auth.Condition{
-				`user.name == resource.name`,
-			},
-		},
-	})
-
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(role)
 
 	assert.Equal(t, true, m.Can(user, "update", auth.Resource{
 		"kind": "user",
@@ -62,33 +35,10 @@ func TestAdminUpdateUser(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	user, err := m.CreateUser("bluemir")
+	user, err := m.CreateUser("bluemir", auth.WithGroup("admin"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	group, err := m.CreateGroup("admin")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	user.Groups.Add(group.Name)
-
-	if err := m.UpdateUser(user); err != nil {
-		t.Fatal(err)
-	}
-
-	role, err := m.CreateRole("admin", []auth.Rule{
-		{
-			Resource: auth.Resource{
-				"kind": "user",
-			},
-			Verbs: []auth.Verb{"update"},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(role)
 
 	assert.Equal(t, true, m.Can(user, "update", auth.Resource{
 		"kind": "user",
