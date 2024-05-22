@@ -12,6 +12,7 @@ import (
 var (
 	Login  = middleware.Login
 	Logout = middleware.Logout
+	me     = middleware.User
 )
 
 func Register(c *gin.Context) {

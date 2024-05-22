@@ -58,6 +58,8 @@ export async function request(method, url, options = {}) {
 		opts.query["_timestamp"] = Date.now();
 	}
 
+
+
 	// parse url
 	const u = new URL(url, location);
 	opts.query = [...u.searchParams.entries()].reduce((obj, [key, value]) => {
@@ -73,11 +75,16 @@ export async function request(method, url, options = {}) {
 	return new Promise(function(resolve, reject) {
 		var req = new XMLHttpRequest();
 
+		if (opts.timeout) {
+			req.timeout = opts.timeout
+		}
+
 		req.addEventListener("readystatechange", function(){
-			if (req.readyState  == 4) {
+			if (req.readyState == 4) {
 				var result = {
 					statusCode: req.status,
-					text : req.responseText,
+					text:       req.responseText,
+					raw:        req.response,
 				};
 
 				var contentType = req.getResponseHeader("Content-Type") || "";
