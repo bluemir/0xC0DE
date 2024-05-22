@@ -1,7 +1,9 @@
 package server
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"golang.org/x/sync/errgroup"
 
@@ -49,6 +51,10 @@ func Run(ctx context.Context, conf *Config) error {
 
 		// backends
 		backends: bs,
+	}
+
+	if !logrus.IsLevelEnabled(logrus.DebugLevel) {
+		gin.SetMode(gin.ReleaseMode)
 	}
 
 	gwHandler, err := server.grpcGatewayHandler(ctx, conf.GRPCBind)

@@ -11,7 +11,7 @@ build: build/$(APP_NAME) ## Build web app
 .PHONY: test
 test: fmt vet ## Run test
 	@$(MAKE) build/tools/go
-	go test -tags noembed -v ./...
+	go test -v ./...
 
 build/$(APP_NAME): $(GO_SOURCES) $(MAKEFILE_LIST) fmt vet
 	@$(MAKE) build/tools/go

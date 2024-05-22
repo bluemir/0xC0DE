@@ -26,27 +26,30 @@ func initAuth(db *gorm.DB, salt string, initUser map[string]string) (*auth.Manag
 		return nil, err
 	}
 
-	if _, err := m.CreateGroup("admin"); err != nil {
-		logrus.Warn(err)
-	}
-
 	policy := struct {
 		Roles    []auth.Role
 		Bindings []struct {
 			Subject auth.Subject
 			Role    string
 		}
+		Groups []string
 	}{}
+
+	if err := yaml.Unmarshal([]byte(defaultPolicy), &policy); err != nil {
+		return nil, err
+	}
+
+	for _, group := range policy.Groups {
+		if _, err := m.EnsureGroup(group); err != nil {
+			logrus.Warn(err)
+		}
+	}
 
 	for name, key := range initUser {
 		logrus.Tracef("init user: %s %s", name, key)
 		if _, _, err := m.Register(name, key, auth.WithGroup("admin", "user")); err != nil {
 			logrus.Warn(err)
 		}
-	}
-
-	if err := yaml.Unmarshal([]byte(defaultPolicy), &policy); err != nil {
-		return nil, err
 	}
 
 	for _, role := range policy.Roles {

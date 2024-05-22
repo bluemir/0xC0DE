@@ -29,3 +29,6 @@ bindings:
 - subject:
     kind: user
   role: user
+groups:
+- user
+- admin

@@ -6,6 +6,12 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
+	middleware "github.com/bluemir/0xC0DE/internal/server/middleware/auth"
+)
+
+var (
+	Login  = middleware.Login
+	Logout = middleware.Logout
 )
 
 func Register(c *gin.Context) {

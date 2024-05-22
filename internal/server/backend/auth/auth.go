@@ -15,7 +15,7 @@ type IManager interface {
 	Can(user *User, verb Verb, res Resource) bool
 
 	// Shotcuts
-	Register(username, unhashedKey string) (*User, *Token, error)
+	Register(username, unhashedKey string, opts ...CreateUserOption) (*User, *Token, error)
 
 	// User
 	CreateUser(username string, opts ...CreateUserOption) (*User, error)
@@ -50,6 +50,9 @@ type IManager interface {
 	DiscardRole(subject Subject, roleName string) error
 	ListAssignedRole(Subject) ([]Role, error)
 }
+
+var _ IManager = &Manager{}
+
 type Manager struct {
 	store AuthStore
 	salt  string

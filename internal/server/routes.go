@@ -1,7 +1,9 @@
 package server
 
 import (
+	"mime"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -16,14 +18,18 @@ import (
 // @version 0.1.0
 // @description
 func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) {
+	var (
+		requireLogin = auth.RequireLogin
+		can          = auth.Can
+	)
 
 	// API
 	{
 		v1 := app.Group("/api/v1", markAPI)
 
 		v1.GET("/ping", handler.Ping)
-		v1.GET("/authn/ping", auth.RequireLogin, handler.Ping)
-		v1.GET("/authz/ping", auth.Can(verb.Create, resource.Server), handler.Ping)
+		v1.GET("/authn/ping", requireLogin, handler.Ping)
+		v1.GET("/authz/ping", can(verb.Create, resource.Server), handler.Ping)
 		// roles:
 		// - name: admin
 		//   rules:
@@ -32,8 +38,8 @@ func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) 
 		//       name: bar
 		//     verb: create
 
-		v1.POST("/login", auth.Login)
-		v1.GET("/logout", auth.Logout)
+		v1.POST("/login", handler.Login)
+		v1.GET("/logout", handler.Logout)
 		v1.POST("/users", handler.Register)
 		v1.GET("/users/me", handler.Me)
 
@@ -73,4 +79,25 @@ func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) 
 		// or for SPA(single page application), client side routing
 		// app.Use(AbortIfHasPrefix("/api"), server.static("/index.html"))
 	}
+
+	noRoute(func(c *gin.Context) {
+		for _, accept := range strings.Split(c.Request.Header.Get("Accept"), ",") {
+			t, _, e := mime.ParseMediaType(accept)
+			if e != nil {
+				continue
+			}
+
+			switch t {
+			case "application/json":
+				c.Status(http.StatusNotFound)
+				return
+			case "text/html", "*/*":
+				c.HTML(http.StatusNotFound, "errors/not-found.html", c)
+				return
+			case "text/plain":
+				c.String(http.StatusNotFound, "not found")
+				return
+			}
+		}
+	})
 }
