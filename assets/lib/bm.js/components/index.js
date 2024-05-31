@@ -8,6 +8,8 @@ import "./dropdown/dropdown.js";
 import "./dropdown/item.js";
 import "./icon/icon.js";
 import "./input/input.js";
+import "./input/key-value.js";
+import "./input/list.js";
 import "./layout/full-page.js";
 import "./modal/modal.js";
 import "./placeholder/placeholder.js";

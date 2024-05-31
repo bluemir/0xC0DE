@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"net/http"
 	"net/http/pprof"
 
 	"github.com/gin-gonic/gin"
@@ -38,6 +39,9 @@ func (server *Server) RunAdminHTTPServer(ctx context.Context, bind string) func(
 		app.Any("/debug/pprof/symbol", gin.WrapF(pprof.Symbol))
 		app.Any("/debug/pprof/trace", gin.WrapF(pprof.Trace))
 
-		return graceful.Run(ctx, bind, app)
+		return graceful.Run(ctx, &http.Server{
+			Addr:    bind,
+			Handler: app,
+		})
 	}
 }

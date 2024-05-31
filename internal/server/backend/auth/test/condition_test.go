@@ -50,6 +50,10 @@ func TestRule(t *testing.T) {
 			},
 		},
 	})
+	if err != nil {
+		logrus.Tracef("%#v", err)
+		t.Fatal(err)
+	}
 	assert.Equal(t, "test", r.Name)
 
 	assert.Equal(t, true, r.IsAllow(auth.Context{

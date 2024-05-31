@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"net/http"
+	"time"
 
 	"github.com/gin-contrib/location"
 	"github.com/gin-contrib/sessions"
@@ -60,6 +62,12 @@ func (server *Server) RunServiceHTTPServer(ctx context.Context, bind string, cer
 		app.Use(extra...)
 		// app.Group("/grpc/*any", extra...)
 
-		return graceful.Run(ctx, bind, app, graceful.WithCert(certs))
+		return graceful.Run(ctx, &http.Server{
+			Addr:              bind,
+			Handler:           app,
+			ReadHeaderTimeout: 1 * time.Minute,
+			WriteTimeout:      3 * time.Minute,
+			IdleTimeout:       3 * time.Minute,
+		}, graceful.WithCert(certs))
 	}
 }

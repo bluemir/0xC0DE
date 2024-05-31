@@ -18,9 +18,6 @@ func newManager() (*auth.Manager, error) {
 		return nil, err
 	}
 	sqlDB.SetMaxOpenConns(1)
-	if err != nil {
-		return nil, err
-	}
 
 	s, err := store.Gorm(db, "")
 	if err != nil {

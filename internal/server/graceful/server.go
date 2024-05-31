@@ -2,6 +2,7 @@ package graceful
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"time"
 
@@ -15,9 +16,8 @@ type CertConfig struct {
 }
 
 type httpServerOption struct {
-	certs             *CertConfig
-	ReadHeaderTimeout time.Duration
-	WriteTimeout      time.Duration
+	certs           *CertConfig
+	shutdownTimeout time.Duration
 }
 
 type httpServerOptionFn func(*httpServerOption)
@@ -27,11 +27,15 @@ func WithCert(cert *CertConfig) httpServerOptionFn {
 		opt.certs = cert
 	}
 }
+func WithShutdownTimeout(d time.Duration) httpServerOptionFn {
+	return func(opt *httpServerOption) {
+		opt.shutdownTimeout = d
+	}
+}
 
-func Run(ctx context.Context, bind string, handler http.Handler, opts ...httpServerOptionFn) error {
+func Run(ctx context.Context, s *http.Server, opts ...httpServerOptionFn) error {
 	opt := httpServerOption{
-		ReadHeaderTimeout: 1 * time.Minute,
-		WriteTimeout:      3 * time.Minute,
+		shutdownTimeout: 5 * time.Second,
 	}
 
 	for _, fn := range opts {
@@ -40,24 +44,30 @@ func Run(ctx context.Context, bind string, handler http.Handler, opts ...httpSer
 
 	// setup graceful server
 	// https://github.com/gin-gonic/examples/blob/master/graceful-shutdown/graceful-shutdown/notify-with-context/server.go
-	s := http.Server{
+
+	/*s := http.Server{
 		Addr:              bind,
 		Handler:           handler,
 		ReadHeaderTimeout: 1 * time.Minute,
 		WriteTimeout:      3 * time.Minute,
+	}*/
+
+	l, err := net.Listen("tcp", s.Addr)
+	if err != nil {
+		return errors.WithStack(err)
 	}
 
 	errc := make(chan error)
 	go func() {
 		defer close(errc)
 
-		logrus.Infof("Listening and serving HTTP on '%s'", bind)
+		logrus.Infof("Listening and serving HTTP on '%s'", s.Addr)
 		if opt.certs == nil {
-			if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			if err := s.Serve(l); err != nil && err != http.ErrServerClosed {
 				errc <- err
 			}
 		} else {
-			if err := s.ListenAndServeTLS(opt.certs.CertFile, opt.certs.KeyFile); err != nil && err != http.ErrServerClosed {
+			if err := s.ServeTLS(l, opt.certs.CertFile, opt.certs.KeyFile); err != nil && err != http.ErrServerClosed {
 				errc <- err
 			}
 		}
@@ -71,11 +81,11 @@ func Run(ctx context.Context, bind string, handler http.Handler, opts ...httpSer
 	}
 
 	// nCtx for shutdown timeout only
-	nCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	nCtx, cancel := context.WithTimeout(context.Background(), opt.shutdownTimeout)
 	defer cancel()
 
 	if err := s.Shutdown(nCtx); err != nil {
-		return errors.Wrapf(err, "Server forced to shutdown: ")
+		return errors.Wrapf(err, "Server forced to shutdown")
 	}
 
 	return nil
