@@ -11,6 +11,18 @@ deploy: build/docker-image.pushed ## Deploy webapp
 	#     | kubectl apply -f -
 	#   kubectl kustermize deploy | kubectl apply -f -
 
+runtime/deploy/%-certs.yaml:
+	@mkdir -p $(dir $@)
+	@if [ "$(CA_CERT)" == "" ] ; then echo "CA_CERT must be provideded.";  exit 1 ; fi
+	@if [ "$(CERT)" == "" ]   ; then echo "CERT must be provideded.";  exit 1 ; fi
+	$(MAKE) $(CERT).crt $(CA_CERT)
+	kubectl create secret generic $(APP_NAME)-$*-cert \
+		--from-file=tls.crt=$(CERT).crt \
+		--from-file=tls.key=$(CERT).key \
+		--from-file=ca.crt=$(CA_CERT) \
+		--dry-run -o yaml \
+		> $@
+
 .PHONY: deploy
 tools: build/tools/kubectl
 build/tools/kubectl:

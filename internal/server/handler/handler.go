@@ -22,4 +22,6 @@ func backends(c *gin.Context) *bs.Backends {
 
 type ListResponse[T any] struct {
 	Items []T
+	//Page int
+	//PageSize int
 }

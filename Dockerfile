@@ -36,6 +36,7 @@ RUN yarn install
 ## for use vendor folder. uncomment next line
 #ENV OPTIONAL_BUILD_ARGS="-mod=vendor"
 ENV OPTIONAL_WEB_BUILD_ARGS="--minify"
+ENV OPTIONAL_BUILD_ARGS="--tags embed"
 
 ARG VERSION
 
