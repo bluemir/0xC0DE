@@ -1,14 +1,12 @@
-package queue
+package datastruct
 
-import "github.com/bluemir/0xC0DE/internal/datastruct"
-
-func Queue[T any](in <-chan T) <-chan T {
+func DynamicChan[T any](in <-chan T) <-chan T {
 	out := make(chan T)
 
 	go func() {
 		defer close(out)
 
-		store := datastruct.NewQueue[T]()
+		store := NewQueue[T]()
 		for {
 			if store.Len() == 0 {
 				evt, more := <-in

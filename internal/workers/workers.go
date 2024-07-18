@@ -3,7 +3,7 @@ package workers
 import (
 	"context"
 
-	"github.com/bluemir/0xC0DE/internal/events/queue"
+	"github.com/bluemir/0xC0DE/internal/datastruct"
 	"github.com/sirupsen/logrus"
 )
 
@@ -56,7 +56,7 @@ func Run[InT any, OutT any](ctx context.Context, fn func(context.Context, InT) (
 		}
 	}()
 
-	return ich, och, queue.Queue(ech)
+	return ich, och, datastruct.DynamicChan(ech)
 
 	// result.Out, result.In, result.Err, result.Add(array...), return result.Collect(), result.Errs()
 }
