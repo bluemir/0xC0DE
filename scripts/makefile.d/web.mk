@@ -31,7 +31,7 @@ OPTIONAL_CLEAN += assets/js/index.js
 ## esbuild
 STATICS += build/static/js/index.js # entrypoint
 build/static/js/%: export NODE_PATH=assets/js:assets/lib
-build/static/js/%: $(JS_SOURCES) build/yarn-updated
+build/static/js/%: $(JS_SOURCES) package-lock.json
 	@$(MAKE) build/tools/npx
 	@mkdir -p $(dir $@)
 	npx esbuild $(@:build/static/%=assets/%) --outdir=$(dir $@) \
@@ -57,14 +57,17 @@ build/$(APP_NAME): $(STATICS) $(HTML_SOURCES)
 ## resolve depandancy
 OPTIONAL_CLEAN += node_modules
 
-build/$(APP_NAME): build/yarn-updated
-build/yarn-updated: package.json
+build/$(APP_NAME): package-lock.json
+build/docker-image: package.json
+
+package-lock.json:
+	@$(MAKE) build/tools/npm
+	@mkdir -p $(dir $@)
+	npm install
+yarn.lock:
 	@$(MAKE) build/tools/yarn
 	@mkdir -p $(dir $@)
 	yarn install
-	touch $@
-
-build/docker-image: package.json
 
 build-tools: build/tools/npm build/tools/yarn build/tools/npx
 build/tools/npm:
