@@ -12,6 +12,7 @@ export PATH:=./build/tools/:./tools/bin:$(PATH)
 OPTIONAL_BUILD_ARGS?=
 
 default: build
+	# `make help` for more info
 
 # sub-makefiles
 # for build tools, docker build, deploy, static web files.
@@ -28,7 +29,7 @@ tools: build-tools ## Install tools(include build tools)
 
 help: ## Display this help
 	# requirement
-	#  - golang: 1.18.x
+	#  - golang: 1.22.x
 	#  - node  : 14.16.x
 	#  - make  : 4.3 (*CAUTION* osx has lower verion of make)
 	#

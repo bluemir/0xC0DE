@@ -1,4 +1,4 @@
-package events_test
+package pubsub_test
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/bluemir/0xC0DE/internal/events"
+	"github.com/bluemir/0xC0DE/internal/pubsub"
 )
 
 type key struct{}
@@ -31,7 +31,7 @@ func TestSendEvent(t *testing.T) {
 	ctx, cancel := testContext(t, 1*time.Second)
 	defer cancel()
 
-	hub, err := events.NewHub(ctx)
+	hub, err := pubsub.NewHub(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -39,9 +39,9 @@ func TestSendEvent(t *testing.T) {
 
 	h := &CounterHandler{}
 
-	hub.AddAllEventHandler(h)
+	hub.AddHandler("*", h)
 
-	hub.FireEvent("test", nil)
+	hub.Publish("test", nil)
 
 	time.Sleep(10 * time.Millisecond)
 
@@ -51,17 +51,17 @@ func TestSendMultiple(t *testing.T) {
 	ctx, cancel := testContext(t, 1*time.Second)
 	defer cancel()
 
-	hub, err := events.NewHub(ctx)
+	hub, err := pubsub.NewHub(ctx)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	recoder := NewRecoder(ctx, hub)
 
-	hub.FireEvent("test-1", nil)
-	hub.FireEvent("test-2", nil)
-	hub.FireEvent("test-3", nil)
-	hub.FireEvent("test-4", nil)
+	hub.Publish("test-1", nil)
+	hub.Publish("test-2", nil)
+	hub.Publish("test-3", nil)
+	hub.Publish("test-4", nil)
 
 	time.Sleep(10 * time.Millisecond)
 
@@ -78,29 +78,29 @@ func TestAddEventHandlerWithNull(t *testing.T) {
 	ctx, cancel := testContext(t, 1*time.Second)
 	defer cancel()
 
-	hub, err := events.NewHub(ctx)
+	hub, err := pubsub.NewHub(ctx)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	hub.AddEventHandler("test", events.Handler(nil))
+	hub.AddHandler("test", pubsub.Handler(nil))
 
-	hub.FireEvent("test", nil)
+	hub.Publish("test", nil)
 }
 
 func TestEventKind(t *testing.T) {
 	ctx, cancel := testContext(t, 1*time.Second)
 	defer cancel()
 
-	hub, err := events.NewHub(ctx)
+	hub, err := pubsub.NewHub(ctx)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	counter := &CounterHandler{}
-	hub.AddEventHandler("test-1", counter)
+	hub.AddHandler("test-1", counter)
 
-	hub.FireEvent("test-2", nil)
+	hub.Publish("test-2", nil)
 
 	assert.Equal(t, 0, counter.GetCount())
 }
@@ -109,7 +109,7 @@ func TestFireEventInsideEventHandler(t *testing.T) {
 	ctx, cancel := testContext(t, 1*time.Second)
 	defer cancel()
 
-	hub, err := events.NewHub(ctx)
+	hub, err := pubsub.NewHub(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -117,9 +117,9 @@ func TestFireEventInsideEventHandler(t *testing.T) {
 
 	recoder := NewRecoder(ctx, hub)
 
-	hub.AddEventHandler("button.down", FowardHandler{"click"})
+	hub.AddHandler("button.down", FowardHandler{"click"})
 
-	hub.FireEvent("button.down", nil)
+	hub.Publish("button.down", nil)
 
 	time.Sleep(10 * time.Millisecond)
 
@@ -133,16 +133,16 @@ func TestAddHandlerInsideEventHandler(t *testing.T) {
 	ctx, cancel := testContext(t, 1*time.Second)
 	defer cancel()
 
-	hub, err := events.NewHub(ctx)
+	hub, err := pubsub.NewHub(ctx)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
 	recoder := NewRecoder(ctx, hub)
-	hub.AddEventHandler("do", ReplaceSelfHandler{})
-	hub.FireEvent("do", nil)
-	hub.FireEvent("do", nil)
+	hub.AddHandler("do", ReplaceSelfHandler{})
+	hub.Publish("do", nil)
+	hub.Publish("do", nil)
 
 	time.Sleep(10 * time.Millisecond)
 
@@ -151,4 +151,41 @@ func TestAddHandlerInsideEventHandler(t *testing.T) {
 		"do",
 		"done",
 	}, recoder.History())
+}
+
+func TestListenWithStar(t *testing.T) {
+	ctx, cancel := testContext(t, 1*time.Second)
+	defer cancel()
+
+	hub, err := pubsub.NewHub(ctx)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	counter := &CounterHandler{}
+	hub.AddHandler("*", counter)
+
+	hub.Publish("test", nil)
+
+	time.Sleep(10 * time.Millisecond)
+
+	assert.Equal(t, 1, counter.GetCount())
+}
+func ignoreTestListenWithStarInWord(t *testing.T) {
+	ctx, cancel := testContext(t, 1*time.Second)
+	defer cancel()
+
+	hub, err := pubsub.NewHub(ctx)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	counter := &CounterHandler{}
+	hub.AddHandler("test.*", counter)
+
+	hub.Publish("test.test", nil)
+
+	time.Sleep(10 * time.Millisecond)
+
+	assert.Equal(t, 1, counter.GetCount())
 }

@@ -7,7 +7,7 @@ import (
 	"golang.org/x/net/context"
 	"gorm.io/gorm"
 
-	"github.com/bluemir/0xC0DE/internal/events"
+	"github.com/bluemir/0xC0DE/internal/pubsub"
 	"github.com/bluemir/0xC0DE/internal/server/backend/meta"
 )
 
@@ -15,10 +15,10 @@ type Config struct {
 }
 type Manager struct {
 	db     *gorm.DB
-	events *events.Hub
+	events *pubsub.Hub
 }
 
-func New(ctx context.Context, conf *Config, db *gorm.DB, events *events.Hub) (*Manager, error) {
+func New(ctx context.Context, conf *Config, db *gorm.DB, events *pubsub.Hub) (*Manager, error) {
 	if err := db.AutoMigrate(&Post{}); err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (m *Manager) Create(ctx context.Context, message string) (*Post, error) {
 		return nil, err
 	}
 
-	m.events.FireEvent("posts.created", post)
+	m.events.Publish("posts.created", post)
 
 	return post, nil
 }

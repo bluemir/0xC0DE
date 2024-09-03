@@ -12,8 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/bluemir/0xC0DE/internal/server/graceful"
-	"github.com/bluemir/0xC0DE/internal/server/handler"
-	"github.com/bluemir/0xC0DE/internal/server/middleware/auth"
+	"github.com/bluemir/0xC0DE/internal/server/injector"
 	"github.com/bluemir/0xC0DE/internal/server/middleware/errs"
 	"github.com/bluemir/0xC0DE/internal/server/middleware/prom"
 )
@@ -40,6 +39,9 @@ func (server *Server) RunServiceHTTPServer(ctx context.Context, bind string, cer
 
 		// sessions
 		store := cookie.NewStore([]byte(server.salt))
+		store.Options(sessions.Options{
+			Path: "/",
+		})
 		app.Use(sessions.Sessions("0xC0DE_session", store))
 
 		app.Use(gin.Recovery())
@@ -48,9 +50,7 @@ func (server *Server) RunServiceHTTPServer(ctx context.Context, bind string, cer
 
 		app.Use(errs.Middleware)
 
-		app.Use(auth.Middleware(server.backends.Auth))
-
-		app.Use(handler.Inject(server.backends))
+		app.Use(injector.Inject(server.backends))
 
 		// prometheus for monitoring
 		app.Use(prom.Metrics())

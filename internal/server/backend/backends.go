@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	"github.com/bluemir/0xC0DE/internal/events"
+	"github.com/bluemir/0xC0DE/internal/pubsub"
 	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
 	"github.com/bluemir/0xC0DE/internal/server/backend/posts"
 	"github.com/pkg/errors"
@@ -31,7 +31,7 @@ type Config struct {
 }
 type Backends struct {
 	Auth   *auth.Manager
-	Events *events.Hub
+	Events *pubsub.Hub
 	Posts  *posts.Manager
 }
 
@@ -40,7 +40,7 @@ func Initialize(ctx context.Context, args *Args) (*Backends, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "config file not exist. path: %s", args.ConfigFilePath)
 	}
-	events, err := events.NewHub(ctx)
+	events, err := pubsub.NewHub(ctx)
 	if err != nil {
 		return nil, err
 	}

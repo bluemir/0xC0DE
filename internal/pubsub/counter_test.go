@@ -1,9 +1,9 @@
-package events_test
+package pubsub_test
 
 import (
 	"sync"
 
-	"github.com/bluemir/0xC0DE/internal/events"
+	"github.com/bluemir/0xC0DE/internal/pubsub"
 )
 
 type CounterHandler struct {
@@ -11,7 +11,7 @@ type CounterHandler struct {
 	count int
 }
 
-func (h *CounterHandler) Handle(ctx events.Context, evt events.Event) {
+func (h *CounterHandler) Handle(ctx pubsub.Context, evt pubsub.Message) {
 	h.lock.Lock()
 	defer h.lock.Unlock()
 	h.count++

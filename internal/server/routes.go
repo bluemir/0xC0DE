@@ -8,9 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/bluemir/0xC0DE/internal/server/handler"
-	"github.com/bluemir/0xC0DE/internal/server/middleware/auth"
-	"github.com/bluemir/0xC0DE/internal/server/middleware/auth/resource"
-	"github.com/bluemir/0xC0DE/internal/server/middleware/auth/verb"
+	"github.com/bluemir/0xC0DE/internal/server/handler/auth/resource"
+	"github.com/bluemir/0xC0DE/internal/server/handler/auth/verb"
 	"github.com/bluemir/0xC0DE/internal/static"
 )
 
@@ -19,8 +18,8 @@ import (
 // @description
 func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) {
 	var (
-		requireLogin = auth.RequireLogin
-		can          = auth.Can
+		requireLogin = handler.RequireLogin
+		can          = handler.Can
 	)
 
 	// API
@@ -43,7 +42,7 @@ func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) 
 		v1.POST("/users", handler.Register)
 		v1.GET("/users/me", handler.Me)
 
-		v1.GET("/can/:verb/:resource", handler.Can)
+		v1.GET("/can/:verb/:resource", handler.CanAPI)
 
 		v1.GET("/users", handler.ListUsers)
 		v1.GET("/groups", handler.ListGroups)
