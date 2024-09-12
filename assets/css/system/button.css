@@ -1,0 +1,28 @@
+button[enhanced] {
+    border: none;
+    padding: 0.3rem 0.5rem;
+    margin: 0.2rem;
+	border-radius: 0.3rem;
+	
+	/* colors */
+	background: var(--gray-200);
+	&:hover {
+		background: var(--gray-400);
+	}
+	
+	&[enhanced=primary] {
+		background: var(--green-300);
+	
+		&:hover {
+			background: var(--green-600);
+		}
+	}
+
+	&[enhanced=error] {
+		background: var(--red-300);
+	
+		&:hover {
+			background: var(--red-600);
+		}
+	}
+}

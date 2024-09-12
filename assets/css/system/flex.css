@@ -1,0 +1,11 @@
+[flex] {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+}
+[flex=right] {
+    justify-content: flex-end;
+}
+[flex=center] {
+    justify-content: center;
+}
