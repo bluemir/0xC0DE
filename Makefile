@@ -6,30 +6,34 @@ APP_NAME=$(notdir $(IMPORT_PATH))
 
 export GO111MODULE=on
 export GOPRIVATE=
-export PATH:=./build/tools/:./tools/bin:$(PATH)
+export PATH:=./build/tools/:$(PATH)
 
 # go build args
 OPTIONAL_BUILD_ARGS?=
 
+.PHONY: default
 default: build
-	# `make help` for more info
 
 # sub-makefiles
 # for build tools, docker build, deploy, static web files.
 include scripts/makefile.d/*.mk
 
 ##@ General
+.PHONY: clean
 clean: ## Clean up
 	rm -rf build/ $(OPTIONAL_CLEAN)
 
+.PHONY: build-tools
 build-tools: ## Install build tools
 	# Build tool installed
+.PHONY: tools
 tools: build-tools ## Install tools(include build tools)
 	# Tool installed
 
+.PHONY: help
 help: ## Display this help
 	# requirement
-	#  - golang: 1.23.x
+	#  - golang: 1.18.x
 	#  - node  : 14.16.x
 	#  - make  : 4.3 (*CAUTION* osx has lower verion of make)
 	#
@@ -39,5 +43,6 @@ help: ## Display this help
 	@echo -e "#"
 	@echo -e "# This project used https://github.com/bluemir/0xC0DE as template."
 
-.PHONY: default build run test clean tools build-tools help
-
+%/.placeholder:
+	@mkdir -p $(dir $@)
+	touch $@
