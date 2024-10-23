@@ -11,12 +11,13 @@ WEB_META      := assets/manifest.json assets/favicon.ico
 
 build/docker-image: $(JS_SOURCES) $(CSS_SOURCES) $(WEB_LIBS) $(HTML_SOURCES)
 
-STATICS :=
+.PHONY: web
+web: ## Build web-files. (bundle, minify, transpile, etc.)
 
 ## common static files
-STATICS += $(WEB_LIBS:assets/%=build/static/%)
-STATICS += $(IMAGES:assets/%=build/static/%)
-STATICS += $(WEB_META:assets/%=build/static/%)
+web: $(WEB_LIBS:assets/%=build/static/%)
+web: $(IMAGES:assets/%=build/static/%)
+web: $(WEB_META:assets/%=build/static/%)
 
 build/static/%: assets/%
 	@mkdir -p $(dir $@)
@@ -31,7 +32,7 @@ assets/js/index.js: $(JS_SOURCES) scripts/tools/import-helper/*
 OPTIONAL_CLEAN += assets/js/index.js
 
 ## esbuild
-STATICS += build/static/js/index.js # entrypoint
+web: build/static/js/index.js  # entrypoint
 build/static/js/%: export NODE_PATH=assets/js:assets/lib
 build/static/js/%: assets/js/% package-lock.json $(MAKEFILES)
 	@$(MAKE) build/tools/npx
@@ -41,7 +42,7 @@ build/static/js/%: assets/js/% package-lock.json $(MAKEFILES)
 		--external:lit-html \
 		$(OPTIONAL_WEB_BUILD_ARGS)
 
-STATICS += build/static/css/page.css build/static/css/element.css
+web: build/static/css/page.css build/static/css/element.css
 build/static/css/%: assets/css/%
 	@$(MAKE) build/tools/npx
 	@mkdir -p $(dir $@)
@@ -51,22 +52,19 @@ build/static/css/%: assets/css/%
 
 build/static/css/page.css build/static/css/element.css: $(CSS_SOURCES)
 
-.PHONY: web
-web: $(STATICS) ## Build web-files. (bundle, minify, transpile, etc.)
-
-build/$(APP_NAME): $(STATICS) $(HTML_SOURCES)
+build/$(APP_NAME): web $(HTML_SOURCES)
 
 ## resolve depandancy
 OPTIONAL_CLEAN += node_modules
 
 build/$(APP_NAME): package-lock.json
-build/docker-image: package.json
+build/docker-image: package-lock.json
 
-package-lock.json:
+package-lock.json: package.json
 	@$(MAKE) build/tools/npm
 	@mkdir -p $(dir $@)
 	npm install
-yarn.lock:
+yarn.lock: package.json
 	@$(MAKE) build/tools/yarn
 	@mkdir -p $(dir $@)
 	yarn install
