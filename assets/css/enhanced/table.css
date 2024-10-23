@@ -1,0 +1,15 @@
+table[enhanced] {
+	width: 100%;
+
+	th, td {
+		border-bottom: 1px solid gray;
+		border-top: 1px solid gray;
+		text-align: left;
+
+		padding: 0 0.5rem;
+	}
+
+	thead {
+		background: var(--gray-100);
+	}
+}

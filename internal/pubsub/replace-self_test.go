@@ -2,9 +2,11 @@ package pubsub_test
 
 import "github.com/bluemir/0xC0DE/internal/pubsub"
 
-type ReplaceSelfHandler struct{}
+type ReplaceSelfHandler struct {
+	Hub pubsub.IHub
+}
 
-func (ReplaceSelfHandler) Handle(ctx pubsub.Context, evt pubsub.Message) {
-	ctx.RemoveHandler("do", ReplaceSelfHandler{})
-	ctx.AddHandler("do", FowardHandler{to: "done"})
+func (h *ReplaceSelfHandler) Handle(evt pubsub.Message) {
+	h.Hub.RemoveHandler("do", h)
+	h.Hub.AddHandler("do", FowardHandler{to: "done", Hub: h.Hub})
 }

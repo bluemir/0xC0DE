@@ -3,16 +3,24 @@ button[enhanced] {
     padding: 0.3rem 0.5rem;
     margin: 0.2rem;
 	border-radius: 0.3rem;
-	
+
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+
+	& > .material-symbols-outlined {
+		font-size: inherit;
+	}
+
 	/* colors */
 	background: var(--gray-200);
 	&:hover {
 		background: var(--gray-400);
 	}
-	
+
 	&[enhanced=primary] {
 		background: var(--green-300);
-	
+
 		&:hover {
 			background: var(--green-600);
 		}
@@ -20,7 +28,7 @@ button[enhanced] {
 
 	&[enhanced=error] {
 		background: var(--red-300);
-	
+
 		&:hover {
 			background: var(--red-600);
 		}

@@ -18,8 +18,13 @@ import (
 )
 
 func (server *Server) RunServiceHTTPServer(ctx context.Context, bind string, certs *CertConfig, extra ...gin.HandlerFunc) func() error {
-
 	return func() error {
+		if logrus.IsLevelEnabled(logrus.DebugLevel) {
+			gin.SetMode(gin.DebugMode)
+		} else {
+			gin.SetMode(gin.ReleaseMode)
+		}
+
 		// starting http server
 		app := gin.New()
 

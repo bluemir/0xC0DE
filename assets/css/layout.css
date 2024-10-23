@@ -1,0 +1,80 @@
+body[layout=full] {
+	/*
+		struct
+
+		body[layout=full]
+			header
+				#elements
+			menu
+				#elements
+			main
+				#elements
+	*/
+
+	height: 100%;
+	display: grid;
+	grid-template-columns: auto 1fr;
+	grid-template-rows: auto 1fr;
+
+	& > header {
+		grid-column: 1 / 3;
+
+		padding-right: 1rem;
+		padding-left: 1rem;
+	}
+	& > menu {
+		overflow-y: scroll;
+		padding: 1rem;
+		margin: 0;
+		min-width: 12rem;
+
+		a {
+			display: block;
+		}
+	}
+	& > main {
+		padding: 1rem;
+		overflow-y: scroll;
+	}
+}
+
+body[layout=one-page] {
+	/*
+		struct
+
+		body[layout=one-page]
+			header
+				[row]
+					#elements
+			main
+				[row]
+					#elements
+				[row]
+					#elements
+				#elements // must be no padding, margin
+					[row]
+						#elements
+			footer
+				[row]
+					#elements
+	*/
+	[row] {
+		max-width: 1280px;
+		margin: auto;
+		padding: 0 2rem;
+	}
+
+	& > header {
+		position: sticky;
+	}
+
+	& > main {
+		[row] {
+			padding: 2rem;
+		}
+	}
+
+	& > footer {
+
+	}
+}

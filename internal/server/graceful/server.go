@@ -42,6 +42,10 @@ func Run(ctx context.Context, s *http.Server, opts ...httpServerOptionFn) error 
 		fn(&opt)
 	}
 
+	s.BaseContext = func(l net.Listener) context.Context {
+		return ctx
+	}
+
 	// setup graceful server
 	// https://github.com/gin-gonic/examples/blob/master/graceful-shutdown/graceful-shutdown/notify-with-context/server.go
 

@@ -1,7 +1,7 @@
 package datastruct
 
 type Tree[K comparable, V any] struct {
-	nodes map[K]*Tree[K, V]
+	nodes Map[K, *Tree[K, V]]
 	value *V
 }
 
@@ -16,7 +16,7 @@ var _ ITree[int, int] = &Tree[int, int]{}
 
 func NewTree[K comparable, V any]() *Tree[K, V] {
 	return &Tree[K, V]{
-		nodes: map[K]*Tree[K, V]{},
+		nodes: Map[K, *Tree[K, V]]{},
 	}
 }
 
@@ -29,8 +29,7 @@ func (t *Tree[K, V]) Get(keys ...K) (V, bool) {
 		return *t.value, true
 	}
 
-	key := keys[0]
-	node, ok := t.nodes[key]
+	node, ok := t.nodes.Get(keys[0])
 	if !ok {
 		var ret V
 		return ret, false
@@ -42,12 +41,8 @@ func (t *Tree[K, V]) Set(keys []K, value V) {
 		t.value = &value
 		return
 	}
-	key := keys[0]
-	node, ok := t.nodes[key]
-	if !ok {
-		node = NewTree[K, V]()
-		t.nodes[key] = node
-	}
+
+	node, _ := t.nodes.GetOrSet(keys[0], NewTree[K, V]())
 	node.Set(keys[1:], value)
 }
 func (t *Tree[K, V]) GetOrSet(keys []K, value V) (V, bool) {

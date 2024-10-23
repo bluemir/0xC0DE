@@ -10,7 +10,7 @@ type chanEventHandler struct {
 	ch chan<- Message
 }
 
-func (h chanEventHandler) Handle(ctx Context, evt Message) {
+func (h chanEventHandler) Handle(evt Message) {
 	for {
 		select {
 		case h.ch <- evt:

@@ -11,7 +11,7 @@ type CounterHandler struct {
 	count int
 }
 
-func (h *CounterHandler) Handle(ctx pubsub.Context, evt pubsub.Message) {
+func (h *CounterHandler) Handle(evt pubsub.Message) {
 	h.lock.Lock()
 	defer h.lock.Unlock()
 	h.count++

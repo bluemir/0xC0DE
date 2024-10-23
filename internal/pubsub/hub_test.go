@@ -117,7 +117,7 @@ func TestFireEventInsideEventHandler(t *testing.T) {
 
 	recoder := NewRecoder(ctx, hub)
 
-	hub.AddHandler("button.down", FowardHandler{"click"})
+	hub.AddHandler("button.down", FowardHandler{to: "click", Hub: hub})
 
 	hub.Publish("button.down", nil)
 
@@ -140,7 +140,7 @@ func TestAddHandlerInsideEventHandler(t *testing.T) {
 	}
 
 	recoder := NewRecoder(ctx, hub)
-	hub.AddHandler("do", ReplaceSelfHandler{})
+	hub.AddHandler("do", &ReplaceSelfHandler{Hub: hub})
 	hub.Publish("do", nil)
 	hub.Publish("do", nil)
 
@@ -171,7 +171,7 @@ func TestListenWithStar(t *testing.T) {
 
 	assert.Equal(t, 1, counter.GetCount())
 }
-func ignoreTestListenWithStarInWord(t *testing.T) {
+func TestListenWithStarInWord(t *testing.T) {
 	ctx, cancel := testContext(t, 1*time.Second)
 	defer cancel()
 

@@ -6,10 +6,11 @@ import (
 )
 
 type FowardHandler struct {
-	to string
+	to  string
+	Hub pubsub.IHub
 }
 
-func (h FowardHandler) Handle(ctx pubsub.Context, evt pubsub.Message) {
+func (h FowardHandler) Handle(evt pubsub.Message) {
 	logrus.Trace(evt)
-	ctx.Publish(h.to, evt.Detail)
+	h.Hub.Publish(h.to, evt.Detail)
 }

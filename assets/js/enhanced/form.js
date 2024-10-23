@@ -1,29 +1,33 @@
 import * as $ from "bm.js/bm.module.js";
 
-$.all(`form[method="delete" i], form[method="put" i]`).map(elem => elem.on("submit", async evt => {
-	// hijack submit
-	evt.preventDefault();
+load();
 
-	let $form = evt.target;
-	let method = $form.attr("method") ? $form.attr("method").toLowerCase() : "get";
+export function load(elem = document) {
+	$.all(elem, `form[method="delete" i], form[method="put" i]`).map(elem => elem.on("submit", async evt => {
+		// hijack submit
+		evt.preventDefault();
 
-	let data = new FormData($form);
+		let $form = evt.target;
+		let method = $form.attr("method") ? $form.attr("method").toLowerCase() : "get";
 
-	let res = await fetch($form.action, {method: method, body: data, redirect: "follow"});
+		let data = new FormData($form);
 
-	console.log("method=delete or method=put not support in valila, it will redirect 'GET' request")
+		let res = await fetch($form.action, {method: method, body: data, redirect: "follow"});
 
-	if (res.status >= 500) {
-		console.error("error on request")
-		return
-	}
+		console.log("method=delete or method=put not support in valila, it will redirect 'GET' request")
 
-	// handle redirect
-	if (res.redirected) {
-		location.href = res.url;
-		return
-	}
+		if (res.status >= 500) {
+			console.error("error on request")
+			return
+		}
 
-	// if not,
-	location.href = $form.action;
-}))
+		// handle redirect
+		if (res.redirected) {
+			location.href = res.url;
+			return
+		}
+
+		// if not,
+		location.href = $form.action;
+	}))
+}

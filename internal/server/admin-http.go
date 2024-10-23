@@ -6,6 +6,7 @@ import (
 	"net/http/pprof"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
@@ -19,6 +20,11 @@ import (
 
 func (server *Server) RunAdminHTTPServer(ctx context.Context, bind string) func() error {
 	return func() error {
+		if logrus.IsLevelEnabled(logrus.DebugLevel) {
+			gin.SetMode(gin.DebugMode)
+		} else {
+			gin.SetMode(gin.ReleaseMode)
+		}
 		// starting http server
 		app := gin.New()
 

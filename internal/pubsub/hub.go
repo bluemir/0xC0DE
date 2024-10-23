@@ -65,14 +65,17 @@ func (h *Hub) broadcast(evt Message) {
 		handlers, _ := h.handlers.GetOrSet(keys, datastruct.NewSet[Handler]())
 
 		for _, handler := range handlers.List() {
-			handler.Handle(h, evt)
+			handler.Handle(evt)
 		}
 	}
 	{
-		// handle star
-		handlers, _ := h.handlers.GetOrSet([]string{"*"}, datastruct.NewSet[Handler]())
-		for _, handler := range handlers.List() {
-			handler.Handle(h, evt)
+		//handler star
+		for i := len(keys); i > 0; i-- {
+			keys[i-1] = "*"
+			handlers, _ := h.handlers.GetOrSet(keys[:i], datastruct.NewSet[Handler]())
+			for _, handler := range handlers.List() {
+				handler.Handle(evt)
+			}
 		}
 	}
 }
@@ -113,15 +116,4 @@ func (h *Hub) Watch(kind string, done <-chan struct{}) <-chan Message {
 	}()
 
 	return c
-}
-
-func (h *Hub) Context() context.Context {
-	return h.ctx
-}
-
-func (h *Hub) Set(key any, value any) {
-	h.values.Set(key, value)
-}
-func (h *Hub) Get(key any) (any, bool) {
-	return h.values.Get(key)
 }

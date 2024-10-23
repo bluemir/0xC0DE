@@ -1,7 +1,6 @@
 package pubsub
 
 import (
-	"context"
 	"encoding/gob"
 	"time"
 )
@@ -18,19 +17,10 @@ type Message struct {
 }
 
 type Handler interface {
-	Handle(ctx Context, msg Message)
+	Handle(msg Message)
 }
 
 type Listener chan<- Message
-
-type Context interface {
-	Context() context.Context
-
-	Set(key any, value any)
-	Get(key any) (any, bool)
-
-	IHub
-}
 
 type IHub interface {
 	// kind must not contain "*"
@@ -49,4 +39,4 @@ type IHub interface {
 	// eg) for evt := range hub.Watch("test", ctx.Done())
 }
 
-var _ IHub = &Hub{}
+var _ IHub = (*Hub)(nil)

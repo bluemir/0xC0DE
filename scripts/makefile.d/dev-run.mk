@@ -16,6 +16,7 @@ dev-run: ## Run dev server. If detect file change, automatically rebuild&restart
 		--include "scripts/makefile.d/*.mk" \
 		--exclude "build/**" \
 		--exclude "**.sw*" \
+		--exclude "assets/js/index.js" \
 		-- \
 	$(MAKE) test run
 
@@ -33,6 +34,7 @@ test-run: ## Run test. If detect file change, automatically run test
 		--include "scripts/makefile.d/*.mk" \
 		--exclude "build/**" \
 		--exclude "**.sw*" \
+		--exclude "assets/js/index.js" \
 		-- \
 	$(MAKE) test
 

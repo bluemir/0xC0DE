@@ -29,7 +29,7 @@ tools: build-tools ## Install tools(include build tools)
 
 help: ## Display this help
 	# requirement
-	#  - golang: 1.22.x
+	#  - golang: 1.23.x
 	#  - node  : 14.16.x
 	#  - make  : 4.3 (*CAUTION* osx has lower verion of make)
 	#
