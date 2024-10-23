@@ -25,29 +25,31 @@ build/static/%: assets/%
 ## js import helper
 build/static/js/index.js: assets/js/index.js
 assets/js/index.js: $(JS_SOURCES) scripts/tools/import-helper/*
-	go run ./scripts/tools/import-helper > $@
+	go run ./scripts/tools/import-helper \
+		--dir=assets/js \
+		--target=$@
 OPTIONAL_CLEAN += assets/js/index.js
 
 ## esbuild
 STATICS += build/static/js/index.js # entrypoint
 build/static/js/%: export NODE_PATH=assets/js:assets/lib
-build/static/js/%: $(JS_SOURCES) package-lock.json
+build/static/js/%: assets/js/% package-lock.json $(MAKEFILES)
 	@$(MAKE) build/tools/npx
 	@mkdir -p $(dir $@)
-	npx esbuild $(@:build/static/%=assets/%) --outdir=$(dir $@) \
-		--bundle --sourcemap --format=esm \
+	npx esbuild $< --outdir=$(dir $@) \
+		--bundle --sourcemap --format=esm --minify \
 		--external:lit-html \
 		$(OPTIONAL_WEB_BUILD_ARGS)
-	#--external:/config.js \
-	#--minify \
 
 STATICS += build/static/css/page.css build/static/css/element.css
-build/static/css/%: $(CSS_SOURCES)
+build/static/css/%: assets/css/%
 	@$(MAKE) build/tools/npx
 	@mkdir -p $(dir $@)
-	npx esbuild $(@:build/static/%=assets/%) --outdir=$(dir $@) \
-		--bundle --sourcemap \
+	npx esbuild $< --outdir=$(dir $@) \
+		--bundle --sourcemap --minify \
 		$(OPTIONAL_WEB_BUILD_ARGS)
+
+build/static/css/page.css build/static/css/element.css: $(CSS_SOURCES)
 
 .PHONY: web
 web: $(STATICS) ## Build web-files. (bundle, minify, transpile, etc.)

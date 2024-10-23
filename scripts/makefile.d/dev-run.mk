@@ -39,7 +39,7 @@ test-run: ## Run test. If detect file change, automatically run test
 	$(MAKE) test
 
 reset: ## Kill all make process. Use when dev-run stuck.
-	ps -e | grep make | grep -v grep | awk '{print $$1}' | xargs kill
+	ps -e | grep $(APP_NAME) | grep -v grep | awk '{print $$1}' | xargs kill
 
 tools: build/tools/watcher
 build/tools/watcher: build/tools/go

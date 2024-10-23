@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/fs"
 	"os"
@@ -9,16 +10,35 @@ import (
 )
 
 func main() {
-	jsFiles := []string{}
 
-	if err := filepath.Walk("assets/js", func(path string, info fs.FileInfo, err error) error {
-		if !strings.HasSuffix(path, ".js") {
+	var source string
+	var target string
+
+	flag.StringVar(&source, "dir", "", "")
+	flag.StringVar(&target, "target", "", "target-file")
+
+	flag.Parse()
+
+	selfRef, err := filepath.Rel(source, target)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	jsFiles := []string{}
+	if err := filepath.Walk(source, func(p string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !strings.HasSuffix(p, ".js") {
 			return nil
 		}
+		path, err := filepath.Rel(source, p)
+		if err != nil {
+			return err
+		}
 
-		path = strings.TrimPrefix(path, "assets/js/")
-
-		if path == "index.js" { // remove self reference
+		if path == selfRef { // remove self reference
 			return nil
 		}
 
@@ -37,7 +57,7 @@ func main() {
 
 	data := strings.Join(lines, "\n")
 
-	if err := os.WriteFile("assets/js/index.js", []byte(data), 0644); err != nil {
+	if err := os.WriteFile(target, []byte(data), 0644); err != nil {
 		panic(err)
 	}
 }
