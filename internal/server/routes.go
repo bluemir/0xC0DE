@@ -43,6 +43,8 @@ func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) 
 		v1.GET("/users/me", handler.Me)
 
 		v1.GET("/can/:verb/:resource", handler.CanAPI)
+		v1.GET("/can/:verb", handler.CanAPI)
+		v1.GET("/can", handler.CanBulkAPI)
 
 		v1.GET("/users", handler.ListUsers)
 		v1.GET("/groups", handler.ListGroups)

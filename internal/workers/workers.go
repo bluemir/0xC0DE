@@ -8,36 +8,34 @@ import (
 )
 
 type option struct {
-	readBufSize  int
-	writeBufSize int
-	workerNum    int
+	workerNum int
 }
 type OptionFn func(*option)
 
-func Run[InT any, OutT any](ctx context.Context, fn func(context.Context, InT) (OutT, error), opts ...OptionFn) (chan<- InT, <-chan OutT, <-chan error) {
+type WorkerFunc[InType any, OutType any] func(context.Context, InType) (OutType, error)
+
+func Run[InType any, OutType any](ctx context.Context, in <-chan InType, fn WorkerFunc[InType, OutType], opts ...OptionFn) (<-chan OutType, <-chan error) {
 	opt := option{
-		readBufSize:  16,
-		writeBufSize: 16,
-		workerNum:    4,
+		workerNum: 4,
 	} // default
 
 	for _, optFn := range opts {
 		optFn(&opt)
 	}
 
-	ich := make(chan InT, opt.readBufSize)
-	och := make(chan OutT, opt.writeBufSize)
-	ech := make(chan error)
+	inputCh := datastruct.DynamicChan(in)
+	outputCh := make(chan OutType)
+	errorCh := make(chan error)
 
 	doneCh := make(chan struct{})
 
 	for i := 0; i < opt.workerNum; i++ {
-		go worker(ctx, fn, ich, och, ech, doneCh)
+		go worker(ctx, fn, inputCh, outputCh, errorCh, doneCh)
 	}
 
 	go func() {
-		defer close(och)
-		defer close(ech)
+		defer close(outputCh)
+		defer close(errorCh)
 
 		count := 0
 		for {
@@ -49,18 +47,15 @@ func Run[InT any, OutT any](ctx context.Context, fn func(context.Context, InT) (
 				if count >= opt.workerNum {
 					return
 				}
-				// case <- ech:
-				//   if opt.exitOnError { return }
-				//    send to out side? or collect and result.Errs()?
 			}
 		}
 	}()
 
-	return ich, och, datastruct.DynamicChan(ech)
+	return datastruct.DynamicChan(outputCh), datastruct.DynamicChan(errorCh)
 
 	// result.Out, result.In, result.Err, result.Add(array...), return result.Collect(), result.Errs()
 }
-func worker[InT any, OutT any](ctx context.Context, fn func(context.Context, InT) (OutT, error), in <-chan InT, out chan<- OutT, errc chan<- error, doneCh chan<- struct{}) {
+func worker[InType any, OutType any](ctx context.Context, fn WorkerFunc[InType, OutType], in <-chan InType, out chan<- OutType, errc chan<- error, doneCh chan<- struct{}) {
 	defer func() {
 		doneCh <- struct{}{}
 	}()
@@ -79,11 +74,7 @@ func worker[InT any, OutT any](ctx context.Context, fn func(context.Context, InT
 		out <- outV
 	}
 }
-func ReadBufferSize(n int) OptionFn {
-	return func(opt *option) {
-		opt.readBufSize = n
-	}
-}
+
 func WorkerNum(n int) OptionFn {
 	return func(opt *option) {
 		opt.workerNum = n

@@ -12,7 +12,7 @@ deploy: build/docker-image.pushed ## Deploy webapp
 	#   kubectl kustermize deploy | kubectl apply -f -
 
 runtime/deploy/%-certs.yaml:
-	@mkdir -p $(dir $@)
+	@mkdir -p $(@D)
 	@if [ "$(CA_CERT)" == "" ] ; then echo "CA_CERT must be provideded.";  exit 1 ; fi
 	@if [ "$(CERT)" == "" ]   ; then echo "CERT must be provideded.";  exit 1 ; fi
 	$(MAKE) $(CERT).crt $(CA_CERT)
@@ -26,6 +26,7 @@ runtime/deploy/%-certs.yaml:
 .PHONY: deploy
 tools: build/tools/kubectl
 build/tools/kubectl:
-	@which $(notdir $@) || (./scripts/tools/install/kubectl.sh)
+	@which $(@F) || (./scripts/tools/install/kubectl.sh)
 	#install kubectl. https://kubernetes.io/docs/tasks/tools/
+	touch $@
 

@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/pkg/errors"
@@ -38,15 +40,18 @@ func Run() error {
 		logrus.SetReportCaller(true)
 		logrus.Infof("logrus level: %s", level)
 
+		callerPrettyfier := func(f *runtime.Frame) (string, string) {
+			/* https://github.com/sirupsen/logrus/issues/63#issuecomment-476486166 */
+			return "", fmt.Sprintf("%s:%d", f.File, f.Line)
+		}
+
 		switch conf.logFormat {
 		case "text-color":
-			logrus.SetFormatter(&logrus.TextFormatter{ForceColors: true})
-		case "text":
-			logrus.SetFormatter(&logrus.TextFormatter{})
+			logrus.SetFormatter(&logrus.TextFormatter{ForceColors: true, CallerPrettyfier: callerPrettyfier})
 		case "json":
-			logrus.SetFormatter(&logrus.JSONFormatter{})
-		case "":
-			// do nothing. it means smart.
+			logrus.SetFormatter(&logrus.JSONFormatter{CallerPrettyfier: callerPrettyfier})
+		case "", "text":
+			logrus.StandardLogger().Formatter = &logrus.TextFormatter{CallerPrettyfier: callerPrettyfier}
 		default:
 			return errors.Errorf("unknown log format")
 		}

@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/gob"
 	"net/http"
+	"strings"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -82,6 +83,7 @@ func Register(c *gin.Context) {
 	c.JSON(http.StatusOK, u)
 }
 
+// @Router /api/v1/login [post]
 func Login(c *gin.Context) {
 	req := struct {
 		Username string `form:"username"`
@@ -105,6 +107,8 @@ func Login(c *gin.Context) {
 
 	c.JSON(http.StatusOK, user)
 }
+
+// @Router /api/v1/logout [get]
 func Logout(c *gin.Context) {
 	session := sessions.Default(c)
 	session.Delete(SessionKeyUser)
@@ -150,6 +154,7 @@ func Me(c *gin.Context) {
 	c.JSON(http.StatusOK, u)
 }
 
+// @Router /api/v1/users
 func ListUsers(c *gin.Context) {
 	users, err := backends(c).Auth.ListUser()
 	if err != nil {
@@ -160,6 +165,7 @@ func ListUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
+// @Router /api/v1/groups
 func ListGroups(c *gin.Context) {
 	groups, err := backends(c).Auth.ListGroup()
 	if err != nil {
@@ -199,6 +205,7 @@ type GroupWithBindingRoles struct {
 	Roles []string `json:"roles,omitempty"`
 }
 
+// @Router /api/v1/roles
 func ListRoles(c *gin.Context) {
 	roles, err := backends(c).Auth.ListRole()
 	if err != nil {
@@ -211,15 +218,59 @@ func ListRoles(c *gin.Context) {
 
 func CanAPI(c *gin.Context) {
 	verb := c.Param("verb")
-	resource := c.Param("resource")
+	kind := c.Param("resource")
 
 	user, _ := me(c)
 
 	// TODO Setup HTTP cache..
 
-	if backends(c).Auth.Can(user, auth.Verb(verb), auth.KeyValues{"kind": resource}) {
+	resource := auth.KeyValues{"kind": kind}
+	for k, v := range c.Request.URL.Query() {
+		resource[k] = strings.Join(v, ",")
+	}
+
+	if backends(c).Auth.Can(user, auth.Verb(verb), resource) {
 		c.Status(http.StatusOK)
 	} else {
 		c.Status(http.StatusForbidden)
 	}
+}
+
+type AuthzRequest struct {
+	Verb     auth.Verb     `json:"verb"`
+	Resource auth.Resource `json:"resource"`
+}
+
+type AuthzResponse struct {
+	Verb     auth.Verb     `json:"verb"`
+	Resource auth.Resource `json:"resource"`
+	Allowed  bool
+	//Cause string
+}
+
+// @Summary authz request
+// @Param "" body array AuthzRequest "request"
+// @Router /api/v1/can [get]
+func CanBulkAPI(c *gin.Context) {
+	req := []AuthzRequest{}
+
+	if err := c.ShouldBind(&req); err != nil {
+		c.Error(err)
+		return
+	}
+
+	user, _ := me(c)
+
+	res := []AuthzResponse{}
+	for _, item := range req {
+		allow := backends(c).Auth.Can(user, item.Verb, item.Resource)
+
+		res = append(res, AuthzResponse{
+			Verb:     item.Verb,
+			Resource: item.Resource,
+			Allowed:  allow,
+		})
+	}
+
+	c.JSON(http.StatusOK, res)
 }

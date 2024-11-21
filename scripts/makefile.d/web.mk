@@ -55,7 +55,7 @@ OPTIONAL_CLEAN += node_modules
 build/$(APP_NAME): package-lock.json
 build/docker-image: package-lock.json
 
-package-lock.json:
+package-lock.json: package.json
 	@$(MAKE) build/tools/npm
 	@mkdir -p $(dir $@)
 	npm install
@@ -65,7 +65,7 @@ yarn.lock:
 	@mkdir -p $(dir $@)
 	yarn install
 
-build-tools: build/tools/npm build/tools/yarn build/tools/npx
+build-tools: build/tools/npm build/tools/npx
 build/tools/npm:
 	@which $(notdir $@)
 build/tools/npx:
