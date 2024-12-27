@@ -154,7 +154,7 @@ func Me(c *gin.Context) {
 	c.JSON(http.StatusOK, u)
 }
 
-// @Router /api/v1/users
+// @Router /api/v1/users [get]
 func ListUsers(c *gin.Context) {
 	users, err := backends(c).Auth.ListUser()
 	if err != nil {
@@ -165,7 +165,7 @@ func ListUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
-// @Router /api/v1/groups
+// @Router /api/v1/groups [get]
 func ListGroups(c *gin.Context) {
 	groups, err := backends(c).Auth.ListGroup()
 	if err != nil {
@@ -205,7 +205,7 @@ type GroupWithBindingRoles struct {
 	Roles []string `json:"roles,omitempty"`
 }
 
-// @Router /api/v1/roles
+// @Router /api/v1/roles [get]
 func ListRoles(c *gin.Context) {
 	roles, err := backends(c).Auth.ListRole()
 	if err != nil {
