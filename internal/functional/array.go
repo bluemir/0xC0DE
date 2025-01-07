@@ -9,6 +9,31 @@ func Map[In any, Out any](in []In, fn func(In) Out) []Out {
 
 	return out
 }
+func MapWithError[In any, Out any](in []In, fn func(In) (Out, error)) ([]Out, error) {
+	out := []Out{}
+
+	for _, v := range in {
+		o, err := fn(v)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, o)
+	}
+
+	return out, nil
+}
+func Contain[In comparable](in []In, v In) bool {
+	return ContainWithFn(in, func(i In) bool { return i == v })
+}
+func ContainWithFn[In any](in []In, fn func(In) bool) bool {
+	for _, v := range in {
+		if fn(v) {
+			return true
+		}
+	}
+
+	return false
+}
 func Filter[T any](in []T, fn func(T) bool) []T {
 	out := []T{}
 

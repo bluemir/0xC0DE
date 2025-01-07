@@ -3,6 +3,10 @@ package auth
 import (
 	"net/http"
 
+	"gorm.io/gorm"
+
+	"github.com/bluemir/0xC0DE/internal/server/backend/meta"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,7 +24,7 @@ type IManager interface {
 	// User
 	CreateUser(username string, opts ...CreateUserOption) (*User, error)
 	GetUser(username string) (*User, error)
-	ListUser() ([]User, error)
+	ListUser(opts ...meta.ListOptionFn) ([]User, error)
 	UpdateUser(user *User) error
 	DeleteUser(username string) error
 
@@ -33,7 +37,7 @@ type IManager interface {
 
 	// Group
 	CreateGroup(name string) (*Group, error)
-	ListGroup() ([]Group, error)
+	ListGroup(opts ...meta.ListOptionFn) ([]Group, error)
 	DeleteGroup(name string) error
 	// group has only name. no need to update
 	// adding or remove group member will be handle in user method
@@ -41,7 +45,7 @@ type IManager interface {
 	// Role
 	CreateRole(name string, rules []Rule) (*Role, error)
 	GetRole(name string) (*Role, error)
-	ListRole() ([]Role, error)
+	ListRole(opts ...meta.ListOptionFn) ([]Role, error)
 	UpdateRole(role *Role) error
 	DeleteRole(name string) error
 
@@ -51,17 +55,29 @@ type IManager interface {
 	ListAssignedRole(Subject) ([]Role, error)
 }
 
-var _ IManager = &Manager{}
+var _ IManager = (*Manager)(nil)
 
 type Manager struct {
-	store AuthStore
-	salt  string
+	db   *gorm.DB
+	salt string
 }
 
-func New(store AuthStore, salt string) (*Manager, error) {
-	m := &Manager{store, salt}
+func New(db *gorm.DB, salt string) (*Manager, error) {
 
-	if err := m.addDefault(); err != nil {
+	if err := db.AutoMigrate(
+		&User{},
+		&Group{},
+		&ServiceAccount{},
+		&Token{},
+		&Role{},
+		&Assign{},
+	); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	m := &Manager{db, salt}
+
+	if err := m.initialize(); err != nil {
 		return nil, err
 	}
 
@@ -72,54 +88,39 @@ func (m *Manager) Default(username, unhashedKey string) (*User, error) {
 	if _, err := m.GetToken(username, unhashedKey); err != nil {
 		return nil, ErrUnauthorized
 	}
-	return m.store.GetUser(username)
+	return m.GetUser(username)
 }
 
 func (m *Manager) Can(user *User, verb Verb, res Resource) bool {
-	logger := logrus.WithField("user", user).WithField("verb", verb).WithField("resource", res)
+	logger := logrus.WithField("user", user.Name).WithField("verb", verb).WithField("resource", res).WithField("group", user.Groups)
 
-	logger.Trace(user.Subjects())
+	//logger.Tracef("length of subject: %d", len(user.Subjects()))
+
 	for _, subject := range user.Subjects() {
+		logger := logger.WithField("subject", subject)
 
 		roles, err := m.ListAssignedRole(subject)
 		if err != nil {
-			logrus.Warn(err)
+			logger.Warn(err)
 			continue // skip
 		}
-		logger.Tracef("%#v", roles)
 
 		for _, role := range roles {
+			logger := logger.WithField("role", role.Name)
+
 			if role.IsAllow(Context{
 				User:     user,
 				Subject:  subject,
 				Verb:     verb,
 				Resource: res,
 			}) {
+				logger.Tracef("allowed")
 				return true
 			}
+			logger.Trace("next")
 		}
 	}
 
+	logger.Trace("rejected")
 	return false
 }
-
-/*
-func (m *Manager) Could(user *User, verb Verb, res Resource) (bool, error) {
-	// could collect errors
-
-	for _, subject := range user.Subjects() {
-		roles, err := m.ListAssignedRole(subject)
-		if err != nil && exitOnErr {
-			return false, err
-		}
-		for _, role := range roles {
-			if role.IsAllow(verb, res) {
-				return true, nil
-			}
-		}
-
-	}
-
-	return false, nil
-}
-*/

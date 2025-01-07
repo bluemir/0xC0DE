@@ -33,7 +33,7 @@ func TestAddRoleWithCondition(t *testing.T) {
 	assert.Equal(t, "hello", r.Name)
 	assert.Len(t, r.Rules, 2)
 }
-func TestRule(t *testing.T) {
+func TestRole(t *testing.T) {
 	m, err := newManager()
 	if err != nil {
 		t.Fatal(err)

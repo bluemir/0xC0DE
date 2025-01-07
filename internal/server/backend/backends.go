@@ -50,7 +50,7 @@ func Initialize(ctx context.Context, args *Args) (*Backends, error) {
 		return nil, errors.Wrapf(err, "init server failed")
 	}
 
-	authManager, err := initAuth(db, args.Salt, args.InitUser)
+	authManager, err := auth.New(db, args.Salt)
 	if err != nil {
 		return nil, errors.Wrapf(err, "init server failed")
 	}

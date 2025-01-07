@@ -58,16 +58,12 @@ export async function request(method, url, options = {}) {
 		opts.query["_timestamp"] = Date.now();
 	}
 
-
-
 	// parse url
 	const u = new URL(url, location);
 	opts.query = [...u.searchParams.entries()].reduce((obj, [key, value]) => {
 		obj[key] = value
 		return obj
 	}, opts.query || {});
-
-
 
 	u.search = "";
 	url = u.href
@@ -508,19 +504,17 @@ extend(Array, {
 	},
 });
 
-
-export class CustomElement extends HTMLElement {
-	// private
-	#handler = {}
-
-	constructor({enableShadow = true} = {}) {
-		super();
-
-		if (enableShadow) {
-			this.attachShadow({mode: 'open'})
-		}
-	}
-	// syntactic sugar
+extend(HTMLElement, {
+	// syntactic sugars
+	connectedCallback() {
+		this.render && this.render();
+		this.onConnected && this.onConnected();
+		this.fireEvent("connected");
+	},
+	disconnectedCallback() {
+		this.onDisconnected && this.onDisconnected();
+		this.fireEvent("disconnected")
+	},
 	attributeChangedCallback(name, oldValue, newValue) {
 		//  to use set follow to custom elements
 		//
@@ -533,29 +527,24 @@ export class CustomElement extends HTMLElement {
 			new: newValue,
 		});
 		this.onAttributeChanged(name, oldValue, newValue);
-	}
+	},
 	onAttributeChanged() {
 		this.render && this.render();
-	}
-	connectedCallback()  {
-		this.render && this.render();
-		this.onConnected && this.onConnected();
-		this.fireEvent("connected")
-	}
-	disconnectedCallback() {
-		this.onDisconnected && this.onDisconnected();
-		this.fireEvent("disconnected")
-	}
-	handler(h) {
-		var name = h instanceof Function ? h.name : h;
-		var f = h instanceof Function ? h : this[h];
+	},
+})
 
-		if (!this.#handler[name]) {
-			this.#handler[name] = evt => f.call(this, evt.detail);
+
+export class CustomElement extends HTMLElement {
+	constructor({enableShadow = true} = {}) {
+		super();
+
+		if (enableShadow) {
+			// this.shadowRoot
+			this.attachShadow({mode: 'open'})
 		}
-		return this.#handler[name];
 	}
 }
+
 
 export class AwaitEventTarget {
 	constructor() {

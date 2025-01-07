@@ -8,10 +8,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//go:embed defaults.yaml
-var defaultData string
+//go:embed policy.yaml
+var policyData []byte
 
-func (m *Manager) addDefault() error {
+func (m *Manager) initialize() error {
 	data := &struct {
 		Roles    []Role
 		Bindings []struct {
@@ -20,8 +20,13 @@ func (m *Manager) addDefault() error {
 		}
 		Groups []string
 	}{}
-	if err := yaml.Unmarshal([]byte(defaultData), data); err != nil {
+	if err := yaml.Unmarshal(policyData, data); err != nil {
 		return err
+	}
+
+	{
+		buf, _ := yaml.Marshal(data)
+		logrus.Tracef("%s", string(buf))
 	}
 
 	for _, group := range data.Groups {

@@ -1,10 +1,57 @@
 import * as $ from "bm.js/bm.module.js";
 
-load();
+function getIndentCharacter(attr) {
+    switch(attr) {
+        case "2space":
+            return "  ";
+        case "4space":
+            return "    ";
+        case "tab":
+        default:
+            return "\t";
+    }
+}
 
-export function load(elem = document) {
-	$.all(elem, "textarea[indent]").map($textarea => $textarea.on("keydown", evt => {
-		// handle indent, un-indent
+class EnhancedTextarea extends HTMLTextAreaElement{
+	constructor() {
+		super()
+	}
+	onConnected()  {
+		if(this.hasAttribute("auto-resize")) {
+			this.enableAutoResize();
+		}
+
+		if(this.hasAttribute("indent")) {
+			this.enableIndent();
+		}
+
+		if(this.hasAttribute("submit-shortcut")) {
+			this.enableSubmitShortcut();
+		}
+	}
+	enableAutoResize() {
+		if (CSS.supports("field-sizing", "content")) {
+			this.style.fieldSizing = "content"
+			return
+		}
+
+		// try old fashioned way.
+		this.style.height = `${this.scrollHeight+2}px`;
+		this.on("input", evt => {
+			// resize textarea
+			let $textarea = evt.target;
+			$textarea.style.height = `auto`; // it's magic, shrink area to fit contents
+			$textarea.style.height = `${$textarea.scrollHeight+2}px`;
+		})
+	}
+	enableIndent() {
+		this.on("keydown", this.#indent);
+
+		if(this.hasAttribute("tab-size")) {
+			this.style.tabSize = `${this.attr("tab-size")}ch`
+		}
+	}
+	#indent(evt) {
 		switch(evt.code) {
 			case "Tab":
 				evt.preventDefault();
@@ -75,50 +122,23 @@ export function load(elem = document) {
 			default:
 				//console.log(evt);
 		}
-	}));
-
-	function getIndentCharacter(attr) {
-		switch(attr) {
-			case "2space":
-				return "  ";
-			case "4space":
-				return "    ";
-			case "tab":
-			default:
-				return "\t";
-		}
 	}
-
-	$.all(elem, "textarea[auto-resize]").map($textarea => {
-		// use `field-sizing: content` when available
-		if (CSS.supports("field-sizing", "content")) {
-			$textarea.style.fieldSizing = "content"
-			return
+	enableSubmitShortcut() {
+		this.on("keydown", this.#submitShortcut)
+	}
+	async #submitShortcut(evt) {
+		if (!(evt.code == "KeyS" && evt.ctrlKey)) {
+			return // just skip
 		}
+		evt.preventDefault();
 
-		// try old fashioned way.
-		$textarea.style.height = `${$textarea.scrollHeight+2}px`;
-		$textarea.on("input", evt => {
-			// resize textarea
-			let $textarea = evt.target;
-			$textarea.style.height = `auto`; // it's magic, shrink area to fit contents
-			$textarea.style.height = `${$textarea.scrollHeight+2}px`;
-		})
-	});
+		// evt.target.closest("form").submit();
+		let $form = this.closest("form");
 
-	$.all(elem, "textarea[submit-shortcut]").map($textarea => {
-		$textarea.on("keydown", async evt => {
-			if (!(evt.code == "KeyS" && evt.ctrlKey)) {
-				return // just skip
-			}
-			evt.preventDefault();
-
-			// evt.target.closest("form").submit();
-			let $form = evt.target.closest("form");
-
-			let data = new FormData($form);
-			let res = await $.request($form.method||"get", $form.action||location.pathname, {body: data});
-			// TODO show message
-		})
-	});
+		let data = new FormData($form);
+		let res = await $.request($form.attr("method")||$form.method, $form.action||location.pathname, {body: data});
+		// TODO show message
+	}
 }
+customElements.define("enhanced-textarea", EnhancedTextarea, {extends: "textarea"});
+
