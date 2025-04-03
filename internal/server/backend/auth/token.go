@@ -71,3 +71,17 @@ func (m *Manager) RevokeToken(username, revokeKey string) error {
 	}
 	return nil
 }
+
+type TokenOpt func(*Token)
+
+func ExpiredAt(t time.Time) func(*Token) {
+	return func(token *Token) {
+		token.ExpiredAt = &t
+	}
+}
+func ExpiredAfter(d time.Duration) func(*Token) {
+	return func(token *Token) {
+		t := time.Now().Add(d)
+		token.ExpiredAt = &t
+	}
+}

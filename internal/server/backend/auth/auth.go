@@ -92,7 +92,10 @@ func (m *Manager) Default(username, unhashedKey string) (*User, error) {
 }
 
 func (m *Manager) Can(user *User, verb Verb, res Resource) bool {
-	logger := logrus.WithField("user", user.Name).WithField("verb", verb).WithField("resource", res).WithField("group", user.Groups)
+	logger := logrus.WithField("verb", verb).WithField("resource", res)
+	if user != nil {
+		logger = logger.WithField("user", user.Name).WithField("group", user.Groups)
+	}
 
 	//logger.Tracef("length of subject: %d", len(user.Subjects()))
 

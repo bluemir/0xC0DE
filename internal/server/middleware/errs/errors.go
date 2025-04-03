@@ -30,10 +30,19 @@ func Middleware(c *gin.Context) {
 
 	// Last one is most important
 	err := c.Errors.Last()
-	logrus.Errorf("%#v", err)
+	logrus.Errorf("%#v", err.Err)
 
 	code := code(err)
-	logrus.Error(err, code)
+	logrus.WithField("code", code).Tracef("%T", err.Err)
+
+	if c.Writer.Written() && code != c.Writer.Status() {
+		logrus.Debugf("Response code already written, expected '%d', but it was '%d'", code, c.Writer.Status())
+		code = c.Writer.Status() // overwrite code with responed code.
+	}
+
+	if code >= 500 {
+		logrus.Warnf("Server Error. code: %d, %s", code, err)
+	}
 
 	// with header or without header, or other processer/ maybe hook? depend on error type? or just code
 	for _, accept := range strings.Split(c.Request.Header.Get("Accept"), ",") {
@@ -47,7 +56,7 @@ func Middleware(c *gin.Context) {
 		case "application/json":
 			// TODO make response json
 			c.JSON(code, gin.H{
-				"errors": c.Errors,
+				"error": err.Err.Error(),
 			})
 			return
 		case "text/html", "*/*":
@@ -66,8 +75,16 @@ func Middleware(c *gin.Context) {
 	}
 	c.String(code, "%#v", c.Errors)
 }
+
+type HttpStatusCodeProvider interface {
+	StatusCode() int
+}
+
 func code(err *gin.Error) int {
 	// errors.Is check same value, but errors.As check only its type.
+	if e, ok := err.Err.(HttpStatusCodeProvider); ok {
+		return e.StatusCode()
+	}
 
 	switch {
 	case errors.Is(err, validator.ValidationErrors{}):

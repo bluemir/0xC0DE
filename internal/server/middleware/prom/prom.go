@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/bluemir/0xC0DE/internal/buildinfo"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -12,14 +13,14 @@ import (
 var (
 	metricsRequestCount = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "n3r_web_request",
+			Name: buildinfo.AppName + "_request_total",
 			Help: "web server request count",
 		},
 		[]string{"method", "url", "code"},
 	)
 	metricsRequestDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name: "n3r_web_request_duration",
+			Name: buildinfo.AppName + "_request_duration",
 			Help: "the time server took to handle the request.",
 			Buckets: []float64{
 				float64(1 * time.Millisecond),

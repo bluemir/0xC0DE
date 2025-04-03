@@ -16,13 +16,10 @@ type Args struct {
 	ConfigFilePath string
 	DBPath         string
 	Salt           string
-	InitUser       map[string]string
 }
 
 func NewArgs() Args {
-	return Args{
-		InitUser: map[string]string{},
-	}
+	return Args{}
 }
 
 // Config from file

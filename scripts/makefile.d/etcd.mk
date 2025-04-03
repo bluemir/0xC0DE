@@ -15,6 +15,7 @@ run-etcd: build/tools/etcd
 		--advertise-client-urls 'https://127.0.0.1:2379' \
 		--listen-client-urls    'https://0.0.0.0:2379' \
 		--data-dir=$(ETCD_DATA_DIR)
+
 # trusted-ca-file은 서버 스스로의 cert를 검증하는데도 쓰고 client cert 를 검증하는데도 쓴다..?
 
 run-etcd-client: build/tools/etcdctl

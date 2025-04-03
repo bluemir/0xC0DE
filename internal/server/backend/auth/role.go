@@ -15,7 +15,7 @@ type Role struct {
 
 type Rule struct {
 	Verbs      []Verb      `gorm:"type:bytes;serializer:gob"`
-	Resource   KeyValues   `gorm:"type:bytes;serializer:gob"`
+	Selector   KeyValues   `gorm:"type:bytes;serializer:gob"`
 	Conditions []Condition `gorm:"type:bytes;serializer:gob"`
 	//
 	// Attribute check?
@@ -86,7 +86,7 @@ func (rule *Rule) IsMatched(ctx Context) bool {
 		return false
 	}
 
-	if !rule.Resource.IsSubsetOf(ctx.Resource) {
+	if !rule.Selector.IsSubsetOf(ctx.Resource) {
 		return false
 	}
 

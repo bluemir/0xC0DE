@@ -122,7 +122,7 @@ func TestRule(t *testing.T) {
 	}
 	rule := auth.Rule{
 		//Verbs: []auth.Verb{"update"},
-		Resource: auth.Resource{
+		Selector: auth.Resource{
 			"kind": "user",
 		},
 	}

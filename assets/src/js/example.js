@@ -24,7 +24,7 @@ class CustomElement extends $.CustomElement {
 	onAttributeChanged(name, oValue, nValue) {
 	}
 	constructor() {
-
+		super();
 	}
 	async render() {
 		render(this.template(this, this.#params), this.shadowRoot);

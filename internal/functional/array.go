@@ -89,6 +89,15 @@ func Flat[T any](in [][]T) []T {
 	return out
 }
 
+func First[In any](in []In, fn func(In) bool) *In {
+	for _, v := range in {
+		if fn(v) {
+			return &v
+		}
+	}
+	return nil
+}
+
 // arr = Filter(arr, func(v int) bool)
 // arr = Map(arr, func(v int) float)
 // ---- vs ----

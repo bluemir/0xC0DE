@@ -1,12 +1,5 @@
 package auth
 
-import (
-	"encoding/json"
-	"time"
-
-	"golang.org/x/exp/maps"
-)
-
 const (
 	KindUser           = "user"
 	KindGroup          = "group"
@@ -32,42 +25,7 @@ func (kvs KeyValues) IsSubsetOf(resource Resource) bool {
 	return true
 }
 
-type TokenOpt func(*Token)
-
-func ExpiredAt(t time.Time) func(*Token) {
-	return func(token *Token) {
-		token.ExpiredAt = &t
-	}
-}
-func ExpiredAfter(d time.Duration) func(*Token) {
-	return func(token *Token) {
-		t := time.Now().Add(d)
-		token.ExpiredAt = &t
-	}
-}
-
-type Set map[string]struct{}
-
-func setFromArray(arr []string) Set {
-	s := Set{}
-	for _, v := range arr {
-		s[v] = struct{}{}
-	}
-	return s
-}
-
 type Labels map[string]string
-
-var x = struct{}{}
-
-func (s Set) Add(vs ...string) {
-	for _, v := range vs {
-		s[v] = x
-	}
-}
-func (s Set) MarshalJSON() ([]byte, error) {
-	return json.Marshal(maps.Keys(s))
-}
 
 type Context struct {
 	User     *User    `expr:"user"`

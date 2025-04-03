@@ -1,13 +1,12 @@
-package test
+package auth_test
 
 import (
 	"fmt"
 	"runtime"
 
+	"github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
 )

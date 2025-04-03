@@ -31,6 +31,7 @@ assets/js/%: assets/src/js/% package.json package-lock.json
 	npx esbuild $< --outdir=$(dir $@) \
 		--bundle --sourcemap --format=esm \
 		--external:lit-html \
+		--external:bm.js/bm.module.js \
 		$(OPTIONAL_WEB_BUILD_ARGS)
 OPTIONAL_CLEAN += assets/js
 
@@ -44,7 +45,7 @@ assets/css/%: assets/src/css/%
 		$(OPTIONAL_WEB_BUILD_ARGS)
 OPTIONAL_CLEAN += assets/css
 
-build/static/css/page.css build/static/css/element.css: $(CSS_SOURCES) # TODO: import graph?
+assets/css/page.css assets/css/element.css: $(CSS_SOURCES) # TODO: import graph?
 
 build/$(APP_NAME): web $(HTML_SOURCES)
 build/docker-image: $(JS_SOURCES) $(CSS_SOURCES) $(WEB_LIBS) $(HTML_SOURCES)

@@ -7,9 +7,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/bluemir/0xC0DE/assets"
+	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	"github.com/bluemir/0xC0DE/assets"
+	"github.com/bluemir/0xC0DE/internal/server/middleware/cache"
 )
 
 func NewRenderer() (*template.Template, error) {
@@ -18,6 +21,9 @@ func NewRenderer() (*template.Template, error) {
 		"json": json.Marshal,
 		"toString": func(buf []byte) string {
 			return string(buf)
+		},
+		"rev": func(c *gin.Context) string {
+			return c.GetString(cache.REVVED)
 		},
 	})
 

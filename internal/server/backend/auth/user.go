@@ -1,16 +1,17 @@
 package auth
 
 import (
+	"github.com/bluemir/0xC0DE/internal/functional"
 	"github.com/bluemir/0xC0DE/internal/server/backend/meta"
 	"github.com/pkg/errors"
 	"github.com/rs/xid"
 )
 
 type User struct {
-	Name   string `gorm:"primaryKey;size:256" json:"name" expr:"name"`
-	Salt   string `json:"-"`
-	Groups Set    `gorm:"type:bytes;serializer:gob" json:"groups"`
-	Labels Labels `gorm:"type:bytes;serializer:gob" json:"labels" expr:"labels"`
+	Name   string  `gorm:"primaryKey;size:256" json:"name" expr:"name"`
+	Salt   string  `json:"-"`
+	Groups []Group `gorm:"many2many:members;" json:"groups"`
+	Labels Labels  `gorm:"type:bytes;serializer:gob" json:"labels" expr:"labels"`
 }
 
 func (m *Manager) Register(username, unhashedKey string, opts ...CreateUserOption) (*User, *Token, error) {
@@ -31,7 +32,11 @@ type CreateUserOption func(u *User)
 
 func WithGroup(groups ...string) func(*User) {
 	return func(u *User) {
-		u.Groups = setFromArray(groups)
+		u.Groups = functional.Map(groups, func(g string) Group {
+			return Group{
+				Name: g,
+			}
+		})
 	}
 }
 
@@ -39,7 +44,7 @@ func (m *Manager) CreateUser(username string, opts ...CreateUserOption) (*User, 
 	u := User{
 		Name:   username,
 		Salt:   xid.New().String(),
-		Groups: Set{},
+		Groups: []Group{},
 	}
 	for _, fn := range opts {
 		fn(&u)
@@ -52,7 +57,7 @@ func (m *Manager) CreateUser(username string, opts ...CreateUserOption) (*User, 
 func (m *Manager) GetUser(username string) (*User, error) {
 	u := User{}
 
-	if err := m.db.Where(User{Name: username}).Take(&u).Error; err != nil {
+	if err := m.db.Preload("Groups").Where(User{Name: username}).Take(&u).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 	return &u, nil
@@ -69,7 +74,7 @@ func (m *Manager) ListUser(opts ...meta.ListOptionFn) ([]User, error) {
 func (m *Manager) ListUserWithOption(option meta.ListOption) ([]User, error) {
 	users := []User{}
 
-	if err := m.db.Offset(option.Offset).Limit(option.Limit).Find(users).Error; err != nil {
+	if err := m.db.Preload("Groups").Offset(option.Offset).Limit(option.Limit).Find(users).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 
@@ -88,7 +93,6 @@ func (m *Manager) DeleteUser(username string) error {
 	return nil
 }
 func (u *User) Subjects() []Subject {
-
 	if u == nil {
 		return []Subject{
 			{
@@ -102,10 +106,10 @@ func (u *User) Subjects() []Subject {
 			Name: u.Name,
 		},
 	}
-	for g := range u.Groups {
+	for _, g := range u.Groups {
 		ret = append(ret, Subject{
 			Kind: KindGroup,
-			Name: g,
+			Name: g.Name,
 		})
 	}
 	return ret

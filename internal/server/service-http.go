@@ -13,6 +13,7 @@ import (
 
 	"github.com/bluemir/0xC0DE/internal/server/graceful"
 	"github.com/bluemir/0xC0DE/internal/server/injector"
+	"github.com/bluemir/0xC0DE/internal/server/middleware/cache"
 	"github.com/bluemir/0xC0DE/internal/server/middleware/errs"
 	"github.com/bluemir/0xC0DE/internal/server/middleware/prom"
 )
@@ -38,9 +39,13 @@ func (server *Server) RunServiceHTTPServer(ctx context.Context, bind string, cer
 		// setup Logger
 		writer := logrus.
 			WithFields(logrus.Fields{}).
-			WriterLevel(logrus.DebugLevel)
+			WriterLevel(logrus.InfoLevel)
 		defer writer.Close()
 		app.Use(gin.LoggerWithWriter(writer))
+
+		// error handler
+		app.Use(errs.Middleware)
+		app.Use(gin.Recovery())
 
 		// sessions
 		store := cookie.NewStore([]byte(server.salt))
@@ -49,11 +54,8 @@ func (server *Server) RunServiceHTTPServer(ctx context.Context, bind string, cer
 		})
 		app.Use(sessions.Sessions("0xC0DE_session", store))
 
-		app.Use(gin.Recovery())
-
 		app.Use(location.Default(), fixURL)
-
-		app.Use(errs.Middleware)
+		app.Use(cache.CacheBusting)
 
 		app.Use(injector.Inject(server.backends))
 

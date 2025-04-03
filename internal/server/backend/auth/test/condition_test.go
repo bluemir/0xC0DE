@@ -40,7 +40,7 @@ func TestRole(t *testing.T) {
 	}
 	r, err := m.CreateRole("test", []auth.Rule{
 		{
-			Resource: auth.KeyValues{
+			Selector: auth.KeyValues{
 				"kind": "user",
 			},
 			Verbs: []auth.Verb{"get"},
