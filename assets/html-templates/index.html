@@ -4,42 +4,51 @@
 		<title>0xC0DE</title>
 		{{ template "snippet/header.html" . }}
 	</head>
-	<body>
-		<landing-page>
-			<section id="hero-contents" grid slot="hero-contents">
-				<section col="7">
-					<h1>Hello World!</h1>
-					<p>
-						this is landing page example!
-					</p>
-					<section>
-						<user-can action="read" resource="page.posts">
-							<c-button><a href="/posts">Posts</a></c-button>
-						</user-can>
-						<user-can action="read" resource="page.register">
-							<c-button><a href="/users/register">Register</a></c-button>
-						</user-can>
-					</section>
-				</section>
-				<c-placeholder col="5"></c-placeholder>
+	<body layout="one-page">
+		<header>
+			<div row>
+				<global-navigation-bar></global-navigation-bar>
+			</div>
+		</header>
+		<main>
+			<section id="hero-contents">
+				<div row grid>
+					<div col="7">
+						<h1>Hello World!</h1>
+						<p>
+							this is landing page example!
+						</p>
+						<section>
+							<user-can action="read" resource="page.posts">
+								<c-button><a href="/posts">Posts</a></c-button>
+							</user-can>
+							<user-can action="read" resource="page.register">
+								<c-button><a href="/users/register">Register</a></c-button>
+							</user-can>
+						</section>
+					</div>
+					<c-placeholder col="5"></c-placeholder>
+				</div>
 			</section>
 			<section grid id="features">
-				<section col="4">
-					<c-icon kind="sync_saved_locally" size="5rem"></c-icon>
-					<h3>Landing Page</h3>
-					<p>A landing page is a standalone web page that potential customers can “land” on when they click through from an email, ad, or other digital location.</p>
-				</section>
-				<section col="4">
-					<c-icon kind="home" size="5rem;"></c-icon>
-					<h3>Default Page</h3>
-					<p>Default layout is used in plain pages. It has simple header and contents.</p>
-				</section>
-				<section col="4">
-					<c-icon kind="settings_applications" size="5rem"></c-icon>
-					<h3>Admin Page</h3>
-					<p>Rich Layout for complicated header, footer and side menu</p>
-				</section>
+				<div row grid>
+					<section col="4">
+						<c-icon kind="sync_saved_locally" size="5rem"></c-icon>
+						<h3>Landing Page</h3>
+						<p>A landing page is a standalone web page that potential customers can “land” on when they click through from an email, ad, or other digital location.</p>
+					</section>
+					<section col="4">
+						<c-icon kind="home" size="5rem;"></c-icon>
+						<h3>Default Page</h3>
+						<p>Default layout is used in plain pages. It has simple header and contents.</p>
+					</section>
+					<section col="4">
+						<c-icon kind="settings_applications" size="5rem"></c-icon>
+						<h3>Admin Page</h3>
+						<p>Rich Layout for complicated header, footer and side menu</p>
+					</section>
+				</div>
 			</section>
-		</landing-page>
+		</main>
 	</body>
 </html>

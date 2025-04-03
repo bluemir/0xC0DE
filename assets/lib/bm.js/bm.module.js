@@ -575,11 +575,13 @@ export class AwaitEventTarget {
 	}
 
 	// syntactic sugar
-	on(eventName, handler) {
-		this.addEventListener(eventName, handler)
+	on(eventName, handler, opts) {
+		this.addEventListener(eventName, handler, opts);
+		return this;
 	}
-	off(eventName, handler) {
-		this.removeEventListener(eventName, handler)
+	off(eventName, handler, opts) {
+		this.removeEventListener(eventName, handler, opts);
+		return this;
 	}
 	fireEvent(name, detail) {
 		var evt = new CustomEvent(name, {detail: detail});

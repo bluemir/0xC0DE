@@ -50,6 +50,13 @@ func (m *Mux[T]) Watch(done <-chan struct{}) <-chan T {
 
 	m.channels[ch] = struct{}{}
 
+	go func() {
+		// cleanup
+		<-done
+		delete(m.channels, ch)
+		close(ch)
+	}()
+
 	return datastruct.DynamicChan(ch)
 }
 

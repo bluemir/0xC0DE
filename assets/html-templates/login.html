@@ -4,10 +4,64 @@
 		<title>0xC0DE - Login</title>
 		{{ template "snippet/header.html" . }}
 	</head>
-	<body>
-		<default-page>
-			<h1>Login</h1>
-			<login-form></login-form>
-		</default-page>
+	<body layout="one-page">
+		<header>
+			<section row>
+				<global-navigation-bar></global-navigation-bar>
+			</section>
+		</header>
+		<main>
+			<section row>
+				<h1>Login</h1>
+				<form>
+					<label>Username</label>
+					<section>
+						<input name="username"/>
+					</section>
+					<label>Password</label>
+					<section>
+						<input name="password" type="password"/>
+					</section>
+					<div>
+						<button enhanced>Login</button>
+					</div>
+				</form>
+			</section>
+		</main>
+		<dialog>
+			<header>
+				<h1>Login Failed</h1>
+			</header>
+			<main><p><!-- TODO message --></p></main>
+			<footer>
+				<a fn href="#" role="close">Close</a>
+			</footer>
+		</dialog>
+		<script type="module">
+			import * as $ from "bm.js/bm.module.js";
+
+			$.get("form").on("submit", async evt => {
+				evt.preventDefault();
+
+				try {
+					let fd = new FormData(evt.target);
+
+					let res = await $.request("POST", `/api/v1/login`, {body:fd});
+
+					location.href = "/posts"
+				} catch(e) {
+					console.log(e);
+					// TODO render message to html
+					//
+					$.get( "dialog").showModal();
+				}
+			});
+
+			$.get("dialog").on("click", $.closeDialog);
+			$.get(`dialog [role="close"]`).on("click", evt => {
+				evt.preventDefault()
+				evt.target.closest("dialog").close();
+			});
+		</script>
 	</body>
 </html>

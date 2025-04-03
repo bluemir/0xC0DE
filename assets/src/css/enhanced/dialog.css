@@ -1,0 +1,33 @@
+
+/*
+
+dialog
+	header
+	main
+	footer
+*/
+
+
+dialog[enhanced] {
+	min-width: 15vw;
+	min-height: 20vh;
+	padding: 1rem;
+
+	&[open] {
+		display: grid;
+		grid-template-rows: auto 1fr auto;
+	}
+
+	header {
+
+	}
+
+	main {
+
+	}
+
+	footer {
+		display: flex;
+		justify-content: flex-end;
+	}
+}
