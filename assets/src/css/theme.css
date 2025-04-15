@@ -5,9 +5,3 @@
 
 }
 
-/* prevent FOUC */
-/* https://web.dev/articles/custom-elements-v1?hl=ko#pre-styling_unregistered_elements */
-*:not(:defined) {
-	opacity: 0;
-	transition: opacity 0.3s ease-in-out;
-}

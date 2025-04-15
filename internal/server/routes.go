@@ -11,6 +11,7 @@ import (
 	"github.com/bluemir/0xC0DE/internal/server/handler"
 	"github.com/bluemir/0xC0DE/internal/server/handler/auth/resource"
 	"github.com/bluemir/0xC0DE/internal/server/handler/auth/verb"
+	"github.com/bluemir/0xC0DE/internal/server/middleware/cache"
 )
 
 // @title 0xC0DE
@@ -65,7 +66,7 @@ func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) 
 	// Static Pages
 	{
 		// js, css, etc.
-		app.Group("/static", staticCache()).StaticFS("/", http.FS(assets.Static))
+		app.Group("/static", staticCache()).Group(cache.Rev()).StaticFS("/", http.FS(assets.Static))
 
 		app.GET("/", html("index.html"))
 		app.GET("/users/register", html("register.html"))

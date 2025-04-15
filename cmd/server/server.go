@@ -25,7 +25,6 @@ func Register(cmd *kingpin.CmdClause) {
 	cmd.Flag("key", "key file").
 		StringVar(&conf.Cert.KeyFile)
 	cmd.Flag("admin-bind", "bind for admin endpoint(metric, swagger, pprof)").
-		Default(":8000").
 		StringVar(&conf.AdminHttpBind)
 
 	cmd.Flag("db-path", "db path").

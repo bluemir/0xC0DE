@@ -59,7 +59,7 @@ func Metrics(labels ...string) gin.HandlerFunc {
 		})
 
 		metricsRequestCount.With(label).Inc()
-		metricsRequestDuration.With(label).Observe(float64(end.Sub(start).Milliseconds()))
+		metricsRequestDuration.With(label).Observe(float64(end.Sub(start)))
 	}
 }
 func Handler() gin.HandlerFunc {

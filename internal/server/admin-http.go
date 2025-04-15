@@ -20,6 +20,11 @@ import (
 
 func (server *Server) RunAdminHTTPServer(ctx context.Context, bind string) func() error {
 	return func() error {
+		if bind == "" {
+			logrus.Warn("disable admin http server")
+			return nil
+		}
+
 		if logrus.IsLevelEnabled(logrus.DebugLevel) {
 			gin.SetMode(gin.DebugMode)
 		} else {

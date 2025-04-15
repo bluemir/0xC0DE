@@ -454,12 +454,12 @@ extend(Element, {
 })
 
 extend(EventTarget, {
-	on: function(name, handler, opt) {
-		this.addEventListener(name, handler, opt);
+	on: function(name, handler, opts) {
+		this.addEventListener(name, handler, opts);
 		return this;
 	},
-	off: function(name, handler, opt) {
-		this.removeEventListener(name, handler, opt)
+	off: function(name, handler, opts) {
+		this.removeEventListener(name, handler, opts)
 		return this;
 	},
 	fireEvent: function(name, detail) {
