@@ -5,8 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bluemir/0xC0DE/internal/datastruct"
 	"github.com/rs/xid"
+
+	"github.com/bluemir/0xC0DE/internal/datastruct"
 )
 
 type IRouter interface {
@@ -28,14 +29,27 @@ type Router struct {
 const Separator = "." // QUESTION make configurable?
 
 func NewRoute(ctx context.Context) (*Router, error) {
-	return &Router{}, nil
+	return &Router{
+		all: datastruct.NewSet[chan<- Event](),
+	}, nil
 }
+
+type keyTypeRouter struct{}
+
+var keyRouter = keyTypeRouter{}
+
+func RouterFrom(ctx context.Context) *Router {
+	return ctx.Value(keyRouter).(*Router)
+}
+
 func (router *Router) Publish(ctx context.Context, kind string, detail any) {
 	keys := strings.Split(kind, Separator)
 	handlers, ok := router.handlers.Get(keys...)
 	if !ok {
 		return
 	}
+
+	ctx = context.WithValue(ctx, keyRouter, router)
 	evt := Event{
 		Context: ctx,
 		Id:      xid.New().String(),

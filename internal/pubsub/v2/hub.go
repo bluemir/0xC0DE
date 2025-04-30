@@ -26,7 +26,17 @@ type Hub struct {
 }
 
 func NewHub(ctx context.Context) (*Hub, error) {
-	return &Hub{}, nil
+	return &Hub{
+		all: datastruct.NewSet[chan<- Event](),
+	}, nil
+}
+
+type keyTypeHub struct{}
+
+var keyHub = keyTypeHub{}
+
+func HubFrom(ctx context.Context) *Hub {
+	return ctx.Value(keyHub).(*Hub)
 }
 
 func (hub *Hub) Publish(ctx context.Context, detail any) {
@@ -36,6 +46,8 @@ func (hub *Hub) Publish(ctx context.Context, detail any) {
 	if !ok {
 		return
 	}
+
+	ctx = context.WithValue(ctx, keyHub, hub)
 	evt := Event{
 		Context: ctx,
 		Id:      xid.New().String(),
