@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/bluemir/0xC0DE/internal/pubsub"
+	"github.com/bluemir/0xC0DE/internal/pubsub/v1"
 )
 
 type key struct{}

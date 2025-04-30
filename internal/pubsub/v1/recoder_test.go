@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/bluemir/0xC0DE/internal/pubsub"
+	"github.com/bluemir/0xC0DE/internal/pubsub/v1"
 )
 
 type Recoder struct {

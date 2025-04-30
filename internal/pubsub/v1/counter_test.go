@@ -3,7 +3,7 @@ package pubsub_test
 import (
 	"sync"
 
-	"github.com/bluemir/0xC0DE/internal/pubsub"
+	"github.com/bluemir/0xC0DE/internal/pubsub/v1"
 )
 
 type CounterHandler struct {

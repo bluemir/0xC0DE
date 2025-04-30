@@ -1,7 +1,7 @@
 package pubsub_test
 
 import (
-	"github.com/bluemir/0xC0DE/internal/pubsub"
+	"github.com/bluemir/0xC0DE/internal/pubsub/v1"
 	"github.com/sirupsen/logrus"
 )
 

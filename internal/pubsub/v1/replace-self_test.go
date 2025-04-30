@@ -1,6 +1,6 @@
 package pubsub_test
 
-import "github.com/bluemir/0xC0DE/internal/pubsub"
+import "github.com/bluemir/0xC0DE/internal/pubsub/v1"
 
 type ReplaceSelfHandler struct {
 	Hub pubsub.IHub
