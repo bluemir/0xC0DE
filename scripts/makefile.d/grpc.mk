@@ -10,10 +10,13 @@ build/$(APP_NAME).unpacked: build/proto_generated
 vet: build/proto_generated
 test: build/proto_generated
 
+
+export PATH:=./build/tools/protobuf/bin:$(PATH)
+
 .PHONY: grpc-gen
 grpc-gen: build/proto_generated ## Generate grpc codes
 
-build/proto_generated: $(PROTO_SOURCE)
+build/proto_generated: $(PROTO_SOURCE) build/tools/protoc 
 	@$(MAKE) \
 		build/tools/protoc \
 		build/tools/protoc-gen-go \
@@ -38,16 +41,15 @@ build/proto_generated: $(PROTO_SOURCE)
 build/docker-image: $(PROTO_SOURCE)
 
 
-export PATH:=./build/tools/protobuf/bin:$(PATH)
 
 ## grpc
 build-tools: build/tools/protoc build/tools/protoc-gen-go build/tools/protoc-gen-go-grpc
-build/tools/protoc:
-	@which $(notdir $@) || (./scripts/tools/install/protoc.sh)
-build/tools/protoc-gen-go: build/tools/go
-	@which $(notdir $@) || (./scripts/tools/install/go-tool.sh google.golang.org/protobuf/cmd/protoc-gen-go)
-build/tools/protoc-gen-go-grpc: build/tools/go
-	@which $(notdir $@) || (./scripts/tools/install/go-tool.sh google.golang.org/grpc/cmd/protoc-gen-go-grpc)
+build/tools/protoc: ./scripts/tools/install/protoc.sh
+	@which $(@F) || ($<)
+build/tools/protoc-gen-go: ./scripts/tools/install/go-tool.sh build/tools/go
+	@which $(@F) || ($< google.golang.org/protobuf/cmd/protoc-gen-go)
+build/tools/protoc-gen-go-grpc: ./scripts/tools/install/go-tool.sh build/tools/go
+	@which $(@F) || ($< google.golang.org/grpc/cmd/protoc-gen-go-grpc)
 
 build-tools: build/tools/protoc-gen-grpc-gateway
 build/tools/protoc-gen-grpc-gateway: build/tools/go

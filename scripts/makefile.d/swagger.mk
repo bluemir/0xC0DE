@@ -15,7 +15,7 @@ swagger: internal/swagger/docs.go ## Make swagger file
 internal/swagger/docs.go: $(filter ./internal/server/%.go,$(GO_SOURCES))
 	@$(MAKE) build/tools/swag
 	@mkdir -p $(dir $@)
-	swag init \
+	build/tools/swag init \
 		--generalInfo internal/server/routes.go \
 		--parseInternal \
 		--output $(dir $@)
