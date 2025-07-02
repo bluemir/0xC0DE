@@ -13,7 +13,7 @@ test: fmt vet ## Run test
 	@$(MAKE) build/tools/go
 	go test -v -trimpath ./...
 
-build/$(APP_NAME): $(GO_SOURCES) $(MAKEFILE_LIST) fmt vet
+build/$(APP_NAME): $(GO_SOURCES) $(MAKEFILE_LIST) fmt vet gen
 	@$(MAKE) build/tools/go
 	@mkdir -p build
 	go build -v \
@@ -37,3 +37,5 @@ fmt: ## Run go fmt against code
 .PHONY: vet
 vet: ## Run go vet against code
 	go vet ./...
+gen: ## Run go generate
+	go generate -x ./...

@@ -80,6 +80,9 @@ func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) 
 
 		// or for SPA(single page application), client side routing
 		// app.Use(AbortIfHasPrefix("/api"), server.static("/index.html"))
+
+		// for dev
+		// app.GET("/dev/palette", html("dev/palette.html"))
 	}
 
 	noRoute(func(c *gin.Context) {
