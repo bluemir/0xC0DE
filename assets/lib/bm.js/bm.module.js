@@ -3,11 +3,14 @@
 //
 // Usage
 // import * as $ from "bm.module.js";
-export var config = {
+export let config = {
 	hook: {
 		preRequest: function(method, url, opt) { return opt }
 	},
 }
+
+// global event listener
+export let events = new EventTarget();
 
 export function get(target, query) {
 	if(target.querySelector instanceof Function) {
@@ -22,7 +25,7 @@ export function all(target, query) {
 	return document.querySelectorAll(target);
 }
 export function create(tagname, attr = {}) {
-	var newTag = document.createElement(tagname);
+	let newTag = document.createElement(tagname);
 	if (attr.$text){
 		newTag.appendChild(document.createTextNode(attr.$text));
 	}
@@ -69,7 +72,7 @@ export async function request(method, url, options = {}) {
 	url = u.href
 
 	return new Promise(function(resolve, reject) {
-		var req = new XMLHttpRequest();
+		let req = new XMLHttpRequest();
 
 		if (opts.timeout) {
 			req.timeout = opts.timeout
@@ -77,13 +80,13 @@ export async function request(method, url, options = {}) {
 
 		req.addEventListener("readystatechange", function(){
 			if (req.readyState == 4) {
-				var result = {
+				let result = {
 					statusCode: req.status,
 					text:       req.responseText,
 					raw:        req.response,
 				};
 
-				var contentType = req.getResponseHeader("Content-Type") || "";
+				let contentType = req.getResponseHeader("Content-Type") || "";
 				if(contentType.includes("application/json")) {
 					result.json = JSON.parse(result.text);
 				}
@@ -143,7 +146,7 @@ export async function timeout(ms) {
 	});
 }
 export function defer() {
-	var ret = {}
+	let ret = {}
 	ret.promise = new Promise(function(resolve, reject){
 		ret.resolve = resolve;
 		ret.reject = reject;
@@ -157,7 +160,7 @@ export function prevent(func){
 	}
 }
 export function form(form) {
-	var fd = new FormData(form)
+	let fd = new FormData(form)
 	return Array.from(fd).reduce((obj, [k, v] )=> {
 		switch(get(form, `[name=${k}]`).attr("type")) {
 			case "number":
@@ -181,16 +184,15 @@ export function debounce(func, {timeout = 200} = {}) {
 
 // for await ( let dt of $.frames()){ /* do something */ }
 export function frames({fps = 30} = {}) {
-	var stop = false;
-	var fpsInterval = 1000 / fps;
-	var then = Date.now();
+	let fpsInterval = 1000 / fps;
+	let then = Date.now();
 
 	async function* f() {
 		while(true) {
 			yield new Promise((resolve, reject) => {
 				const animate = () => {
-					var now = Date.now();
-					var elapsed = now - then;
+					let now = Date.now();
+					let elapsed = now - then;
 
 					if (elapsed > fpsInterval) {
 						then = now - (elapsed%fpsInterval);
@@ -209,9 +211,9 @@ export function frames({fps = 30} = {}) {
 }
 
 export function animateFrame(callback, {fps = 30} = {}) {
-	var stop = false;
-	var fpsInterval = 1000 / fps;
-	var then = Date.now();
+	let stop = false;
+	let fpsInterval = 1000 / fps;
+	let then = Date.now();
 	animate();
 
 	function animate() {
@@ -220,13 +222,13 @@ export function animateFrame(callback, {fps = 30} = {}) {
 		}
 		requestAnimationFrame(animate);
 
-		var now = Date.now();
-		var elapsed = now - then;
+		let now = Date.now();
+		let elapsed = now - then;
 
 		if (elapsed > fpsInterval) {
 			then = now - (elapsed % fpsInterval);
 
-			var ret = callback(elapsed - (elapsed%fpsInterval));
+			let ret = callback(elapsed - (elapsed%fpsInterval));
 			if (ret && ret.stop) {
 				stop = true;
 			}
@@ -234,12 +236,12 @@ export function animateFrame(callback, {fps = 30} = {}) {
 	}
 }
 export function jq(data, query, value) {
-	var keys = query.split("\\.").map(str => str.split(".")).reduce((p, c) => {
+	let keys = query.split("\\.").map(str => str.split(".")).reduce((p, c) => {
 		if (p.length == 0 ) {
 			return c;
 		}
-		var last = p.pop();
-		var first = c.shift();
+		let last = p.pop();
+		let first = c.shift();
 
 		return [].concat(p, [last+"."+first], c);
 	});
@@ -249,7 +251,7 @@ export function jq(data, query, value) {
 	}
 
 	try {
-		var visitor = data;
+		let visitor = data;
 		while(keys.length > 1) {
 			visitor = visitor[keys.shift()];
 		}
@@ -318,7 +320,7 @@ class ExtendedError extends Error {
 	}
 }
 export function wsURL (url){
-	var u= new URL(url, document.location)
+	let u= new URL(url, document.location)
 	u.protocol = document.location.protocol.includes("https") ? "wss:" : "ws:"
 	return u;
 }
@@ -335,7 +337,6 @@ export const util = {
 		},
 	},
 };
-export var event = new EventTarget();
 
 function resolveParam(url, params) {
 	if (params == null) {
@@ -432,7 +433,7 @@ extend(Node, {
 		return this;
 	},
 	clear : function(filter) {
-		var f = filter || function(e) { return true };
+		let f = filter || function(e) { return true };
 		this.childNodes.filter(f).forEach((e) => this.removeChild(e))
 		return this;
 	},
@@ -463,7 +464,7 @@ extend(EventTarget, {
 		return this;
 	},
 	fireEvent: function(name, detail) {
-		var evt = new CustomEvent(name, {detail: detail});
+		let evt = new CustomEvent(name, {detail: detail});
 		this.dispatchEvent(evt);
 		return this;
 	}
@@ -488,7 +489,7 @@ extend(Array, {
 		return this.filter((v, i)  => this.first(v, isSame) == i);
 	},
 	promise: function() {
-		var arr = this;
+		let arr = this;
 		return {
 			all:  () => Promise.all(arr),
 			any:  () => Promise.any(arr),
@@ -584,7 +585,7 @@ export class AwaitEventTarget {
 		return this;
 	}
 	fireEvent(name, detail) {
-		var evt = new CustomEvent(name, {detail: detail});
+		let evt = new CustomEvent(name, {detail: detail});
 		// name will be evt.type
 		return this.dispatchEvent(evt);
 	}
