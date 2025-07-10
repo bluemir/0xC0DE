@@ -11,7 +11,7 @@ build/docker-image: Dockerfile $(MAKEFILE_LIST)
 	@mkdir -p $(dir $@)
 	$(DOCKER) build \
 		--build-arg VERSION=$(VERSION) \
-		-t $(MAGE_NAME):$(VERSION) \
+		-t $(IMAGE_NAME):$(VERSION) \
 		-f $< .
 	echo $(IMAGE_NAME):$(VERSION) > $@
 
