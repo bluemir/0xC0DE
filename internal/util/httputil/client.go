@@ -3,8 +3,10 @@ package httputil
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"io"
 	"maps"
+	"mime"
 	"net/http"
 	"reflect"
 	"time"
@@ -84,46 +86,15 @@ func MaxConnsPerHost(n int) HttpClientOptionFn {
 }
 
 type HttpRequestOption struct {
-	Request       any
-	Response      any
-	ErrorResponse any
-	Cookies       []*http.Cookie
-	Headers       http.Header
+	Request any
+	Cookies []*http.Cookie
+	Headers http.Header
 }
 type HttpRequestOptionFn func(*HttpRequestOption) error
 
 func WithRequest(reqBody any) HttpRequestOptionFn {
 	return func(option *HttpRequestOption) error {
 		option.Request = reqBody
-		return nil
-	}
-}
-
-func WithResponse(res any) HttpRequestOptionFn {
-	return func(option *HttpRequestOption) error {
-		if res == nil {
-			return errors.Errorf("response must not be nil")
-		}
-
-		if reflect.ValueOf(res).Kind() != reflect.Ptr {
-			return errors.Errorf("response must be ptr")
-		}
-
-		option.Response = res
-		return nil
-	}
-}
-func WithErrorReponse(e any) HttpRequestOptionFn {
-	return func(option *HttpRequestOption) error {
-		if e == nil {
-			return errors.Errorf("error response must not be nil")
-		}
-
-		if reflect.ValueOf(e).Kind() != reflect.Ptr {
-			return errors.Errorf("error response must be ptr")
-		}
-
-		option.ErrorResponse = e
 		return nil
 	}
 }
@@ -225,25 +196,57 @@ type Response struct {
 func (res *Response) Raw() (int, []byte) {
 	return res.raw.StatusCode, res.Body
 }
-func (res *Response) JSON(onSuccess any, onError any) (int, error) {
+func (res *Response) ShouldBind(onSuccess any, onError any) (int, error) {
+	kind, _, err := mime.ParseMediaType(res.raw.Header.Get("Content-Type"))
+	if err != nil {
+		// TODO consider as plain text?
+		return 0, errors.WithStack(err)
+	}
+
+	switch kind {
+	case "application/json", "text/json":
+		return res.ShouldBindWith(onSuccess, onError, json.Unmarshal)
+	case "text/xml":
+		return res.ShouldBindWith(onSuccess, onError, xml.Unmarshal)
+	case "text/plain":
+		return res.ShouldBindWith(onSuccess, onError, TextBinder)
+	default:
+		return res.ShouldBindWith(onSuccess, onError, TextBinder)
+	}
+}
+func (res *Response) ShouldBindWith(onSuccess, onError any, binder func(buf []byte, v any) error) (int, error) {
 	switch res.IsSuccess() {
 	case true:
 		if onSuccess != nil {
-			if err := json.Unmarshal(res.Body, onSuccess); err != nil {
+			if err := binder(res.Body, onSuccess); err != nil {
 				logrus.Warnf("cannot unmarshal http response: %s", err)
 				return 0, err
 			}
 		}
 	case false:
 		if onError != nil {
-			if err := json.Unmarshal(res.Body, onError); err != nil {
+			if err := binder(res.Body, onError); err != nil {
 				logrus.Warnf("cannot unmarshal error response: %s", err)
 				return 0, err
 			}
 		}
 	}
-
 	return res.raw.StatusCode, nil
+}
+func TextBinder(buf []byte, v any) error {
+	if reflect.ValueOf(v).Kind() != reflect.Ptr {
+		return errors.Errorf("Must be Ptr")
+	}
+
+	switch value := v.(type) {
+	case *string:
+		*value = string(buf)
+	case *[]byte:
+		*value = buf
+	default:
+		return errors.Errorf("not implements")
+	}
+	return nil
 }
 func (res *Response) IsSuccess() bool {
 	return res.raw.StatusCode >= 200 && res.raw.StatusCode < 300
