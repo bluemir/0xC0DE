@@ -58,13 +58,15 @@ func (router *Router) Publish(ctx context.Context, kind string, detail any) {
 		Kind:    kind,
 	}
 
-	for _, handler := range handlers.List() {
+	handlers.ForEach(func(handler Handler) error {
 		handler.Handle(ctx, evt)
-	}
+		return nil
+	})
 
-	for _, ch := range router.all.List() {
+	router.all.ForEach(func(ch chan<- Event) error {
 		ch <- evt
-	}
+		return nil
+	})
 }
 func (router *Router) AddHandler(kind string, handler Handler) {
 	keys := strings.Split(kind, Separator)

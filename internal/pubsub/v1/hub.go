@@ -64,18 +64,23 @@ func (h *Hub) broadcast(evt Message) {
 	{
 		handlers, _ := h.handlers.GetOrSet(keys, datastruct.NewSet[Handler]())
 
-		for _, handler := range handlers.List() {
+		logrus.Tracef("%+v", &handlers)
+
+		handlers.ForEach(func(handler Handler) error {
 			handler.Handle(evt)
-		}
+			return nil
+		})
 	}
 	{
 		//handler star
 		for i := len(keys); i > 0; i-- {
 			keys[i-1] = "*"
 			handlers, _ := h.handlers.GetOrSet(keys[:i], datastruct.NewSet[Handler]())
-			for _, handler := range handlers.List() {
+
+			handlers.ForEach(func(handler Handler) error {
 				handler.Handle(evt)
-			}
+				return nil
+			})
 		}
 	}
 }

@@ -10,6 +10,7 @@ import (
 )
 
 type Message struct {
+	str string
 }
 
 func TestMux(t *testing.T) {
@@ -17,26 +18,25 @@ func TestMux(t *testing.T) {
 	defer cancel()
 
 	ch := make(chan Message)
-	m, err := mux.New(ctx, ch)
+	m, err := mux.New(ch)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	counter := 0
+	go func() {
+		//time.Sleep(500 * time.Millisecond)
+		ch <- Message{"a"}
+		ch <- Message{"b"}
+		close(ch)
+	}()
 
-	go func(counter *int) {
+	{
+		counter := 0
 		ch := m.Watch(ctx.Done())
-		for range ch {
-			*counter++
+		for m := range ch {
+			counter++
+			println(m.str)
 		}
-	}(&counter)
-
-	ch <- Message{}
-	ch <- Message{}
-
-	close(ch)
-
-	time.Sleep(500 * time.Millisecond)
-
-	assert.Equal(t, 2, counter)
+		assert.Equal(t, 2, counter)
+	}
 }

@@ -56,13 +56,15 @@ func (hub *Hub) Publish(ctx context.Context, detail any) {
 		Kind:    kind.String(),
 	}
 
-	for _, handler := range handlers.List() {
+	handlers.ForEach(func(handler Handler) error {
 		handler.Handle(ctx, evt)
-	}
+		return nil
+	})
 
-	for _, ch := range hub.all.List() {
+	hub.all.ForEach(func(ch chan<- Event) error {
 		ch <- evt
-	}
+		return nil
+	})
 }
 func (hub *Hub) AddHandler(kind any, handler Handler) {
 	handlers, _ := hub.handlers.GetOrSet(reflect.TypeOf(kind), datastruct.NewSet[Handler]())

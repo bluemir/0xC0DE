@@ -7,67 +7,46 @@ import (
 type null struct{}
 
 type Set[T comparable] struct {
-	m map[T]null
-	sync.RWMutex
+	internal *sync.Map
 }
 
 func NewSet[T comparable]() Set[T] {
 	return Set[T]{
-		m: map[T]null{},
+		internal: &sync.Map{},
 	}
 }
 
 // Add add
 func (s *Set[T]) Add(item T) {
-	s.Lock()
-	defer s.Unlock()
-	s.m[item] = null{}
+
+	s.internal.Store(item, null{})
 }
 
 // Remove deletes the specified item from the map
 func (s *Set[T]) Remove(item T) {
-	s.Lock()
-	defer s.Unlock()
-	delete(s.m, item)
+	s.internal.Delete(item)
 }
 
 // Has looks for the existence of an item
 func (s *Set[T]) Has(item T) bool {
-	s.RLock()
-	defer s.RUnlock()
-	_, ok := s.m[item]
+	_, ok := s.internal.Load(item)
 	return ok
-}
-
-// Len returns the number of items in a set.
-func (s *Set[T]) Len() int {
-	if s == nil {
-		return 0
-	}
-	return len(s.List())
 }
 
 // Clear removes all items from the set
 func (s *Set[T]) Clear() {
-	s.Lock()
-	defer s.Unlock()
-
-	s.m = map[T]null{}
+	s.internal.Clear()
 }
 
-// IsEmpty checks for emptiness
-func (s *Set[T]) IsEmpty() bool {
-	return s.Len() == 0
-}
-
-// Set returns a slice of all items
-func (s *Set[T]) List() []T {
-	s.RLock()
-	defer s.RUnlock()
-
-	list := make([]T, 0, len(s.m))
-	for item := range s.m {
-		list = append(list, item)
-	}
-	return list
+// ForEach run function each item, with lock. return error when occur error
+func (s *Set[T]) ForEach(fn func(T) error) error {
+	var err error
+	s.internal.Range(func(k, v any) bool {
+		err = fn(k.(T))
+		if err != nil {
+			return false
+		}
+		return true
+	})
+	return err
 }

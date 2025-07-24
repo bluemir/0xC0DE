@@ -1,8 +1,6 @@
 package mux
 
 import (
-	"context"
-
 	"github.com/bluemir/0xC0DE/internal/datastruct"
 	"github.com/sirupsen/logrus"
 )
@@ -10,36 +8,28 @@ import (
 type Mux[T any] struct {
 	ch <-chan T
 
-	channels map[chan<- T]struct{}
-	// TODO need lock?
+	// channels map[chan<- T]bool
+	channels datastruct.Set[chan<- T]
+	done     <-chan struct{}
 }
 
-func New[T any](ctx context.Context, ch <-chan T) (*Mux[T], error) {
+func New[T any](ch <-chan T) (*Mux[T], error) {
+
+	done := make(chan struct{})
+
 	m := &Mux[T]{
 		ch: ch,
 
-		channels: map[chan<- T]struct{}{},
+		channels: datastruct.NewSet[chan<- T](),
+		done:     done,
 	}
 	go func(m *Mux[T]) {
-		defer func() {
-			// close all channels
-			for ch := range m.channels {
-				close(ch)
-			}
-
-			logrus.Trace("termination mux broadcast")
-		}()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case v, more := <-ch:
-				if !more {
-					return
-				}
-				m.broadcast(v)
-			}
+		for v := range ch {
+			m.broadcast(v)
 		}
+		close(done) // broadcast end of mux
+
+		logrus.Trace("termination mux broadcast")
 	}(m)
 
 	return m, nil
@@ -48,12 +38,15 @@ func New[T any](ctx context.Context, ch <-chan T) (*Mux[T], error) {
 func (m *Mux[T]) Watch(done <-chan struct{}) <-chan T {
 	ch := make(chan T)
 
-	m.channels[ch] = struct{}{}
+	m.channels.Add(ch)
 
 	go func() {
+		select { // close one of them
+		case <-done:
+		case <-m.done:
+		}
 		// cleanup
-		<-done
-		delete(m.channels, ch)
+		m.channels.Remove(ch)
 		close(ch)
 	}()
 
@@ -61,7 +54,11 @@ func (m *Mux[T]) Watch(done <-chan struct{}) <-chan T {
 }
 
 func (m *Mux[T]) broadcast(v T) {
-	for ch := range m.channels {
+	m.channels.ForEach(func(ch chan<- T) error {
 		ch <- v
-	}
+		return nil
+	})
+}
+func (m *Mux[T]) Wait() {
+	<-m.done
 }

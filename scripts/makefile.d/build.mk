@@ -11,7 +11,7 @@ build: build/$(APP_NAME) ## Build web app
 .PHONY: test
 test: fmt vet ## Run test
 	@$(MAKE) build/tools/go
-	go test -v -trimpath ./...
+	go test -trimpath ./...
 
 build/$(APP_NAME): $(GO_SOURCES) $(MAKEFILE_LIST) fmt vet gen
 	@$(MAKE) build/tools/go

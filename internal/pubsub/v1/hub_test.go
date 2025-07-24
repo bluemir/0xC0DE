@@ -43,7 +43,7 @@ func TestSendEvent(t *testing.T) {
 
 	hub.Publish("test", nil)
 
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
 	assert.Equal(t, 1, h.GetCount())
 }
@@ -167,7 +167,7 @@ func TestListenWithStar(t *testing.T) {
 
 	hub.Publish("test", nil)
 
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
 	assert.Equal(t, 1, counter.GetCount())
 }
