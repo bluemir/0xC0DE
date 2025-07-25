@@ -18,7 +18,6 @@ func NewSet[T comparable]() Set[T] {
 
 // Add add
 func (s *Set[T]) Add(item T) {
-
 	s.internal.Store(item, null{})
 }
 
@@ -38,8 +37,8 @@ func (s *Set[T]) Clear() {
 	s.internal.Clear()
 }
 
-// ForEach run function each item, with lock. return error when occur error
-func (s *Set[T]) ForEach(fn func(T) error) error {
+// Range run function each item, with lock. return error when occur error
+func (s *Set[T]) Range(fn func(T) error) error {
 	var err error
 	s.internal.Range(func(k, v any) bool {
 		err = fn(k.(T))

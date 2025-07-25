@@ -56,12 +56,12 @@ func (hub *Hub) Publish(ctx context.Context, detail any) {
 		Kind:    kind.String(),
 	}
 
-	handlers.ForEach(func(handler Handler) error {
+	handlers.Range(func(handler Handler) error {
 		handler.Handle(ctx, evt)
 		return nil
 	})
 
-	hub.all.ForEach(func(ch chan<- Event) error {
+	hub.all.Range(func(ch chan<- Event) error {
 		ch <- evt
 		return nil
 	})

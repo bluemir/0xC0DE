@@ -66,7 +66,7 @@ func (h *Hub) broadcast(evt Message) {
 
 		logrus.Tracef("%+v", &handlers)
 
-		handlers.ForEach(func(handler Handler) error {
+		handlers.Range(func(handler Handler) error {
 			handler.Handle(evt)
 			return nil
 		})
@@ -77,7 +77,7 @@ func (h *Hub) broadcast(evt Message) {
 			keys[i-1] = "*"
 			handlers, _ := h.handlers.GetOrSet(keys[:i], datastruct.NewSet[Handler]())
 
-			handlers.ForEach(func(handler Handler) error {
+			handlers.Range(func(handler Handler) error {
 				handler.Handle(evt)
 				return nil
 			})

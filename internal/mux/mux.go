@@ -54,7 +54,7 @@ func (m *Mux[T]) Watch(done <-chan struct{}) <-chan T {
 }
 
 func (m *Mux[T]) broadcast(v T) {
-	m.channels.ForEach(func(ch chan<- T) error {
+	m.channels.Range(func(ch chan<- T) error {
 		ch <- v
 		return nil
 	})

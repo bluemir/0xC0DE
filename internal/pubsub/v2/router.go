@@ -58,12 +58,12 @@ func (router *Router) Publish(ctx context.Context, kind string, detail any) {
 		Kind:    kind,
 	}
 
-	handlers.ForEach(func(handler Handler) error {
+	handlers.Range(func(handler Handler) error {
 		handler.Handle(ctx, evt)
 		return nil
 	})
 
-	router.all.ForEach(func(ch chan<- Event) error {
+	router.all.Range(func(ch chan<- Event) error {
 		ch <- evt
 		return nil
 	})
