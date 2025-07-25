@@ -43,6 +43,8 @@ func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) 
 		v1.POST("/users", handler.Register)
 		v1.GET("/users/me", handler.Me)
 
+		v1.POST("/bootstrap", bootstrap.CheckBootstrapToken, handler.Register)
+
 		v1.GET("/can/:verb/:resource", handler.CanAPI)
 		v1.GET("/can/:verb", handler.CanAPI)
 		v1.GET("/can", handler.CanBulkAPI)
@@ -77,6 +79,9 @@ func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) 
 		app.GET("/admin/iam/users", html("admin/iam/users.html"))
 		app.GET("/admin/iam/groups", html("admin/iam/groups.html"))
 		app.GET("/admin/iam/roles", html("admin/iam/roles.html"))
+
+		// bootstrap
+		app.GET("/bootstarp", bootstrap.IssueBootstrapToken, html("bootstrap.html"))
 
 		// or for SPA(single page application), client side routing
 		// app.Use(AbortIfHasPrefix("/api"), server.static("/index.html"))

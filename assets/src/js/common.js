@@ -1,3 +1,5 @@
+import * as $ from "bm.js/bm.module.js";
+
 let rev = $.get(`head script[type="importmap"]`).attr("rev");
 
 export let css = `
