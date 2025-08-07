@@ -24,7 +24,7 @@ body[layout=full] {
 	}
 	& > menu {
 		overflow-y: scroll;
-		padding: 1rem;
+		padding: 0;
 		margin: 0;
 		min-width: 12rem;
 

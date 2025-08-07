@@ -1,8 +1,12 @@
 package meta
 
+import (
+	"github.com/pkg/errors"
+)
+
 type ListOption struct {
-	Limit  int `json:"limit"`
-	Offset int `json:"offset"`
+	Limit  int `json:"limit"  form:"limit"`
+	Offset int `json:"offset" form:"offset"`
 }
 type ListOptionFn func(opt *ListOption)
 
@@ -50,3 +54,7 @@ type PagedList[v any] struct {
 	Page     int `json:"page"`
 	PageSize int `json:"pageSize"`
 }
+
+var (
+	ErrNotImplemented = errors.Errorf("not Implemented")
+)

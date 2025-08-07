@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/bluemir/0xC0DE/internal/functional"
+	"github.com/bluemir/functional"
 	"github.com/pkg/errors"
 )
 

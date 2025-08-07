@@ -6,9 +6,11 @@ import (
 	"io"
 )
 
-func Hash(str string) string {
+func Hash(strs ...string) string {
 	hashed := crypto.SHA512.New()
-	io.WriteString(hashed, str)
+	for _, str := range strs {
+		io.WriteString(hashed, str)
+	}
 	return hex.EncodeToString(hashed.Sum(nil))
 
 }

@@ -3,9 +3,10 @@ package auth_test
 import (
 	"testing"
 
-	"github.com/bluemir/0xC0DE/internal/functional"
-	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
+	"github.com/bluemir/functional"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
 )
 
 func TestCreateWithGroup(t *testing.T) {

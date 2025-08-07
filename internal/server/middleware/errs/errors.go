@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
+	"github.com/bluemir/0xC0DE/internal/server/backend/meta"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/mattn/go-sqlite3"
@@ -97,6 +98,8 @@ func code(err *gin.Error) int {
 		return http.StatusForbidden
 	case errors.Is(err, os.ErrNotExist):
 		return http.StatusNotFound
+	case errors.Is(err, meta.ErrNotImplemented):
+		return http.StatusNotImplemented
 	case errors.As(err, &sqlite3.Error{}):
 		e := sqlite3.Error{}
 		errors.As(err, &e)

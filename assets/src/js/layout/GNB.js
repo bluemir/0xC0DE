@@ -12,7 +12,7 @@ var tmpl = (elem) => html`
 			justify-content: space-between;
 		}
 		a {
-			color: var(--fg-color, black);
+			color: inherit;
 			text-decoration: none;
 		}
 		a:hover {

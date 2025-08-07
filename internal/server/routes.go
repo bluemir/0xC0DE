@@ -111,3 +111,11 @@ func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) 
 		}
 	})
 }
+func w(fn func(c *gin.Context) error) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if err := fn(c); err != nil {
+			c.Error(err)
+			c.Abort()
+		}
+	}
+}

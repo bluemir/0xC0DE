@@ -1,10 +1,11 @@
 package auth
 
 import (
-	"github.com/bluemir/0xC0DE/internal/functional"
-	"github.com/bluemir/0xC0DE/internal/server/backend/meta"
+	"github.com/bluemir/functional"
 	"github.com/pkg/errors"
 	"github.com/rs/xid"
+
+	"github.com/bluemir/0xC0DE/internal/server/backend/meta"
 )
 
 type User struct {
