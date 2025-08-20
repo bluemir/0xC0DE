@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"net/http"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
+	"github.com/bluemir/0xC0DE/internal/buildinfo"
 	"github.com/bluemir/0xC0DE/internal/server/graceful"
 	"github.com/bluemir/0xC0DE/internal/server/injector"
 	"github.com/bluemir/0xC0DE/internal/server/middleware/cache"
@@ -18,7 +20,7 @@ import (
 	"github.com/bluemir/0xC0DE/internal/server/middleware/prom"
 )
 
-func (server *Server) RunServiceHTTPServer(ctx context.Context, bind string, certs *CertConfig, extra ...gin.HandlerFunc) func() error {
+func (server *Server) RunServiceHTTPServer(ctx context.Context, bind string, tlsConf *tls.Config, extra ...gin.HandlerFunc) func() error {
 	return func() error {
 		if logrus.IsLevelEnabled(logrus.DebugLevel) {
 			gin.SetMode(gin.DebugMode)
@@ -48,7 +50,7 @@ func (server *Server) RunServiceHTTPServer(ctx context.Context, bind string, cer
 		app.Use(gin.Recovery())
 
 		// sessions
-		store := cookie.NewStore([]byte(server.salt))
+		store := cookie.NewStore([]byte(buildinfo.Signature()))
 		store.Options(sessions.Options{
 			Path: "/",
 		})
@@ -75,6 +77,8 @@ func (server *Server) RunServiceHTTPServer(ctx context.Context, bind string, cer
 			ReadHeaderTimeout: 1 * time.Minute,
 			WriteTimeout:      3 * time.Minute,
 			IdleTimeout:       3 * time.Minute,
-		}, graceful.WithCert(certs))
+
+			TLSConfig: tlsConf,
+		})
 	}
 }

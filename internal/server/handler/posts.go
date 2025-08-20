@@ -29,16 +29,26 @@ func CreatePost(c *gin.Context) {
 
 	c.JSON(http.StatusOK, post)
 }
-func ListPost(c *gin.Context) {
+func ListPost(c *gin.Context) error {
+	req := struct {
+		Query struct {
+			meta.ListOption
+		}
+	}{}
+
+	if err := c.ShouldBindQuery(req.Query); err != nil {
+		return err
+	}
+
 	items, err := backends(c).Posts.List(c.Request.Context(), meta.Limit(20))
 	if err != nil {
-		c.Error(err)
-		return
+		return err
 	}
 
 	c.JSON(http.StatusOK, ListResponse[posts.Post]{
 		Items: items,
 	})
+	return nil
 }
 
 func StreamPost(c *gin.Context) {
@@ -52,11 +62,10 @@ func StreamPost(c *gin.Context) {
 		c.Writer.Flush() //will write header.
 	}
 
-	ch := backends(c).Events.Watch("posts/created", c.Request.Context().Done())
-
+	ch := backends(c).Events.Watch(posts.EventPostCreated{}, c.Request.Context().Done())
 	gone := c.Stream(func(w io.Writer) bool {
 		if evt, ok := <-ch; ok {
-			c.SSEvent("post", evt.Detail)
+			c.SSEvent("post", evt.Detail.(posts.EventPostCreated).Post)
 			return true // continue
 		}
 		return false // disconnect

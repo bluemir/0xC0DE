@@ -57,7 +57,7 @@ func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) 
 		v1.GET("/roles", handler.ListRoles)
 
 		v1.POST("/posts", handler.CreatePost)
-		v1.GET("/posts", handler.ListPost)
+		v1.GET("/posts", w(handler.ListPost))
 		v1.GET("/posts/stream", handler.StreamPost)
 
 		// WebSocket

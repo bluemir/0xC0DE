@@ -2,6 +2,7 @@ package graceful
 
 import (
 	"context"
+	"crypto/tls"
 	"net"
 	"net/http"
 	"time"
@@ -10,23 +11,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type CertConfig struct {
-	CertFile string
-	KeyFile  string
-}
-
 type httpServerOption struct {
-	certs           *CertConfig
 	shutdownTimeout time.Duration
 }
 
 type httpServerOptionFn func(*httpServerOption)
 
-func WithCert(cert *CertConfig) httpServerOptionFn {
-	return func(opt *httpServerOption) {
-		opt.certs = cert
-	}
-}
 func WithShutdownTimeout(d time.Duration) httpServerOptionFn {
 	return func(opt *httpServerOption) {
 		opt.shutdownTimeout = d
@@ -54,6 +44,9 @@ func Run(ctx context.Context, s *http.Server, opts ...httpServerOptionFn) error 
 		Handler:           handler,
 		ReadHeaderTimeout: 1 * time.Minute,
 		WriteTimeout:      3 * time.Minute,
+
+		// TLS
+		TLSConfig: ...
 	}*/
 
 	l, err := net.Listen("tcp", s.Addr)
@@ -61,19 +54,17 @@ func Run(ctx context.Context, s *http.Server, opts ...httpServerOptionFn) error 
 		return errors.WithStack(err)
 	}
 
+	if s.TLSConfig != nil {
+		l = tls.NewListener(l, s.TLSConfig)
+	}
+
 	errc := make(chan error)
 	go func() {
 		defer close(errc)
 
 		logrus.Infof("Listening and serving HTTP on '%s'", s.Addr)
-		if opt.certs == nil {
-			if err := s.Serve(l); err != nil && err != http.ErrServerClosed {
-				errc <- err
-			}
-		} else {
-			if err := s.ServeTLS(l, opt.certs.CertFile, opt.certs.KeyFile); err != nil && err != http.ErrServerClosed {
-				errc <- err
-			}
+		if err := s.Serve(l); err != nil && err != http.ErrServerClosed {
+			errc <- err
 		}
 	}()
 
