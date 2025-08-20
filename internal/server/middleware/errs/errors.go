@@ -88,7 +88,7 @@ func code(err *gin.Error) int {
 	}
 
 	switch {
-	case errors.Is(err, validator.ValidationErrors{}):
+	case errors.As(err, &validator.ValidationErrors{}):
 		return http.StatusBadRequest
 	case errors.Is(err, gorm.ErrDuplicatedKey):
 		return http.StatusConflict

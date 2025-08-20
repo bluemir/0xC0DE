@@ -7,7 +7,7 @@ import (
 	"golang.org/x/net/context"
 	"gorm.io/gorm"
 
-	"github.com/bluemir/0xC0DE/internal/pubsub/v1"
+	"github.com/bluemir/0xC0DE/internal/pubsub/v2"
 	"github.com/bluemir/0xC0DE/internal/server/backend/meta"
 )
 
@@ -30,6 +30,9 @@ type Post struct {
 	At      time.Time `json:"at"`
 	Message string    `json:"message"`
 }
+type EventPostCreated struct {
+	Post Post
+}
 
 func (m *Manager) Create(ctx context.Context, message string) (*Post, error) {
 	post := &Post{
@@ -41,7 +44,7 @@ func (m *Manager) Create(ctx context.Context, message string) (*Post, error) {
 		return nil, err
 	}
 
-	m.events.Publish("posts.created", post)
+	m.events.Publish(ctx, EventPostCreated{Post: *post})
 
 	return post, nil
 }

@@ -1,6 +1,8 @@
 package server
 
 import (
+	"bytes"
+	"io"
 	"mime"
 	"net/http"
 	"strings"
@@ -11,6 +13,7 @@ import (
 	"github.com/bluemir/0xC0DE/internal/server/handler"
 	"github.com/bluemir/0xC0DE/internal/server/handler/auth/resource"
 	"github.com/bluemir/0xC0DE/internal/server/handler/auth/verb"
+	"github.com/bluemir/0xC0DE/internal/server/middleware/bootstrap"
 	"github.com/bluemir/0xC0DE/internal/server/middleware/cache"
 )
 
@@ -43,7 +46,7 @@ func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) 
 		v1.POST("/users", handler.Register)
 		v1.GET("/users/me", handler.Me)
 
-		v1.POST("/bootstrap", bootstrap.CheckBootstrapToken, handler.Register)
+		v1.POST("/bootstrap", bodyReaderTweak, bootstrap.CheckBootstrapToken, handler.Register)
 
 		v1.GET("/can/:verb/:resource", handler.CanAPI)
 		v1.GET("/can/:verb", handler.CanAPI)
@@ -91,7 +94,7 @@ func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) 
 	}
 
 	noRoute(func(c *gin.Context) {
-		for _, accept := range strings.Split(c.Request.Header.Get("Accept"), ",") {
+		for accept := range strings.SplitSeq(c.Request.Header.Get("Accept"), ",") {
 			t, _, e := mime.ParseMediaType(accept)
 			if e != nil {
 				continue
@@ -118,4 +121,28 @@ func w(fn func(c *gin.Context) error) gin.HandlerFunc {
 			c.Abort()
 		}
 	}
+}
+func bodyReaderTweak(c *gin.Context) {
+	// body 를 여러번 읽지 못하는 것을 대응 하기 위한 tweak
+	body := c.Request.Body
+
+	buf := bytes.NewBuffer(nil)
+
+	if _, err := io.Copy(buf, body); err != nil {
+		c.Error(err)
+		c.Abort()
+		return
+	}
+
+	// should i use `gin.BodyBytesKey`? https://stackoverflow.com/questions/62736851/go-gin-read-request-body-many-times
+
+	// Data 는 buf에서 읽고, close 는 원래것에서 호출
+	c.Request.Body = struct {
+		io.Reader
+		io.Closer
+	}{
+		Reader: bytes.NewReader(buf.Bytes()),
+		Closer: body,
+	}
+
 }
