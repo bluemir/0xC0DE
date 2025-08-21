@@ -44,16 +44,16 @@ func Initialize(ctx context.Context, args *Args) (*Backends, error) {
 	// init components
 	db, err := initDB(args.DBPath)
 	if err != nil {
-		return nil, errors.Wrapf(err, "init server failed")
+		return nil, err
 	}
 
 	authManager, err := auth.New(db, args.Salt)
 	if err != nil {
-		return nil, errors.Wrapf(err, "init server failed")
+		return nil, err
 	}
 	postManager, err := posts.New(ctx, &conf.Posts, db, events)
 	if err != nil {
-		return nil, errors.Wrapf(err, "init post manager failed")
+		return nil, err
 	}
 
 	return &Backends{
