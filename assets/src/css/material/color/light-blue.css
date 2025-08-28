@@ -1,0 +1,16 @@
+:host, :root {
+	--light-blue-50:  #E1F5FE;
+	--light-blue-100: #B3E5FC;
+	--light-blue-200: #81D4FA;
+	--light-blue-300: #4FC3F7;
+	--light-blue-400: #29B6F6;
+	--light-blue-500: #03A9F4;
+	--light-blue-600: #039BE5;
+	--light-blue-700: #0288D1;
+	--light-blue-800: #0277BD;
+	--light-blue-900: #01579B;
+	--light-blue-alt-100: #80D8FF;
+	--light-blue-alt-200: #40C4FF;
+	--light-blue-alt-400: #00B0FF;
+	--light-blue-alt-700: #0091EA;
+}
