@@ -40,7 +40,7 @@ func ListPost(c *gin.Context) error {
 		return err
 	}
 
-	items, err := backends(c).Posts.List(c.Request.Context(), meta.Limit(20))
+	items, err := backends(c).Posts.ListWithOption(c.Request.Context(), &req.Query.ListOption)
 	if err != nil {
 		return err
 	}

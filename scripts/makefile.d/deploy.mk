@@ -11,6 +11,12 @@ deploy: build/docker-image.pushed ## Deploy webapp
 	#     | kubectl apply -f -
 	#   kubectl kustermize deploy | kubectl apply -f -
 
+cert-secrets: ## make k8s secret file
+cert-secrets: runtime/deploy/local/server-certs.yaml
+
+runtime/deploy/local/server-certs.yaml: CA_CERT=$(CERT_DIR)/local/ca.crt
+runtime/deploy/local/server-certs.yaml: CERT=$(CERT_DIR)/local/app/server
+
 runtime/deploy/%-certs.yaml:
 	@mkdir -p $(@D)
 	@if [ "$(CA_CERT)" == "" ] ; then echo "CA_CERT must be provideded.";  exit 1 ; fi

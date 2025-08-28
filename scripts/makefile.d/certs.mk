@@ -28,12 +28,6 @@ $(CERT_DIR)/local/app/server.csr:  OPTIONAL_SAN=",IP:127.0.0.1"
 $(CERT_DIR)/local/etcd/server.csr: OPTIONAL_SAN=",IP:127.0.0.1"
 $(CERT_DIR)/local/etcd/server.crt: SINGING_CERT=$(CERT_DIR)/ca
 
-cert-secrets: ## make k8s secret file
-cert-secrets: runtime/deploy/local/server-certs.yaml
-
-runtime/deploy/local/server-certs.yaml: CA_CERT=$(CERT_DIR)/local/ca.crt
-runtime/deploy/local/server-certs.yaml: CERT=$(CERT_DIR)/local/app/server
-
 ##########################################################################
 
 .PRECIOUS: $(CERT_DIR)/%.key $(CERT_DIR)/%.csr $(CERT_DIR)/%.crt
@@ -44,17 +38,21 @@ $(CERT_DIR)/%.key: $(MAKEFILES)
 	@mkdir -p $(dir $@)
 	openssl genrsa -out $@ $(KEY_SIZE)
 
+$(CERT_DIR)/ca.crt: COMMON_NAME?=$(APP_NAME)
 $(CERT_DIR)/ca.crt: $(CERT_DIR)/ca.key
 	@mkdir -p $(dir $@)
 	openssl req -new -x509 -days 3650 -key $< \
-		-subj "/C=AU/CN=$(APP_NAME)"\
+		-subj "/C=AU/CN=$(COMMON_NAME)" \
 		-addext "basicConstraints=critical,CA:TRUE" \
+		-addext "keyUsage=keyCertSign,cRLSign" \
 		-out $@
+$(CERT_DIR)/%/ca.crt: COMMON_NAME?=$(APP_NAME)
 $(CERT_DIR)/%/ca.crt: $(CERT_DIR)/%/ca.key
 	@mkdir -p $(dir $@)
 	openssl req -new -x509 -days 3650 -key $< \
-		-subj "/C=AU/CN=$(APP_NAME)"\
+		-subj "/C=AU/CN=$(COMMON_NAME)" \
 		-addext "basicConstraints=critical,CA:TRUE" \
+		-addext "keyUsage=keyCertSign,cRLSign" \
 		-out $@
 
 $(CERT_DIR)/%.csr: COMMON_NAME?=$(APP_NAME)
@@ -85,5 +83,6 @@ $(CERT_DIR)/%.crt: $(CERT_DIR)/%.csr $(MAKEFILES)
 	# check issuer: openssl x509 -subject -issuer -noout -in $@
 	# check SAN:    openssl x509 -text -noout -in $@ | grep "Subject Alternative Name" -A1
 	################################################################################
+
 $(CERT_DIR)/%.bundle.crt:
 	cat $^ > $@

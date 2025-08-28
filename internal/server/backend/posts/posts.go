@@ -62,7 +62,7 @@ func (m *Manager) List(ctx context.Context, opts ...meta.ListOptionFn) ([]Post, 
 }
 func (m *Manager) ListWithOption(ctx context.Context, opt *meta.ListOption) ([]Post, error) {
 	if opt.Limit == 0 {
-		opt.Limit = 20
+		opt.Limit = 20 // default value
 	}
 
 	posts := []Post{}

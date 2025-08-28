@@ -3,8 +3,8 @@ import * as $ from "bm.js/bm.module.js";
 import {html, render} from 'lit-html';
 import * as common from "common.js";
 
-class CustomElement extends $.CustomElement {
-	template(elem) {
+class CustomElement extends HTMLElement {
+	template(params) {
 		return html`
 			<style>
 				${common.css}
@@ -22,12 +22,15 @@ class CustomElement extends $.CustomElement {
 		return [];
 	}
 	onAttributeChanged(name, oValue, nValue) {
+		// TODO
 	}
 	constructor() {
 		super();
+
+		this.attachShadow({mode: 'open'})
 	}
 	async render() {
-		render(this.template(this, this.#params), this.shadowRoot);
+		render(this.template(this.#params), this.shadowRoot);
 	}
 	async onConnected () {
 	}

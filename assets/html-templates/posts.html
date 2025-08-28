@@ -13,9 +13,51 @@
 		<main>
 			<div row>
 				<h1>Posts</h1>
-				<post-create></post-create>
+				<section >
+					<form>
+						<c-input label="message" name="message"></c-input>
+						<button enhanced>Send</button>
+					</form>
+				</section>
+				<table>
+					<thead>
+						<tr>
+							<td>Message</td>
+							<td></td>
+						</tr>
+					</thead>
+					<tbody></tbody>
+				</table>
 				<post-list></post-list>
 			</div>
 		</main>
+		<script type="module">
+			import * as $ from "bm.js/bm.module.js";
+			import {html, render} from 'lit-html';
+
+			// Create
+			$.get("form").on("submit", async (evt) => {
+				evt.preventDefault();
+
+				let $form = evt.target;
+
+				let res = await $.request("POST", `/api/v1/posts`, {
+					body: new FormData(evt.target),
+				});
+
+				$form.reset();
+
+				$.events.fireEvent("message.info", { msg: "created!" });
+			});
+
+			// List
+			let res = await $.request();
+			render(res.json.items.map(post => html`
+				<tr>
+					<td><${post.message}/td>
+					<td><${post.id}/td>
+				</tr>
+			`), $.get("tbody"));
+		</script>
 	</body>
 </html>

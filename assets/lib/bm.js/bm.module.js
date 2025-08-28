@@ -319,7 +319,7 @@ class ExtendedError extends Error {
 		this.stack = this.stack.split('\n').slice(0, message_lines+1).join('\n') + '\n' + error.stack;
 	}
 }
-export function wsURL (url){
+export function wsURL(url) {
 	let u= new URL(url, document.location)
 	u.protocol = document.location.protocol.includes("https") ? "wss:" : "ws:"
 	return u;
@@ -360,7 +360,7 @@ function queryString(obj) {
 	}).join("&");
 }
 
-Object.keyValues= function(obj, f) {
+Object.keyValues= function(obj) {
 	return Object.entries(obj).map(([key, value]) => {
 		return {key, value};
 	});
@@ -433,7 +433,7 @@ extend(Node, {
 		return this;
 	},
 	clear : function(filter) {
-		let f = filter || function(e) { return true };
+		let f = filter || function() { return true };
 		this.childNodes.filter(f).forEach((e) => this.removeChild(e))
 		return this;
 	},
@@ -533,19 +533,6 @@ extend(HTMLElement, {
 		this.render && this.render();
 	},
 })
-
-
-export class CustomElement extends HTMLElement {
-	constructor({enableShadow = true} = {}) {
-		super();
-
-		if (enableShadow) {
-			// this.shadowRoot
-			this.attachShadow({mode: 'open'})
-		}
-	}
-}
-
 
 export class AwaitEventTarget {
 	constructor() {
