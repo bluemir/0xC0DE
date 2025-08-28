@@ -3,6 +3,15 @@
 	<head>
 		<title>0xC0DE</title>
 		{{ template "snippet/header.html" . }}
+		<style>
+			header {
+				background-color: var(--gray-300);
+			}
+			#hero-contents {
+				background-color: var(--blue-gray-600);
+				color: var(--gray-200);
+			}
+		</style>
 	</head>
 	<body layout="one-page">
 		<header>
@@ -20,17 +29,17 @@
 						</p>
 						<section>
 							<user-can action="read" resource="page.posts">
-								<c-button><a href="/posts">Posts</a></c-button>
+								<a role="btn" href="/posts">Posts</a>
 							</user-can>
 							<user-can action="read" resource="page.register">
-								<c-button><a href="/users/register">Register</a></c-button>
+								<a role="btn" href="/users/register">Register</a>
 							</user-can>
 						</section>
 					</div>
 					<c-placeholder col="5"></c-placeholder>
 				</div>
 			</section>
-			<section grid id="features">
+			<section id="features">
 				<div row grid>
 					<section col="4">
 						<c-icon kind="sync_saved_locally" size="5rem"></c-icon>

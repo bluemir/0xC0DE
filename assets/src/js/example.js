@@ -6,9 +6,8 @@ import * as common from "common.js";
 class CustomElement extends HTMLElement {
 	template(params) {
 		return html`
+			<style>${common.css}</style>
 			<style>
-				${common.css}
-
 				:host {
 				}
 				::slotted(*) {
@@ -24,11 +23,15 @@ class CustomElement extends HTMLElement {
 	onAttributeChanged(name, oValue, nValue) {
 		// TODO
 	}
+
 	constructor() {
 		super();
-
 		this.attachShadow({mode: 'open'})
 	}
+	// or
+	/*
+	#shadow = this.attachShadow({mode: 'closed'});
+	*/
 	async render() {
 		render(this.template(this.#params), this.shadowRoot);
 	}

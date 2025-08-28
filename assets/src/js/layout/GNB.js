@@ -23,12 +23,12 @@ class GlobalNavigationBar extends HTMLElement {
 			</style>
 			<section id="logo">
 				<a href="/">0xC0DE</a>
-				${elem.hasAttribute("admin") ? html`
+				${this.hasAttribute("admin") ? html`
 					 <a href="/admin">Admin</a>
 				 `:""}
 			</section>
 			<section id="action">
-				${ elem.user ? html`
+				${this.user ? html`
 					<a href="/admin"><c-icon kind="construction" /></a>
 					<a href="/users/profile">Profile</a>
 					<a href="/users/logout" >Logout</a>

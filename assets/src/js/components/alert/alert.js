@@ -2,7 +2,7 @@ import * as $ from "bm.js/bm.module.js";
 import {html, render} from 'lit-html';
 import {css} from "common.js";
 
-class Alert extends $.CustomElement {
+class Alert extends HTMLElement {
 	template() {
 		return html`
 			<style>
@@ -30,6 +30,7 @@ class Alert extends $.CustomElement {
 	constructor() {
 		super();
 	}
+	#shadow = this.attachShadow({mode:'closed'});
 
 	onConnected() {
 		// TODO save last 10 events on session storage
@@ -49,7 +50,7 @@ class Alert extends $.CustomElement {
 			await $.timeout(3000);
 
 			$article.remove();
-		}, {signal:this.#signal});
+		}, {signal: this.#signal});
 
 		$.events.on("alert.warn", async (evt) => {
 			let { message, raw } = evt.detail;
@@ -65,7 +66,7 @@ class Alert extends $.CustomElement {
 			await $.timeout(3000);
 
 			$article.remove();
-		}, {signal:this.#signal});
+		}, {signal: this.#signal});
 
 		$.events.on("alert.error", async (evt) => {
 			let { message, raw } = evt.detail;
@@ -81,13 +82,13 @@ class Alert extends $.CustomElement {
 			await $.timeout(3000);
 
 			$article.remove();
-		}, {signal:this.#signal});
+		}, {signal:this. #signal});
 	}
 	onDisconnected() {
 		this.#signal.abort();
 	}
 	async render() {
-		render(this.template(), this.shadowRoot);
+		render(this.template(), this.#shadow);
 	}
 }
 customElements.define("c-alert", Alert);

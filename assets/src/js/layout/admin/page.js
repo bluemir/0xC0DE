@@ -59,9 +59,11 @@ var tmpl = (app) => html`
 	</footer>
 `;
 
-class AdminPage extends $.CustomElement {
+class AdminPage extends HTMLElement {
 	constructor() {
 		super();
+
+		this.attachShadow({mode: "open"});
 	}
 
 	async render() {

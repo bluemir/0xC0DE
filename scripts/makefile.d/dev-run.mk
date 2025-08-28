@@ -17,6 +17,7 @@ dev-run: ## Run dev server. If detect file change, automatically rebuild&restart
 		--exclude "build/**" \
 		--exclude "**.sw*" \
 		--exclude "assets/js/index.js" \
+		--exclude "pkg/api/v1/**.go" \
 		-- \
 	$(MAKE) test run
 

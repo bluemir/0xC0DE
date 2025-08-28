@@ -3,45 +3,47 @@ import * as $ from "bm.js/bm.module.js";
 import {html, render} from 'lit-html';
 import {css} from "common.js";
 
-var tmpl = (elem) => html`
-	<style>
-		${css}
+class CustomElement extends HTMLElement {
+	template() {
+		return html`
+			<style>
+				${css}
 
-		:host {
-		}
-		table {
-			th, td {
-				border: 1px solid var(--gray-400);
-			}
-		}
-
-	</style>
-	<table>
-		<thead>
-			<tr>
-				<th>Name</th>
-				<th></th>
-			</tr>
-		</thead>
-		<tbody>
-		${elem.items.map((item) => html`
-			<tr>
-				<td>${item.name}</td>
-				<td>
-					<a href="#">edit</a>
-				</td>
-			</tr>
-		`)}
-		</tbody>
-	</table>
-`;
-
-class CustomElement extends $.CustomElement {
+				:host {
+				}
+				table {
+					th, td {
+						border: 1px solid var(--gray-400);
+					}
+				}
+			</style>
+			<table>
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+				${this.#items.map((item) => html`
+					<tr>
+						<td>${item.name}</td>
+						<td>
+							<a href="#">edit</a>
+						</td>
+					</tr>
+				`)}
+				</tbody>
+			</table>
+		`;
+	}
 	constructor() {
 		super();
 
-		this.items = [];
+		this.attachShadow({mode: "open"});
 	}
+
+	#items = [];
 
 	async render() {
 		render(tmpl(this), this.shadowRoot);
@@ -50,7 +52,7 @@ class CustomElement extends $.CustomElement {
 	async onConnected() {
 		let res = await $.request("GET", "/api/v1/roles");
 
-		this.items = res.json;
+		this.#items = res.json;
 
 		this.render();
 	}

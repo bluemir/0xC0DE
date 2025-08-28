@@ -26,7 +26,7 @@ var tmpl = (elem) => html`
 
 // key value input
 // encode to `{key}={value},{key}={value}`
-class CustomElement extends $.CustomElement {
+class CustomElement extends HTMLElement {
 	static get formAssociated() {
 		return true;
 	}
@@ -40,6 +40,8 @@ class CustomElement extends $.CustomElement {
 
 	constructor() {
 		super();
+
+		this.attachShadow({mode: "open"});
 	}
 
 	setKey(index, key) {

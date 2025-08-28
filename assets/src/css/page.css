@@ -4,6 +4,7 @@
 @import "./system/shadow.css";
 @import "./system/layout.css";
 @import "./enhanced/dialog.css";
+@import "./enhanced/button.css";
 
 body {
 	margin: 0px;

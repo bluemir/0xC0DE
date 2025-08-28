@@ -32,9 +32,11 @@ var tmpl = (elem) => html`
 	</table>
 `;
 
-class CustomElement extends $.CustomElement {
+class CustomElement extends HTMLElement {
 	constructor() {
 		super();
+
+		this.attachShadow({mode: "open"});
 
 		this.items = [];
 	}

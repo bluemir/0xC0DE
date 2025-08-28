@@ -18,6 +18,7 @@ export function load(elem = document) {
 
 		if (res.status >= 500) {
 			console.error("error on request")
+			$.events.fireEvents("alert.error", { message: "error on form submit" })
 			return
 		}
 

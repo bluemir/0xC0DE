@@ -14,9 +14,10 @@ var tmpl = (elem) => html`
 	</span>
 `;
 
-class AdminFooter extends $.CustomElement {
+class AdminFooter extends HTMLElement {
 	constructor() {
 		super();
+		this.attachShadow({mode: "open"});
 	}
 
 	async render() {

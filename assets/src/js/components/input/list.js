@@ -28,13 +28,18 @@ var tmpl = (elem) => html`
 
 // key value input
 // encode to `{item},{item}`
-class CustomElement extends $.CustomElement {
+class CustomElement extends HTMLElement {
 	static get formAssociated() {
 		return true;
 	}
 
+	template(...args) {
+		return tmpl.apply(this, args);
+	}
+
 	constructor() {
 		super();
+		this.attachShadow({mode: "open"});
 	}
 
 	items = [""];

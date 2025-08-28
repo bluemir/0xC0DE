@@ -47,9 +47,10 @@ var tmpl = (app) => html`
 	<slot name="panel"></slot>
 `;
 
-class Tabs extends $.CustomElement {
+class Tabs extends HTMLElement {
 	constructor() {
 		super();
+		this.attachShadow({mode: "open"});
 	}
 	static get observedAttributes() {
 		return [ "selected" ];

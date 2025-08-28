@@ -25,9 +25,10 @@ var tmpl = (elem) => html`
 	<slot></slot>
 `;
 
-class CustomElement extends $.CustomElement {
+class CustomElement extends HTMLElement {
 	constructor() {
 		super();
+		this.attachShadow({mode: "open"});
 	}
 	onConnected() {
 		$.all(this, "a").

@@ -2,28 +2,31 @@ import * as $ from "bm.js/bm.module.js";
 import {html, render} from 'lit-html';
 import {css} from "common.js";
 
-var tmpl = (elem) => html`
-	<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-	<style>
-		${css}
+class Icon extends HTMLElement {
+	template() {
+		return html`
+			<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+			<style>
+				${css}
 
-		:host {
-			display: inline;
-		}
+				:host {
+					display: inline;
+				}
 
-		span.material-symbols-outlined {
-			${elem.size}
-			cursor: default;
-			vertical-align: bottom;
-		}
-	</style>
+				span.material-symbols-outlined {
+					${this.size}
+					cursor: default;
+					vertical-align: bottom;
+				}
+			</style>
 
-	<span class="material-symbols-outlined">${elem.attr("kind")}</span>
-`;
-
-class Icon extends $.CustomElement {
+			<span class="material-symbols-outlined">${this.attr("kind")}</span>
+		`;
+	}
 	constructor() {
 		super();
+
+		this.attachShadow({mode:'open'});
 	}
 	onConnected() {
 		if ($.get(document, "head link#icons")) {
@@ -42,7 +45,7 @@ class Icon extends $.CustomElement {
 		this.render();
 	}
 	async render() {
-		render(tmpl(this), this.shadowRoot);
+		render(this.template(), this.shadowRoot);
 	}
 	// attribute
 	get size() {

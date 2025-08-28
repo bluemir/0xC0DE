@@ -25,9 +25,10 @@ var tmpl = (elem) => html`
 	<a href="/admin/events">Events</a>
 `;
 
-class AdminMenu extends $.CustomElement {
+class AdminMenu extends HTMLElement {
 	constructor() {
 		super();
+		this.attachShadow({mode: "open"});
 	}
 
 	async render() {
