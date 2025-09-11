@@ -37,6 +37,8 @@ TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 cd $TMP_DIR
 
-curl -SsL "https://dl.k8s.io/release/$TAG/bin/$OS/$ARCH/kubectl" -o kubectl
-chmod +x kubectl
-mv kubectl $BINDIR
+
+
+curl -SsL "https://github.com/mikefarah/yq/releases/download/$TAG/yq_$OS_$ARCH" -o yq
+chmod +x yq
+mv yq $BINDIR

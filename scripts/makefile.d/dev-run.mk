@@ -2,8 +2,7 @@
 
 run: build/$(APP_NAME) ## Run web app
 	$< -vvv server --config runtime/config.yaml #--cert runtime/certs/server.crt --key runtime/certs/server.key
-dev-run: ## Run dev server. If detect file change, automatically rebuild&restart server
-	@$(MAKE) build/tools/watcher
+dev-run: | build/tools/watcher ## Run dev server. If detect file change, automatically rebuild&restart server
 	watcher \
 		--include "go.mod" \
 		--include "go.sum" \
@@ -21,8 +20,7 @@ dev-run: ## Run dev server. If detect file change, automatically rebuild&restart
 		-- \
 	$(MAKE) test run
 
-test-run: ## Run test. If detect file change, automatically run test
-	@$(MAKE) build/tools/watcher
+test-run: | build/tools/watcher ## Run test. If detect file change, automatically run test
 	watcher \
 		--include "go.mod" \
 		--include "go.sum" \

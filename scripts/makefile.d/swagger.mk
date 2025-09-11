@@ -3,7 +3,7 @@
 
 # see https://github.com/swaggo/swag for documents
 
-build/$(APP_NAME).unpacked: internal/swagger/docs.go
+build/$(APP_NAME): internal/swagger/docs.go
 test: internal/swagger/docs.go
 vet: internal/swagger/docs.go
 
@@ -12,8 +12,7 @@ OPTIONAL_CLEAN+= internal/swagger/docs.go internal/swagger/swagger.json internal
 .PHONY: swagger
 swagger: internal/swagger/docs.go ## Make swagger file
 
-internal/swagger/docs.go: $(filter ./internal/server/%.go,$(GO_SOURCES))
-	@$(MAKE) build/tools/swag
+internal/swagger/docs.go: $(filter ./internal/server/%.go,$(GO_SOURCES)) | build/tools/swag
 	@mkdir -p $(dir $@)
 	build/tools/swag init \
 		--generalInfo internal/server/routes.go \
@@ -23,10 +22,8 @@ internal/swagger/docs.go: $(filter ./internal/server/%.go,$(GO_SOURCES))
 	# for override swaggo, add this option `--overridesFile .swaggo`
 
 
-install-swaggo: ## install swaggo
-	./scripts/tools/install/go-tool.sh github.com/swaggo/swag/cmd/swag
-build/tools/swag:
-	@$(MAKE) build/tools/go
-	@which $(notdir $@) || ($(MAKE) install-swaggo)
+install-swaggo: | build/tools/swag ## install swaggo
+build/tools/swag: | build/tools/go
+	@which $(notdir $@) || $(shell ./scripts/tools/install/go-tool.sh github.com/swaggo/swag/cmd/swag)
 
 tools: build/tools/swag

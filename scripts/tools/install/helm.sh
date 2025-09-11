@@ -1,7 +1,7 @@
 set -e
 
 TAG=$1
-BINDIR=$(pwd)/${2:-/runtime/tools}
+BIN_DIR=$(pwd)/${2:-/runtime/tools}
 
 # initArch discovers the architecture for this system.
 initArch() {
@@ -35,8 +35,9 @@ initOS
 
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
+
 cd $TMP_DIR
 
-curl -SsL "https://dl.k8s.io/release/$TAG/bin/$OS/$ARCH/kubectl" -o kubectl
-chmod +x kubectl
-mv kubectl $BINDIR
+curl -SsL "https://get.helm.sh/helm-$TAG-$OS-$ARCH.tar.gz" -o helm.tar.gz
+tar xf "helm.tar.gz"
+mv $OS-$ARCH/helm $BIN_DIR

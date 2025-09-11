@@ -6,8 +6,7 @@ docker: build/docker-image ## Build docker image
 DOCKER?=$(shell scripts/tools/find-docker-alt.sh)
 
 #build/docker-image: export DOCKER_BUILDKIT=1
-build/docker-image: Dockerfile $(MAKEFILE_LIST)
-	@$(MAKE) build/tools/docker
+build/docker-image: Dockerfile $(MAKEFILE_LIST) | build/tools/$(DOCKER)
 	@mkdir -p $(dir $@)
 	$(DOCKER) build \
 		--build-arg VERSION=$(VERSION) \

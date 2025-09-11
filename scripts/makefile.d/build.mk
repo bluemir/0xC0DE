@@ -9,12 +9,10 @@ build/docker-image: $(GO_SOURCES)
 build: build/$(APP_NAME) ## Build web app
 
 .PHONY: test
-test: fmt vet ## Run test
-	@$(MAKE) build/tools/go
+test: fmt vet | build/tools/go ## Run test
 	go test -trimpath ./...
 
-build/$(APP_NAME): $(GO_SOURCES) $(MAKEFILE_LIST) fmt vet gen
-	@$(MAKE) build/tools/go
+build/$(APP_NAME): $(GO_SOURCES) $(MAKEFILE_LIST) | fmt vet gen build/tools/go
 	@mkdir -p build
 	go build -v \
 		-trimpath \

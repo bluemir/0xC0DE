@@ -25,8 +25,7 @@ assets/src/js/index.js: $(JS_SOURCES) scripts/tools/import-helper/*
 ## js build, with esbuild
 web: assets/js/index.js # entrypoints
 assets/js/%: export NODE_PATH=assets/src/js:assets/lib
-assets/js/%: assets/src/js/% package.json package-lock.json
-	@$(MAKE) build/tools/npx
+assets/js/%: assets/src/js/% package.json package-lock.json | build/tools/npx
 	@mkdir -p $(dir $@)
 	npx esbuild $< --outdir=$(dir $@) \
 		--bundle --sourcemap --format=esm \
@@ -37,8 +36,7 @@ OPTIONAL_CLEAN += assets/js
 
 ## css build, with esbuild
 web: assets/css/page.css assets/css/element.css
-assets/css/%: assets/src/css/%
-	@$(MAKE) build/tools/npx
+assets/css/%: assets/src/css/% | build/tools/npx
 	@mkdir -p $(dir $@)
 	npx esbuild $< --outdir=$(dir $@) \
 		--bundle --sourcemap \
@@ -47,7 +45,7 @@ OPTIONAL_CLEAN += assets/css
 
 assets/css/page.css assets/css/element.css: $(CSS_SOURCES) # TODO: import graph?
 
-build/$(APP_NAME): web $(HTML_SOURCES)
+build/$(APP_NAME): $(HTML_SOURCES) | web
 build/docker-image: $(JS_SOURCES) $(CSS_SOURCES) $(WEB_LIBS) $(HTML_SOURCES)
 
 ## resolve depandancy
@@ -56,22 +54,17 @@ OPTIONAL_CLEAN += node_modules
 build/$(APP_NAME): package-lock.json
 build/docker-image: package-lock.json
 
-package-lock.json: package.json
-	@$(MAKE) build/tools/npm
+package-lock.json: package.json | build/tools/npm
 	@mkdir -p $(dir $@)
 	npm install
 
-yarn.lock:
-	@$(MAKE) build/tools/yarn
-	@mkdir -p $(dir $@)
-	yarn install
 
 build-tools: build/tools/npm build/tools/npx
 build/tools/npm:
 	@which $(notdir $@)
 build/tools/npx:
 	@which $(notdir $@)
-build/tools/yarn: build/tools/npm
+build/tools/yarn: |  build/tools/npm
 	@which $(notdir $@) || (npm install -g yarn)
 
 vet: assets/js/.placeholder assets/css/.placeholder

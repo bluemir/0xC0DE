@@ -1,6 +1,6 @@
 ##@ Deployments
+#deploy: | build/tools/kubectl
 deploy: build/docker-image.pushed ## Deploy webapp
-	#@$(MAKE) build/tools/kubectl
 	#@if [ "$(IMAGE_PULL_SECRET_NAME)" == "" ] ; then echo "IMAGE_PULL_SECRET_NAME must provideded.";  exit 1 ; fi
 	#@if [ "$(NAMESPACE)" == "" ] ; then echo "NAMESPACE must provideded.";  exit 1 ; fi
 	#@kubectl get -n $(NAMESPACE) secrets/$(IMAGE_PULL_SECRET_NAME) || (echo 'secrets "$(IMAGE_PULL_SECRET_NAME)" not found.' ; exit 1)
@@ -32,7 +32,14 @@ runtime/deploy/%-certs.yaml:
 .PHONY: deploy
 tools: build/tools/kubectl
 build/tools/kubectl:
-	@which $(@F) || (./scripts/tools/install/kubectl.sh)
+	@which $(@F) || (./scripts/tools/install/kubectl.sh v1.33.1 build/tools)
 	#install kubectl. https://kubernetes.io/docs/tasks/tools/
 	touch $@
 
+build/tools/helm:
+	@which $(@F) || (./scripts/tools/install/helm.sh v3.18.6 build/tools)
+
+
+runtime/tools/yq:
+	@mkdir -p $(@D)
+	@which $(@F) || (./scripts/tools/install/yq.sh v4.47.1)

@@ -2,10 +2,10 @@
 
 ETCD_DATA_DIR=runtime/etcd.data
 
-run-etcd: build/tools/etcd ## Run etcd for development
+run-etcd: ## Run etcd for development
 run-etcd: runtime/certs/local/etcd/server.crt runtime/certs/local/etcd/server.key
 run-etcd: runtime/certs/local/etcd-client/ca.crt
-run-etcd: build/tools/etcd
+run-etcd: | build/tools/etcd
 	build/tools/etcd \
 		--name local \
 		--cert-file runtime/certs/local/etcd/server.crt \
