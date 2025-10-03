@@ -13,29 +13,15 @@ dev-run: | build/tools/watcher ## Run dev server. If detect file change, automat
 		--include "api/proto/**" \
 		--include "Makefile" \
 		--include "scripts/makefile.d/*.mk" \
+		--include "runtime/config.yaml" \
 		--exclude "build/**" \
 		--exclude "**.sw*" \
-		--exclude "assets/js/index.js" \
+		--exclude "assets/js/**" \
+		--exclude "assets/css/**" \
+		--exclude "assets/src/js/index.js" \
 		--exclude "pkg/api/v1/**.go" \
 		-- \
 	$(MAKE) test run
-
-test-run: | build/tools/watcher ## Run test. If detect file change, automatically run test
-	watcher \
-		--include "go.mod" \
-		--include "go.sum" \
-		--include "**.go" \
-		--include "package.json" \
-		--include "yarn.lock" \
-		--include "assets/**" \
-		--include "api/proto/**" \
-		--include "Makefile" \
-		--include "scripts/makefile.d/*.mk" \
-		--exclude "build/**" \
-		--exclude "**.sw*" \
-		--exclude "assets/js/index.js" \
-		-- \
-	$(MAKE) test
 
 reset: ## Kill all make process. Use when dev-run stuck.
 	ps -e | grep $(APP_NAME) | grep -v grep | awk '{print $$1}' | xargs kill

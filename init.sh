@@ -19,8 +19,10 @@ if [ "$NAME" =  "" ] ; then
 fi
 echo $NAME
 
-find . -name init.sh -o -name Makefile -prune -o -type f -print | xargs -n 1 sed -i "s#github.com/bluemir/0xC0DE#$REPO#g"
-find . -name init.sh -o -name Makefile -prune -o -type f -print | xargs -n 1 sed -i "s#0xC0DE#$NAME#g"
+find . -name init.sh -o -name Makefile -prune -o -type f -print | xargs -n 1 sed -i.bak "s#github.com/bluemir/0xC0DE#$REPO#g"
+find . -name "*.bak" | xargs rm
+find . -name init.sh -o -name Makefile -prune -o -type f -print | xargs -n 1 sed -i.bak "s#0xC0DE#$NAME#g"
+find . -name "*.bak" | xargs rm
 
 read -p "Do you wish to remove init.sh(Y/n)? " yn
 case $yn in
