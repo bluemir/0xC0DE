@@ -11,18 +11,15 @@ vet: build/proto_generated
 test: build/proto_generated
 
 
-export PATH:=./build/tools/protobuf/bin:$(PATH)
+export PATH:=./runtime/tools/protobuf/bin:$(PATH)
 
 .PHONY: grpc-gen
 grpc-gen: build/proto_generated ## Generate grpc codes
 
-build/proto_generated: $(PROTO_SOURCE) build/tools/protoc 
-	@$(MAKE) \
-		build/tools/protoc \
-		build/tools/protoc-gen-go \
-		build/tools/protoc-gen-go-grpc \
-		build/tools/protoc-gen-grpc-gateway \
-		build/tools/protoc-gen-openapiv2
+build/proto_generated: $(PROTO_SOURCE)
+build/proto_generated: | runtime/tools/protoc
+build/proto_generated: | runtime/tools/protoc-gen-go runtime/tools/protoc-gen-go-grpc
+build/proto_generated: | runtime/tools/protoc-gen-grpc-gateway runtime/tools/protoc-gen-openapiv2
 	@mkdir -p pkg/ build/openapiv2
 	protoc \
 		-I api/proto \
@@ -41,19 +38,19 @@ build/proto_generated: $(PROTO_SOURCE) build/tools/protoc
 build/docker-image: $(PROTO_SOURCE)
 
 ## grpc
-build-tools: | build/tools/protoc build/tools/protoc-gen-go build/tools/protoc-gen-go-grpc
-build/tools/protoc: ./scripts/tools/install/protoc.sh
+build-tools: | runtime/tools/protoc runtime/tools/protoc-gen-go runtime/tools/protoc-gen-go-grpc
+runtime/tools/protoc: ./scripts/tools/install/protoc.sh
 	@which $(@F) || ($<)
-build/tools/protoc-gen-go: ./scripts/tools/install/go-tool.sh |  build/tools/go
+runtime/tools/protoc-gen-go: ./scripts/tools/install/go-tool.sh |  runtime/tools/go
 	@which $(@F) || ($< google.golang.org/protobuf/cmd/protoc-gen-go)
-build/tools/protoc-gen-go-grpc: ./scripts/tools/install/go-tool.sh | build/tools/go
+runtime/tools/protoc-gen-go-grpc: ./scripts/tools/install/go-tool.sh | runtime/tools/go
 	@which $(@F) || ($< google.golang.org/grpc/cmd/protoc-gen-go-grpc)
 
-build-tools: build/tools/protoc-gen-grpc-gateway
-build/tools/protoc-gen-grpc-gateway: | build/tools/go
+build-tools: runtime/tools/protoc-gen-grpc-gateway
+runtime/tools/protoc-gen-grpc-gateway: | runtime/tools/go
 	@which $(@F) || (./scripts/tools/install/go-tool.sh github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway)
 
-build-tools: build/tools/protoc-gen-openapiv2
-build/tools/protoc-gen-openapiv2: | build/tools/go
+build-tools: runtime/tools/protoc-gen-openapiv2
+runtime/tools/protoc-gen-openapiv2: | runtime/tools/go
 	@which $(@F) || (./scripts/tools/install/go-tool.sh github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2)
 

@@ -12,9 +12,9 @@ OPTIONAL_CLEAN+= internal/swagger/docs.go internal/swagger/swagger.json internal
 .PHONY: swagger
 swagger: internal/swagger/docs.go ## Make swagger file
 
-internal/swagger/docs.go: $(filter ./internal/server/%.go,$(GO_SOURCES)) | build/tools/swag
+internal/swagger/docs.go: $(filter ./internal/server/%.go,$(GO_SOURCES)) | runtime/tools/swag
 	@mkdir -p $(dir $@)
-	build/tools/swag init \
+	swag init \
 		--generalInfo internal/server/routes.go \
 		--parseInternal \
 		--output $(dir $@)
@@ -22,8 +22,8 @@ internal/swagger/docs.go: $(filter ./internal/server/%.go,$(GO_SOURCES)) | build
 	# for override swaggo, add this option `--overridesFile .swaggo`
 
 
-install-swaggo: | build/tools/swag ## install swaggo
-build/tools/swag: | build/tools/go
+install-swaggo: runtime/tools/swag ## install swaggo
+runtime/tools/swag: | runtime/tools/go
 	@which $(notdir $@) || $(shell ./scripts/tools/install/go-tool.sh github.com/swaggo/swag/cmd/swag)
 
-tools: build/tools/swag
+tools: runtime/tools/swag

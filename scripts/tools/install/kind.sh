@@ -1,6 +1,6 @@
 set -e
 
-BINDIR=$(pwd)/build/tools
+BIN_DIR=$(pwd)/${2:-/runtime/tools}
 
 TMP_DIR=$(mktemp -d)
 cd $TMP_DIR
@@ -13,6 +13,6 @@ cd $TMP_DIR
 chmod +x ./kind
 
 mkdir -p $BINDIR
-sudo mv ./kind $(BINDIR)
+sudo mv ./kind $(BIN_DIR)
 
 rm -rf $TMP_DIR

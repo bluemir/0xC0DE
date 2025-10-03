@@ -1,6 +1,7 @@
 set -e
 
-BINDIR=$(pwd)/build/tools
+BIN_DIR=$(pwd)/${2:-/runtime/tools}
+
 
 OS=$(go env GOOS)
 ARCH=$(go env GOARCH)
@@ -19,7 +20,7 @@ unzip protoc-31.0-osx-aarch_64.zip -d protobuf
 #unzip protoc-3.15.8-linux-x86_64.zip -d build/tools/protobuf/
 #ln -s protobuf/bin/protoc build/tools/protoc
 
-mkdir -p $BINDIR
-mv protobuf $BINDIR/
+mkdir -p $BIN_DIR
+mv protobuf $BIN_DIR/
 
 rm -rf $TMP_DIR

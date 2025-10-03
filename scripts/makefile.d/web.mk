@@ -28,7 +28,7 @@ web: assets/js/index.js # entrypoints
 build/$(APP_NAME): assets/js/index.js
 
 assets/js/%: export NODE_PATH=assets/src/js:assets/lib
-assets/js/%: assets/src/js/% package.json package-lock.json | build/tools/npx
+assets/js/%: assets/src/js/% package.json package-lock.json | runtime/tools/npx
 	@mkdir -p $(dir $@)
 	npx esbuild $< --outdir=$(dir $@) \
 		--bundle --sourcemap --format=esm \
@@ -40,7 +40,7 @@ OPTIONAL_CLEAN += assets/js
 ## css build, with esbuild
 web: assets/css/page.css assets/css/element.css
 build/$(APP_NAME): assets/css/page.css assets/css/element.css
-assets/css/%: assets/src/css/% | build/tools/npx
+assets/css/%: assets/src/css/% | runtime/tools/npx
 	@mkdir -p $(dir $@)
 	npx esbuild $< --outdir=$(dir $@) \
 		--bundle --sourcemap \
@@ -56,16 +56,16 @@ build/docker-image: $(JS_SOURCES) $(CSS_SOURCES) $(WEB_LIBS) $(HTML_SOURCES)
 ## resolve depandancy
 OPTIONAL_CLEAN += node_modules
 
-package-lock.json: package.json | build/tools/npm
+package-lock.json: package.json | runtime/tools/npm
 	@mkdir -p $(dir $@)
 	npm install
 
-build-tools: build/tools/npm build/tools/npx
-build/tools/npm:
+build-tools: runtime/tools/npm runtime/tools/npx
+runtime/tools/npm:
 	@which $(notdir $@)
-build/tools/npx:
+runtime/tools/npx:
 	@which $(notdir $@)
-build/tools/yarn: |  build/tools/npm
+runtime/tools/yarn: |  runtime/tools/npm
 	@which $(notdir $@) || (npm install -g yarn)
 
 vet: assets/js/.placeholder assets/css/.placeholder

@@ -9,10 +9,10 @@ build/docker-image: $(GO_SOURCES)
 build: build/$(APP_NAME) ## Build web app
 
 .PHONY: test
-test: fmt vet | build/tools/go ## Run test
+test: fmt vet | runtime/tools/go ## Run test
 	go test -trimpath ./...
 
-build/$(APP_NAME): $(GO_SOURCES) $(MAKEFILE_LIST) | fmt vet gen build/tools/go
+build/$(APP_NAME): $(GO_SOURCES) $(MAKEFILE_LIST) | fmt vet gen runtime/tools/go
 	@mkdir -p build
 	go build -v \
 		-trimpath \
@@ -24,8 +24,8 @@ build/$(APP_NAME): $(GO_SOURCES) $(MAKEFILE_LIST) | fmt vet gen build/tools/go
 		$(OPTIONAL_BUILD_ARGS) \
 		-o $@ .
 
-build-tools: build/tools/go
-build/tools/go:
+build-tools: runtime/tools/go
+runtime/tools/go:
 	@which $(notdir $@) || echo "see https://golang.org/doc/install"
 
 .PHONY: fmt

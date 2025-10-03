@@ -1,7 +1,7 @@
 set -e
 
 VERSION=$1
-BINDIR=$(pwd)/build/tools
+BIN_DIR=$(pwd)/${2:-/runtime/tools}
 
 OS=$(go env GOOS)
 ARCH=$(go env GOARCH)
@@ -14,7 +14,7 @@ curl -LO "https://github.com/etcd-io/etcd/releases/download/$VERSION/etcd-$VERSI
 tar -xvf "etcd-$VERSION-$OS-$ARCH.tar.gz"
 
 
-mkdir -p $BINDIR
-mv etcd-$VERSION-$OS-$ARCH/etcd etcd-$VERSION-$OS-$ARCH/etcdctl $BINDIR
+mkdir -p $BIN_DIR
+mv etcd-$VERSION-$OS-$ARCH/etcd etcd-$VERSION-$OS-$ARCH/etcdctl $BIN_DIR
 
 rm -rf $TMP_DIR

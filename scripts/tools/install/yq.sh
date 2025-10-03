@@ -1,7 +1,7 @@
 set -e
 
 TAG=$1
-BINDIR=$(pwd)/${2:-/runtime/tools}
+BIN_DIR=$(pwd)/${2:-/runtime/tools}
 
 # initArch discovers the architecture for this system.
 initArch() {
@@ -41,4 +41,4 @@ cd $TMP_DIR
 
 curl -SsL "https://github.com/mikefarah/yq/releases/download/$TAG/yq_$OS_$ARCH" -o yq
 chmod +x yq
-mv yq $BINDIR
+mv yq $BIN_DIR

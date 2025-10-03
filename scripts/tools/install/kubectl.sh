@@ -1,7 +1,7 @@
 set -e
 
 TAG=$1
-BINDIR=$(pwd)/${2:-/runtime/tools}
+BIN_DIR=$(pwd)/${2:-/runtime/tools}
 
 # initArch discovers the architecture for this system.
 initArch() {
@@ -39,4 +39,4 @@ cd $TMP_DIR
 
 curl -SsL "https://dl.k8s.io/release/$TAG/bin/$OS/$ARCH/kubectl" -o kubectl
 chmod +x kubectl
-mv kubectl $BINDIR
+mv kubectl $BIN_DIR
