@@ -15,7 +15,7 @@ import (
 )
 
 func Register(cmd *kingpin.CmdClause) {
-	conf := server.NewConfig()
+	conf := server.Args{}
 
 	cmd.Flag("bind", "bind").
 		Default(":8080").

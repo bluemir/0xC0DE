@@ -1,7 +1,7 @@
 ##@ Run
 
 run: build/$(APP_NAME) ## Run web app
-	$< -vvv server --config runtime/config.yaml #--cert runtime/certs/server.crt --key runtime/certs/server.key
+	$< -vvv server --config runtime/config.hjson #--cert runtime/certs/server.crt --key runtime/certs/server.key
 dev-run: | runtime/tools/watcher ## Run dev server. If detect file change, automatically rebuild&restart server
 	watcher \
 		--include "go.mod" \
@@ -16,6 +16,7 @@ dev-run: | runtime/tools/watcher ## Run dev server. If detect file change, autom
 		--include "runtime/config.yaml" \
 		--exclude "build/**" \
 		--exclude "**.sw*" \
+		--exclude "internal/swagger/**" \
 		--exclude "assets/js/**" \
 		--exclude "assets/css/**" \
 		--exclude "assets/src/js/index.js" \

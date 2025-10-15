@@ -3,37 +3,55 @@ package server
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"os"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hjson/hjson-go/v4"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"golang.org/x/sync/errgroup"
+	"gopkg.in/yaml.v3"
 
 	"github.com/bluemir/0xC0DE/internal/server/backend"
+	"github.com/bluemir/0xC0DE/internal/server/store"
 )
 
-type Config struct {
+type Args struct {
 	ServiceHttpBind string
 	Cert            CertConfig
 	GRPCBind        string
 	AdminHttpBind   string
+	ConfigFilePath  string
 
-	backend.Args
+	DBPath string
+	Salt   string
 }
 
-func NewConfig() Config {
-	return Config{
-		Args: backend.NewArgs(),
-	}
+type Config struct {
+	Backend backend.Config
 }
 
 type Server struct {
 	backends *backend.Backends
 }
 
-func Run(ctx context.Context, conf *Config) error {
-	bs, err := backend.Initialize(ctx, &conf.Args)
+func Run(ctx context.Context, args *Args) error {
+	conf, err := readCofigFile(args.ConfigFilePath)
+	if err != nil {
+		return errors.Wrapf(err, "config file not exist. path: %s", args.ConfigFilePath)
+	}
+
+	// pass cmd to config
+	conf.Backend.Auth.Salt = args.Salt
+
+	db, err := store.Initialize(ctx, args.DBPath)
+	if err != nil {
+		return err
+	}
+
+	bs, err := backend.Initialize(ctx, &conf.Backend, db)
 	if err != nil {
 		return err
 	}
@@ -54,12 +72,12 @@ func Run(ctx context.Context, conf *Config) error {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	gwHandler, err := server.grpcGatewayHandler(ctx, conf.GRPCBind)
+	gwHandler, err := server.grpcGatewayHandler(ctx, args.GRPCBind)
 	if err != nil {
 		return err
 	}
 
-	certs, err := conf.Cert.Load()
+	certs, err := args.Cert.Load()
 	if err != nil {
 		return err
 	}
@@ -71,9 +89,9 @@ func Run(ctx context.Context, conf *Config) error {
 
 	// run servers
 	eg, nCtx := errgroup.WithContext(ctx)
-	eg.Go(server.RunServiceHTTPServer(nCtx, conf.ServiceHttpBind, tlsConfig, gwHandler))
-	eg.Go(server.RunAdminHTTPServer(nCtx, conf.AdminHttpBind))
-	eg.Go(server.RunGRPCServer(nCtx, conf.GRPCBind))
+	eg.Go(server.RunServiceHTTPServer(nCtx, args.ServiceHttpBind, tlsConfig, gwHandler))
+	eg.Go(server.RunAdminHTTPServer(nCtx, args.AdminHttpBind))
+	eg.Go(server.RunGRPCServer(nCtx, args.GRPCBind))
 
 	// TODO run grpc, http, https, http2https redirect servers by config
 
@@ -121,6 +139,37 @@ func getTLSConfig(serverCert *tls.Certificate, clientAuthCACert *tls.Certificate
 			}
 			conf.ClientCAs.AddCert(c)
 		}
+	}
+
+	return &conf, nil
+}
+
+func readCofigFile(configFilePath string) (*Config, error) {
+	conf := Config{}
+
+	buf, err := os.ReadFile(configFilePath)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	switch filepath.Ext(configFilePath) {
+	case ".yaml", ".yml":
+		logrus.Info("parse as yaml")
+		if err := yaml.Unmarshal(buf, &conf); err != nil {
+			return nil, errors.WithStack(err)
+		}
+	case ".json", ".hjson":
+		logrus.Info("parse as hjson")
+		if err := hjson.Unmarshal(buf, &conf); err != nil {
+			return nil, errors.WithStack(err)
+		}
+	default:
+		return nil, errors.Errorf("unknown ext: %s", filepath.Ext(configFilePath))
+	}
+
+	if logrus.IsLevelEnabled(logrus.DebugLevel) {
+		buf, _ := hjson.Marshal(conf)
+		logrus.Debugf("\n%s", string(buf))
 	}
 
 	return &conf, nil
