@@ -3,6 +3,7 @@ package posts
 import (
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/rs/xid"
 	"golang.org/x/net/context"
 	"gorm.io/gorm"
@@ -40,7 +41,7 @@ func (m *Manager) Create(ctx context.Context, message string) (*Post, error) {
 		At:      time.Now(),
 		Message: message,
 	}
-	if err := m.db.Create(post).Error; err != nil {
+	if err := m.db.WithContext(ctx).Create(post).Error; err != nil {
 		return nil, err
 	}
 
@@ -49,7 +50,7 @@ func (m *Manager) Create(ctx context.Context, message string) (*Post, error) {
 	return post, nil
 }
 
-func (m *Manager) List(ctx context.Context, opts ...meta.ListOptionFn) ([]Post, error) {
+func (m *Manager) List(ctx context.Context, opts ...meta.ListOptionFn) (*meta.List[Post], error) {
 	opt := meta.ListOption{
 		Limit: 20,
 	}
@@ -60,16 +61,34 @@ func (m *Manager) List(ctx context.Context, opts ...meta.ListOptionFn) ([]Post, 
 
 	return m.ListWithOption(ctx, &opt)
 }
-func (m *Manager) ListWithOption(ctx context.Context, opt *meta.ListOption) ([]Post, error) {
-	if opt.Limit == 0 {
-		opt.Limit = 20 // default value
-	}
+func (m *Manager) ListWithOption(ctx context.Context, opt *meta.ListOption) (*meta.List[Post], error) {
+	list := meta.List[Post]{}
 
-	posts := []Post{}
-
-	if err := m.db.Limit(opt.Limit).Find(&posts).Error; err != nil {
+	if err := m.db.WithContext(ctx).Limit(opt.Limit).Find(&list.Items).Error; err != nil {
 		return nil, err
 	}
 
-	return posts, nil
+	return &list, nil
+}
+
+type Query struct {
+	Message *string
+}
+
+func (m *Manager) FindWithOption(ctx context.Context, query Query, opt *meta.ListOption) (*meta.List[Post], error) {
+	tx := m.db.WithContext(ctx)
+
+	if query.Message != nil && len(*query.Message) > 0 {
+		tx = tx.Where("message LIKE @message", map[string]any{
+			"message": "%" + *query.Message + "%",
+		})
+	}
+
+	list := meta.List[Post]{}
+
+	if err := tx.Limit(opt.Limit).Offset(opt.Offset).Find(&list.Items).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return &list, nil
 }

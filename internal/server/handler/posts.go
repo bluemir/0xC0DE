@@ -29,10 +29,11 @@ func CreatePost(c *gin.Context) {
 
 	c.JSON(http.StatusOK, post)
 }
-func ListPost(c *gin.Context) error {
+func FindPost(c *gin.Context) error {
 	req := struct {
 		Query struct {
 			meta.ListOption
+			posts.Query
 		}
 	}{}
 
@@ -40,24 +41,22 @@ func ListPost(c *gin.Context) error {
 		return err
 	}
 
-	items, err := backends(c).Posts.ListWithOption(c.Request.Context(), &req.Query.ListOption)
+	list, err := backends(c).Posts.FindWithOption(c.Request.Context(), req.Query.Query, &req.Query.ListOption)
 	if err != nil {
 		return err
 	}
 
-	c.JSON(http.StatusOK, ListResponse[posts.Post]{
-		Items: items,
-	})
+	c.JSON(http.StatusOK, list)
 	return nil
 }
 
 func StreamPost(c *gin.Context) {
-	items, err := backends(c).Posts.List(c.Request.Context())
+	list, err := backends(c).Posts.List(c.Request.Context(), meta.Limit(-1))
 	if err != nil && err != gorm.ErrRecordNotFound {
 		c.Error(err)
 		return
 	}
-	for _, post := range items {
+	for _, post := range list.Items {
 		c.SSEvent("post", post)
 		c.Writer.Flush() //will write header.
 	}
