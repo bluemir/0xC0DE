@@ -63,13 +63,25 @@ export async function request(method, url, options = {}) {
 
 	// parse url
 	const u = new URL(url, location);
-	opts.query = [...u.searchParams.entries()].reduce((obj, [key, value]) => {
-		obj[key] = value
-		return obj
-	}, opts.query || {});
+	Object.entries(opts.query || {}).forEach(([key, value]) => {
+		if (!value) {
+			return
+		}
+		if (typeof value == "string") {
+			u.searchParams.set(key, value)
+			return
+		}
+		if (typeof value[Symbol.iterator] === 'function') {
+			for( let v of value) {
+				console.log(v);
+				u.searchParams.append(key, v)
+			}
+			return
+		}
 
-	u.search = "";
-	url = u.href
+		u.searchParams.set(key, value)
+	})
+
 
 	return new Promise(function(resolve, reject) {
 		let req = new XMLHttpRequest();
@@ -103,10 +115,10 @@ export async function request(method, url, options = {}) {
 			console.debug("request with auth", opts.auth)
 			// In Chrome and firefox Auth header not included request(due to security, see https://bugs.chromium.org/p/chromium/issues/detail?id=128323)
 			// so forced set header
-			req.open(method, resolveParam(url, opts.params) + queryString(opts.query), true, opts.auth.user, opts.auth.password);
+			req.open(method, resolveParam(u.toString(), opts.params), true, opts.auth.user, opts.auth.password);
 			req.setRequestHeader("Authorization", "Basic " + btoa(opts.auth.user+":"+opts.auth.password));
 		} else {
-			req.open(method, resolveParam(url, opts.params) + queryString(opts.query), true);
+			req.open(method, resolveParam(u.toString(), opts.params), true);
 		}
 
 		// set default accept
@@ -140,6 +152,7 @@ export async function request(method, url, options = {}) {
 		}
 	});
 }
+
 export async function timeout(ms) {
 	return new Promise(function(resolve, reject){
 		setTimeout(resolve, ms);
@@ -349,15 +362,6 @@ function resolveParam(url, params) {
 		console.warn(`[$.reqeust] find param pattern '${name}', but not provided`);
 		return matched;
 	});
-}
-
-function queryString(obj) {
-	if (obj == null) {
-		return "";
-	}
-	return "?" + Object.keys(obj).map(function(key) {
-		return key + "=" + encodeURIComponent(obj[key]);
-	}).join("&");
 }
 
 Object.keyValues= function(obj) {
