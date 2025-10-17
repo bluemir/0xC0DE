@@ -75,8 +75,8 @@ type Query struct {
 	Message *string
 }
 
-func (m *Manager) FindWithOption(ctx context.Context, query Query, opt *meta.ListOption) (*meta.List[Post], error) {
-	tx := m.db.WithContext(ctx)
+func (m *Manager) FindWithOption(ctx context.Context, query Query, opt meta.ListOption) (*meta.List[Post], error) {
+	tx := m.db.WithContext(ctx).Model(&Post{})
 
 	if query.Message != nil && len(*query.Message) > 0 {
 		tx = tx.Where("message LIKE @message", map[string]any{
@@ -85,6 +85,10 @@ func (m *Manager) FindWithOption(ctx context.Context, query Query, opt *meta.Lis
 	}
 
 	list := meta.List[Post]{}
+
+	if err := tx.Count(&list.Total).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
 
 	if err := tx.Limit(opt.Limit).Offset(opt.Offset).Find(&list.Items).Error; err != nil {
 		return nil, errors.WithStack(err)

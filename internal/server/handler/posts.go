@@ -29,11 +29,27 @@ func CreatePost(c *gin.Context) {
 
 	c.JSON(http.StatusOK, post)
 }
+
+type Query struct {
+	Message *string `form:"message"`
+}
+
+func (q Query) build() posts.Query {
+	// TODO validation & convert
+	if len(*q.Message) == 0 {
+		q.Message = nil
+	}
+
+	return posts.Query{
+		Message: q.Message,
+	}
+}
+
 func FindPost(c *gin.Context) error {
 	req := struct {
 		Query struct {
 			meta.ListOption
-			posts.Query
+			Query
 		}
 	}{}
 
@@ -41,7 +57,7 @@ func FindPost(c *gin.Context) error {
 		return err
 	}
 
-	list, err := backends(c).Posts.FindWithOption(c.Request.Context(), req.Query.Query, &req.Query.ListOption)
+	list, err := backends(c).Posts.FindWithOption(c.Request.Context(), req.Query.build(), req.Query.ListOption)
 	if err != nil {
 		return err
 	}

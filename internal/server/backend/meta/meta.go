@@ -32,6 +32,7 @@ func Page(page int, pageSize int) ListOptionFn {
 type List[v any] struct {
 	Items      []v `json:"items"`
 	ListOption `json:",inline"`
+	Total      int64 `json:"total,omitempty"`
 }
 
 func (l List[v]) Page() int {
