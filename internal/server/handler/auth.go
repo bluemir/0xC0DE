@@ -75,7 +75,7 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	if _, err := backends(c).Auth.IssueToken(req.Username, req.Password); err != nil {
+	if _, err := backends(c).Auth.IssueToken(req.Username, auth.TokenKindPassword, req.Password); err != nil {
 		c.Error(err)
 		return
 	}

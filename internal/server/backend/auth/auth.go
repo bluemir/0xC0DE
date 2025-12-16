@@ -29,11 +29,11 @@ type IManager interface {
 	DeleteUser(username string) error
 
 	// Token
-	IssueToken(username, unhashedKey string, opts ...TokenOpt) (*Token, error)
-	GenerateToken(username string, opts ...TokenOpt) (*Token, string, error)
-	GetToken(username, unhashedKey string) (*Token, error)
+	IssueToken(username string, kind TokenKind, unhashedSecret string, opts ...TokenOpt) (*Token, error)
+	GenerateAccessKey(username string, opts ...TokenOpt) (*Token, string, error)
+	GetToken(username string, kind TokenKind, index int) (*Token, error)
 	ListToken(username string) ([]Token, error)
-	RevokeToken(username, unhashedKey string) error
+	RevokeToken(username string, kind TokenKind, index int) error
 
 	// Group
 	CreateGroup(name string) (*Group, error)
@@ -84,9 +84,13 @@ func New(db *gorm.DB, salt string) (*Manager, error) {
 	return m, nil
 }
 
-func (m *Manager) Default(username, unhashedKey string) (*User, error) {
-	if _, err := m.GetToken(username, unhashedKey); err != nil {
+func (m *Manager) Default(username, unhashedSecret string) (*User, error) {
+	token, err := m.GetToken(username, TokenKindPassword, 0)
+	if err != nil {
 		return nil, ErrUnauthorized
+	}
+	if err := token.Validate(unhashedSecret); err != nil {
+		return nil, err
 	}
 	return m.GetUser(username)
 }

@@ -15,18 +15,18 @@ type User struct {
 	Labels Labels  `gorm:"type:bytes;serializer:gob" json:"labels" expr:"labels"`
 }
 
-func (m *Manager) Register(username, unhashedKey string, opts ...CreateUserOption) (*User, *Token, error) {
+func (m *Manager) Register(username, unhashedPassword string, opts ...CreateUserOption) (*User, *Token, error) {
 	user, err := m.CreateUser(username, opts...)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	token, err := m.IssueToken(username, unhashedKey)
+	accessKey, err := m.IssueToken(username, TokenKindPassword, unhashedPassword)
 	if err != nil {
 		return user, nil, err
 	}
 
-	return user, token, nil
+	return user, accessKey, nil
 }
 
 type CreateUserOption func(u *User)
