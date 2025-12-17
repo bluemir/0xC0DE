@@ -31,6 +31,7 @@ type IManager interface {
 	// Token
 	IssueToken(username string, kind TokenKind, unhashedSecret string, opts ...TokenOpt) (*Token, error)
 	GenerateAccessKey(username string, opts ...TokenOpt) (*Token, string, error)
+	UpdatePassword(username string, password string) error
 	GetToken(username string, kind TokenKind, index int) (*Token, error)
 	ListToken(username string) ([]Token, error)
 	RevokeToken(username string, kind TokenKind, index int) error

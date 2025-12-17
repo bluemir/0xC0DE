@@ -3,10 +3,13 @@ package auth
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Token struct {
@@ -25,6 +28,9 @@ const (
 )
 
 func (token *Token) Validate(unhashedSecret string) error {
+	if token.ExpiredAt != nil && token.ExpiredAt.Before(time.Now()) {
+		return errors.New("token is expired") // TODO
+	}
 	return bcrypt.CompareHashAndPassword(token.HashedSecret, []byte(unhashedSecret))
 }
 
@@ -42,10 +48,48 @@ func (m *Manager) IssueToken(username string, kind TokenKind, unhashedSecret str
 		fn(token)
 	}
 
-	if err := m.db.Create(token).Error; err != nil {
+	tx := m.db.Begin()
+	defer tx.Rollback()
+
+	lastToken := Token{}
+
+	result := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("username = ? AND kind = ?", username, kind).
+		Order("index desc").
+		First(&lastToken)
+	if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return nil, errors.WithStack(result.Error)
+	}
+	if result.RowsAffected > 0 {
+		token.Index = lastToken.Index + 1
+	} else {
+		token.Index = 0
+	}
+
+	if err := tx.Create(token).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
+	if err := tx.Commit().Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+
 	return token, nil
+}
+func (m *Manager) UpdatePassword(username string, unhashedPassword string) error {
+	hashedSecret, err := bcrypt.GenerateFromPassword([]byte(unhashedPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if err := m.db.Save(&Token{
+		Username:     username,
+		Kind:         TokenKindPassword,
+		Index:        0,
+		HashedSecret: hashedSecret,
+	}).Error; err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 func (m *Manager) GenerateAccessKey(username string, opts ...TokenOpt) (*Token, string, error) {
 	unhashedSecret, err := generateRandomString(32)
@@ -54,7 +98,10 @@ func (m *Manager) GenerateAccessKey(username string, opts ...TokenOpt) (*Token, 
 	if err != nil {
 		return nil, "", err
 	}
-	return t, unhashedSecret, nil
+
+	// {username}.{index}.{secret}
+
+	return t, fmt.Sprintf("%s.%d.%s", username, t.Index, unhashedSecret), nil
 }
 func (m *Manager) GetToken(username string, kind TokenKind, index int) (*Token, error) {
 	token := Token{}
