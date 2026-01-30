@@ -62,20 +62,15 @@ func Register(c *gin.Context) {
 	req := struct {
 		Username string `form:"username"     validate:"required,min=4"`
 		Password string `form:"password"     validate:"required,min=4"`
-		Confirm  string `form:"confirm"      validate:"required,eqfield=Password"`
 	}{}
 
 	if err := c.ShouldBind(&req); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
-	}
-
-	u, err := backends(c).Auth.CreateUser(req.Username, auth.WithGroup("user"))
-	if err != nil {
-		c.Error(err)
 		return
 	}
 
-	if _, err := backends(c).Auth.IssueToken(req.Username, auth.TokenKindPassword, req.Password); err != nil {
+	u, _, err := backends(c).Auth.Register(req.Username, req.Password, auth.WithGroup("user"))
+	if err != nil {
 		c.Error(err)
 		return
 	}

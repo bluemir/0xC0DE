@@ -1,11 +1,10 @@
 package auth
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"time"
 
+	"github.com/bluemir/0xC0DE/internal/util"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -92,7 +91,7 @@ func (m *Manager) UpdatePassword(username string, unhashedPassword string) error
 	return nil
 }
 func (m *Manager) GenerateAccessKey(username string, opts ...TokenOpt) (*Token, string, error) {
-	unhashedSecret, err := generateRandomString(32)
+	unhashedSecret := util.RandomString(32)
 
 	t, err := m.IssueToken(username, TokenKindAccessKey, unhashedSecret, opts...)
 	if err != nil {
@@ -146,12 +145,4 @@ func ExpiredAfter(d time.Duration) func(*Token) {
 		t := time.Now().Add(d)
 		token.ExpiredAt = &t
 	}
-}
-func generateRandomString(n int) (string, error) {
-	bytes := make([]byte, n)
-	if _, err := rand.Read(bytes); err != nil {
-		return "", err
-	}
-
-	return hex.EncodeToString(bytes), nil
 }
