@@ -46,9 +46,6 @@ func RouterFrom(ctx context.Context) *Router {
 func (router *Router) Publish(ctx context.Context, kind string, detail any) {
 	keys := strings.Split(kind, Separator)
 	handlers, ok := router.handlers.Get(keys...)
-	if !ok {
-		return
-	}
 
 	ctx = context.WithValue(ctx, keyRouter, router)
 	evt := Event{
@@ -59,17 +56,19 @@ func (router *Router) Publish(ctx context.Context, kind string, detail any) {
 		Kind:    kind,
 	}
 
-	snapshot := []Handler{}
-	if err := handlers.Range(func(handler Handler) error {
-		snapshot = append(snapshot, handler)
-		return nil
-	}); err != nil {
-		logrus.Debug(err)
-	}
-
-	for _, handler := range snapshot {
-		if err := handler.Handle(ctx, evt); err != nil {
+	if ok {
+		snapshot := []Handler{}
+		if err := handlers.Range(func(handler Handler) error {
+			snapshot = append(snapshot, handler)
+			return nil
+		}); err != nil {
 			logrus.Debug(err)
+		}
+
+		for _, handler := range snapshot {
+			if err := handler.Handle(ctx, evt); err != nil {
+				logrus.Debug(err)
+			}
 		}
 	}
 

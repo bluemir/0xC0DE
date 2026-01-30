@@ -52,11 +52,6 @@ type chanEventHandler struct {
 func (hub *Hub) Publish(ctx context.Context, detail any) {
 	kind := reflect.TypeOf(detail)
 
-	handlers, ok := hub.handlers.Get(kind)
-	if !ok {
-		return
-	}
-
 	ctx = context.WithValue(ctx, keyHub, hub)
 	evt := Event{
 		Context: ctx,
@@ -64,6 +59,18 @@ func (hub *Hub) Publish(ctx context.Context, detail any) {
 		At:      time.Now(),
 		Detail:  detail,
 		Kind:    kind.String(),
+	}
+
+	if err := hub.all.Range(func(ch chan<- Event) error {
+		ch <- evt
+		return nil
+	}); err != nil {
+		logrus.Debug(err)
+	}
+
+	handlers, ok := hub.handlers.Get(kind)
+	if !ok {
+		return
 	}
 
 	snapshot := []Handler{}
@@ -80,12 +87,6 @@ func (hub *Hub) Publish(ctx context.Context, detail any) {
 		}
 	}
 
-	if err := hub.all.Range(func(ch chan<- Event) error {
-		ch <- evt
-		return nil
-	}); err != nil {
-		logrus.Debug(err)
-	}
 }
 func (hub *Hub) AddHandler(kind any, handler Handler) {
 	handlers, _ := hub.handlers.GetOrSet(reflect.TypeOf(kind), datastruct.NewSet[Handler]())

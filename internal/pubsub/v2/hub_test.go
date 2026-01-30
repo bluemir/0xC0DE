@@ -181,3 +181,98 @@ func TestHub_ModifyHandlersInHandler(t *testing.T) {
 
 	assert.Equal(t, 1, recoder.Count(), "AddedRecorder count mismatch")
 }
+
+func TestHub_RemoveHandler(t *testing.T) {
+	ctx, cancel := testContext(t, 1*time.Second)
+	defer cancel()
+
+	hub, err := pubsub.NewHub(ctx)
+	require.NoError(t, err)
+
+	recoder := NewRecordingHandler()
+	// Note: AddHandler uses reflect.TypeOf(kind), so pass an instance
+	hub.AddHandler(EventForTest{}, recoder)
+
+	hub.Publish(ctx, EventForTest{Message: "msg1"})
+
+	// Wait specifically or ensure synchronous behavior if possible.
+	// The current implementation of Publish seems synchronous for handlers but potentially async for channels?
+	// Reviewing Hub.Publish: it iterates over handlers and calls Handle directly.
+	// So for RecordingHandler it is synchronous.
+
+	assert.Equal(t, 1, recoder.Count())
+
+	hub.RemoveHandler(EventForTest{}, recoder)
+
+	hub.Publish(ctx, EventForTest{Message: "msg2"})
+	assert.Equal(t, 1, recoder.Count(), "Should not receive event after removal")
+}
+
+func TestHub_Watch(t *testing.T) {
+	ctx, cancel := testContext(t, 1*time.Second)
+	defer cancel()
+
+	hub, err := pubsub.NewHub(ctx)
+	require.NoError(t, err)
+
+	done := make(chan struct{})
+	ch := hub.Watch(EventForTest{}, done)
+
+	expectedMsg := "test-watch"
+	go func() {
+		// Give time for Watch to be registered if needed, though it should be synchronous
+		time.Sleep(10 * time.Millisecond)
+		hub.Publish(ctx, EventForTest{Message: expectedMsg})
+	}()
+
+	select {
+	case evt := <-ch:
+		val, ok := evt.Detail.(EventForTest)
+		assert.True(t, ok)
+		assert.Equal(t, expectedMsg, val.Message)
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("Timeout waiting for event via Watch")
+	}
+
+	close(done)
+	select {
+	case _, ok := <-ch:
+		assert.False(t, ok, "Channel from Watch should be closed after done is closed")
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("Timeout waiting for Watch channel close")
+	}
+}
+
+func TestHub_WatchAll(t *testing.T) {
+	ctx, cancel := testContext(t, 1*time.Second)
+	defer cancel()
+
+	hub, err := pubsub.NewHub(ctx)
+	require.NoError(t, err)
+
+	done := make(chan struct{})
+	ch := hub.WatchAll(done)
+
+	expectedMsg := "test-watch-all"
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		hub.Publish(ctx, EventForTest{Message: expectedMsg})
+	}()
+
+	select {
+	case evt := <-ch:
+		val, ok := evt.Detail.(EventForTest)
+		assert.True(t, ok)
+		assert.Equal(t, expectedMsg, val.Message)
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("Timeout waiting for event via WatchAll")
+	}
+
+	close(done)
+	select {
+	case _, ok := <-ch:
+		assert.False(t, ok, "Channel from WatchAll should be closed after done is closed")
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("Timeout waiting for WatchAll channel close")
+	}
+}
