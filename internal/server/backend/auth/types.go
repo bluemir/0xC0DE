@@ -18,6 +18,9 @@ func (kvs KeyValues) Get(key string) string {
 
 func (kvs KeyValues) IsSubsetOf(resource Resource) bool {
 	for k, v := range kvs {
+		if v == "*" {
+			continue
+		}
 		if resource[k] != v {
 			return false
 		}

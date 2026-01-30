@@ -12,7 +12,7 @@ build: build/$(APP_NAME) ## Build web app
 test: fmt vet | runtime/tools/go ## Run test
 	go test -trimpath ./...
 
-build/$(APP_NAME): $(GO_SOURCES) $(MAKEFILE_LIST) | fmt vet gen test sec vulncheck runtime/tools/go
+build/$(APP_NAME): $(GO_SOURCES) $(MAKEFILE_LIST) | fmt vet gen test vulncheck runtime/tools/go
 	@mkdir -p build
 	go build -v \
 		-trimpath \

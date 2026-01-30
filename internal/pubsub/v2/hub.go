@@ -21,14 +21,13 @@ type IHub interface {
 var _ IHub = (*Hub)(nil)
 
 type Hub struct {
-	handlers datastruct.Map[reflect.Type, datastruct.Set[Handler]]
-
-	all datastruct.Set[chan<- Event]
+	handlers    datastruct.Map[reflect.Type, datastruct.Set[Handler]]
+	broadcaster *Broadcaster[Event]
 }
 
 func NewHub(ctx context.Context) (*Hub, error) {
 	return &Hub{
-		all: datastruct.NewSet[chan<- Event](),
+		broadcaster: NewBroadcaster[Event](),
 	}, nil
 }
 
@@ -61,12 +60,7 @@ func (hub *Hub) Publish(ctx context.Context, detail any) {
 		Kind:    kind.String(),
 	}
 
-	if err := hub.all.Range(func(ch chan<- Event) error {
-		ch <- evt
-		return nil
-	}); err != nil {
-		logrus.Debug(err)
-	}
+	hub.broadcaster.Broadcast(evt)
 
 	handlers, ok := hub.handlers.Get(kind)
 	if !ok {
@@ -113,14 +107,5 @@ func (hub *Hub) Watch(kind any, done <-chan struct{}) <-chan Event {
 	return ch
 }
 func (hub *Hub) WatchAll(done <-chan struct{}) <-chan Event {
-	ch := make(chan Event)
-
-	hub.all.Add(ch)
-	go func() {
-		<-done
-		hub.all.Remove(ch)
-		close(ch)
-	}()
-
-	return datastruct.DynamicChan(ch)
+	return hub.broadcaster.Watch(done)
 }

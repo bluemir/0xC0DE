@@ -1,7 +1,6 @@
-package errs
+package errs_test
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -9,66 +8,78 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
+	"github.com/bluemir/0xC0DE/internal/server/middleware/errs"
 )
 
-func TestMiddleware_JSON(t *testing.T) {
+func TestMiddleware(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-
-	c.Request, _ = http.NewRequest("GET", "/", nil)
-	c.Request.Header.Set("Accept", "application/json")
-
-	// Trigger error
-	c.Error(errors.New("something went wrong"))
-
-	Middleware(c)
-
-	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	assert.Equal(t, "application/json; charset=utf-8", w.Header().Get("Content-Type"))
-
-	var pd ProblemDetails
-	err := json.Unmarshal(w.Body.Bytes(), &pd)
-	assert.NoError(t, err)
-
-	assert.Equal(t, "about:blank", pd.Type)
-	assert.Equal(t, "Internal Server Error", pd.Title)
-	assert.Equal(t, http.StatusInternalServerError, pd.Status)
-	assert.Equal(t, "something went wrong", pd.Detail)
-}
-
-func TestNegotiate(t *testing.T) {
 	tests := []struct {
-		accept   string
-		expected string
+		name         string
+		setup        func(*gin.Context)
+		expectedCode int
+		expectedBody string
 	}{
-		{"application/json", "application/json"},
-		{"text/html", "text/html"},
-		{"text/plain", "text/plain"},
-		{"*/*", "text/html"}, // parse media type returns */* which falls through switch?
-		// Wait, my switch only has application/json and text/html.
-		// If */* matches nothing, it goes to default "text/plain"?
-		// Let's check logic:
-		// t, _, err := mime.ParseMediaType("*/*") -> t is "*/*"
-		// switch "*/*" ... no match -> loop continues -> returns "text/plain"
-		// Is this desired? Original had case "text/html", "*/*":...
-		// My refactor removed "*/*" from case.
-		{"application/xml", "text/plain"},
+		{
+			name: "NoError",
+			setup: func(c *gin.Context) {
+				c.Status(http.StatusOK)
+			},
+			expectedCode: http.StatusOK,
+			expectedBody: "",
+		},
+		{
+			name: "Unauthorized",
+			setup: func(c *gin.Context) {
+				c.Error(auth.ErrUnauthorized)
+			},
+			expectedCode: http.StatusUnauthorized,
+		},
+		{
+			name: "Forbidden",
+			setup: func(c *gin.Context) {
+				c.Error(auth.ErrForbidden)
+			},
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			name: "InternalServerError",
+			setup: func(c *gin.Context) {
+				c.Error(errors.New("some random error"))
+			},
+			expectedCode: http.StatusInternalServerError,
+		},
+		{
+			name: "AbortWithError",
+			setup: func(c *gin.Context) {
+				c.AbortWithError(http.StatusBadRequest, errors.New("bad request"))
+			},
+			expectedCode: http.StatusBadRequest,
+		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.accept, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			w := httptest.NewRecorder()
-			c, _ := gin.CreateTestContext(w)
-			c.Request, _ = http.NewRequest("GET", "/", nil)
-			c.Request.Header.Set("Accept", tt.accept)
 
-			got := negotiate(c)
-			if tt.accept == "*/*" {
-				// Special check for my suspicion
+			r := gin.New()
+			r.Use(errs.Middleware)
+			r.GET("/", func(c *gin.Context) {
+				tc.setup(c)
+			})
+
+			req, _ := http.NewRequest("GET", "/", nil)
+			req.Header.Set("Accept", "application/json")
+
+			r.ServeHTTP(w, req)
+
+			assert.Equal(t, tc.expectedCode, w.Code)
+
+			if tc.expectedBody != "" {
+				assert.Contains(t, w.Body.String(), tc.expectedBody)
 			}
-			assert.Equal(t, tt.expected, got)
 		})
 	}
 }

@@ -186,48 +186,48 @@ func TestErrorOnWorker(t *testing.T) {
 	assert.Nil(t, ctx.Err())
 }
 
-/*
-	func TestErrorHandler(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-		defer cancel()
+func TestErrorHandler(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
 
-		response, errs := func() ([]int, []error) {
-			in, out, errc := workers.Run[int, int](ctx, func(ctx context.Context, a int) (int, error) {
-				if a == 13 {
-					return 0, errors.New("dummy error")
-				}
-				return a * a, nil
-			})
-
-			for i := 0; i < 20; i++ {
-				in <- i
+	response, errs := func() ([]int, []error) {
+		in := make(chan int)
+		out, errc := workers.Run[int, int](ctx, in, func(ctx context.Context, a int) (int, error) {
+			if a == 13 {
+				return 0, errors.New("dummy error")
 			}
-			close(in)
+			return a * a, nil
+		})
 
-			response := []int{}
-			errs := []error{}
-			for {
-				select {
-				case ret, more := <-out:
-					if !more {
-						return response, errs
-					}
-					response = append(response, ret)
-				case err := <-errc:
-					if err != nil {
-						errs = append(errs, err)
-					}
-					// exit on error
-					// return response, errs
+		for i := 0; i < 20; i++ {
+			in <- i
+		}
+		close(in)
+
+		response := []int{}
+		errs := []error{}
+		for {
+			select {
+			case ret, more := <-out:
+				if !more {
+					return response, errs
 				}
+				response = append(response, ret)
+			case err := <-errc:
+				if err != nil {
+					errs = append(errs, err)
+				}
+				// exit on error
+				// return response, errs
 			}
-		}()
+		}
+	}()
 
-		assert.Len(t, response, 19)
-		assert.Len(t, errs, 1)
-		assert.Nil(t, ctx.Err())
-	}
-*/
+	assert.Len(t, response, 19)
+	assert.Len(t, errs, 1)
+	assert.Nil(t, ctx.Err())
+}
+
 func TestMultipleErrorOnWorker(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()

@@ -22,16 +22,15 @@ type IRouter interface {
 var _ IRouter = (*Router)(nil)
 
 type Router struct {
-	handlers datastruct.Tree[string, datastruct.Set[Handler]]
-
-	all datastruct.Set[chan<- Event]
+	handlers    datastruct.Tree[string, datastruct.Set[Handler]]
+	broadcaster *Broadcaster[Event]
 }
 
 const Separator = "." // QUESTION make configurable?
 
 func NewRoute(ctx context.Context) (*Router, error) {
 	return &Router{
-		all: datastruct.NewSet[chan<- Event](),
+		broadcaster: NewBroadcaster[Event](),
 	}, nil
 }
 
@@ -72,12 +71,7 @@ func (router *Router) Publish(ctx context.Context, kind string, detail any) {
 		}
 	}
 
-	if err := router.all.Range(func(ch chan<- Event) error {
-		ch <- evt
-		return nil
-	}); err != nil {
-		logrus.Debug(err)
-	}
+	router.broadcaster.Broadcast(evt)
 }
 func (router *Router) AddHandler(kind string, handler Handler) {
 	keys := strings.Split(kind, Separator)
@@ -108,14 +102,5 @@ func (router *Router) Watch(kind string, done <-chan struct{}) <-chan Event {
 	return ch
 }
 func (router *Router) WatchAll(done <-chan struct{}) <-chan Event {
-	ch := make(chan Event)
-
-	router.all.Add(ch)
-	go func() {
-		<-done
-		router.all.Remove(ch)
-		close(ch)
-	}()
-
-	return datastruct.DynamicChan(ch)
+	return router.broadcaster.Watch(done)
 }

@@ -54,7 +54,7 @@ func (m *Manager) IssueToken(username string, kind TokenKind, unhashedSecret str
 
 	result := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where("username = ? AND kind = ?", username, kind).
-		Order("index desc").
+		Order("`index` desc").
 		First(&lastToken)
 	if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return nil, errors.WithStack(result.Error)

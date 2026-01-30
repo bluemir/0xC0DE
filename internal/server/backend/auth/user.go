@@ -73,9 +73,12 @@ func (m *Manager) ListUser(opts ...meta.ListOptionFn) ([]User, error) {
 	return m.ListUserWithOption(opt)
 }
 func (m *Manager) ListUserWithOption(option meta.ListOption) ([]User, error) {
+	if option.Limit == 0 {
+		option.Limit = 20
+	}
 	users := []User{}
 
-	if err := m.db.Preload("Groups").Offset(option.Offset).Limit(option.Limit).Find(users).Error; err != nil {
+	if err := m.db.Preload("Groups").Offset(option.Offset).Limit(option.Limit).Find(&users).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 

@@ -36,7 +36,7 @@ type Query struct {
 
 func (q Query) build() posts.Query {
 	// TODO validation & convert
-	if len(*q.Message) == 0 {
+	if q.Message != nil && len(*q.Message) == 0 {
 		q.Message = nil
 	}
 

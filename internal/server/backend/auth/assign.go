@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"github.com/bluemir/functional"
 	"github.com/cockroachdb/errors"
+	"gorm.io/gorm"
 )
 
 type Assign struct {
@@ -46,17 +46,17 @@ func (m *Manager) ListAssignedRole(subject Subject) ([]Role, error) {
 		})
 	}
 
-	roles, err := functional.MapWithError(assigns, func(assign Assign) (*Role, error) {
-		role := &Role{}
-
-		if err := m.db.Where(Role{Name: assign.Role}).Take(role).Error; err != nil {
+	roles := []Role{}
+	for _, assign := range assigns {
+		role := Role{}
+		if err := m.db.Where(Role{Name: assign.Role}).Take(&role).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				continue
+			}
 			return nil, errors.WithStack(err)
 		}
-		return role, nil
-	})
-	if err != nil {
-		return nil, err
+		roles = append(roles, role)
 	}
 
-	return functional.Map(roles, func(r *Role) Role { return *r }), nil
+	return roles, nil
 }

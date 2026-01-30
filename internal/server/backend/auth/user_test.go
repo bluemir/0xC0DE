@@ -3,28 +3,70 @@ package auth_test
 import (
 	"testing"
 
-	"github.com/bluemir/functional"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
 )
 
-func TestCreateWithGroup(t *testing.T) {
-	m, err := newManager()
-	if err != nil {
-		t.Fatal(err)
-	}
+func TestUserCRUD(t *testing.T) {
+	m := newTestManager(t)
 
-	if _, err := m.CreateUser("bluemir", auth.WithGroup("test-1")); err != nil {
-		t.Fatal(err)
-	}
+	// Create User (via Register or CreateUser)
+	// CreateUser is lower level.
+	user, err := m.CreateUser("user1", auth.WithGroup("group1"))
+	assert.NoError(t, err)
+	assert.Equal(t, "user1", user.Name)
+	assert.Len(t, user.Groups, 1)
+	assert.Equal(t, "group1", user.Groups[0].Name)
 
-	u, err := m.GetUser("bluemir")
-	if err != nil {
-		t.Fatal(err)
-	}
+	// Get User
+	gotUser, err := m.GetUser("user1")
+	assert.NoError(t, err)
+	assert.Equal(t, "user1", gotUser.Name)
 
-	g := functional.First(u.Groups, func(g auth.Group) bool { return g.Name == "test-1" })
-	assert.NotNil(t, g)
-	assert.Equal(t, "test-1", g.Name)
+	// List User
+	users, err := m.ListUser()
+	assert.NoError(t, err)
+	assert.Len(t, users, 1)
+	assert.Equal(t, "user1", users[0].Name)
+
+	// Update User
+	gotUser.Labels = map[string]string{"key": "value"}
+	err = m.UpdateUser(gotUser)
+	assert.NoError(t, err)
+
+	gotUser, err = m.GetUser("user1")
+	assert.NoError(t, err)
+	assert.Equal(t, "value", gotUser.Labels["key"])
+
+	// Delete User
+	err = m.DeleteUser("user1")
+	assert.NoError(t, err)
+
+	_, err = m.GetUser("user1")
+	assert.Error(t, err)
+}
+
+func TestSubjects(t *testing.T) {
+	m := newTestManager(t)
+	user, _ := m.CreateUser("user1", auth.WithGroup("group1"))
+
+	subjects := user.Subjects()
+	// Should contain user subject and group subject
+	// user:kind=user,name=user1
+	// group:kind=group,name=group1
+
+	hasUserSubject := false
+	hasGroupSubject := false
+
+	for _, s := range subjects {
+		if s.Kind == auth.KindUser && s.Name == "user1" {
+			hasUserSubject = true
+		}
+		if s.Kind == auth.KindGroup && s.Name == "group1" {
+			hasGroupSubject = true
+		}
+	}
+	assert.True(t, hasUserSubject)
+	assert.True(t, hasGroupSubject)
 }

@@ -53,9 +53,12 @@ func (m *Manager) ListRole(opts ...meta.ListOptionFn) ([]Role, error) {
 	return m.ListRoleWithOption(&opt)
 }
 func (m *Manager) ListRoleWithOption(option *meta.ListOption) ([]Role, error) {
+	if option.Limit == 0 {
+		option.Limit = 20
+	}
 	roles := []Role{}
 
-	if err := m.db.Offset(option.Offset).Limit(option.Limit).Find(roles).Error; err != nil {
+	if err := m.db.Offset(option.Offset).Limit(option.Limit).Find(&roles).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 
@@ -82,7 +85,7 @@ func (role *Role) IsAllow(ctx Context) bool {
 	})
 }
 func (rule *Rule) IsMatched(ctx Context) bool {
-	if !(functional.Contain(rule.Verbs, ctx.Verb) || len(rule.Verbs) == 0) {
+	if !(functional.Contain(rule.Verbs, ctx.Verb) || functional.Contain(rule.Verbs, Verb("*")) || len(rule.Verbs) == 0) {
 		return false
 	}
 
