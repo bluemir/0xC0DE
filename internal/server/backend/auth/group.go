@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/pkg/errors"
+	"github.com/cockroachdb/errors"
 
 	"github.com/bluemir/0xC0DE/internal/server/backend/meta"
 )

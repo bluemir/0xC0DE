@@ -2,7 +2,7 @@ package auth
 
 import (
 	"github.com/bluemir/functional"
-	"github.com/pkg/errors"
+	"github.com/cockroachdb/errors"
 )
 
 type Assign struct {

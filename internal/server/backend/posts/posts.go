@@ -3,7 +3,7 @@ package posts
 import (
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/cockroachdb/errors"
 	"github.com/rs/xid"
 	"golang.org/x/net/context"
 	"gorm.io/gorm"

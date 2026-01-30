@@ -1,7 +1,7 @@
 package meta
 
 import (
-	"github.com/pkg/errors"
+	"github.com/cockroachdb/errors"
 )
 
 type ListOption struct {

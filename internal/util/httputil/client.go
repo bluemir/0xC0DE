@@ -11,7 +11,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/cockroachdb/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/bluemir/0xC0DE/internal/util/retry"

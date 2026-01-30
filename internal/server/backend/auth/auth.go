@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/bluemir/0xC0DE/internal/server/backend/meta"
-	"github.com/pkg/errors"
+	"github.com/cockroachdb/errors"
 	"github.com/sirupsen/logrus"
 )
 

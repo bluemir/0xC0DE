@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/bluemir/0xC0DE/internal/server/backend/meta"
-	"github.com/pkg/errors"
+	"github.com/cockroachdb/errors"
 )
 
 const (

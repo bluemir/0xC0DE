@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/bluemir/0xC0DE/internal/util"
-	"github.com/pkg/errors"
+	"github.com/cockroachdb/errors"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

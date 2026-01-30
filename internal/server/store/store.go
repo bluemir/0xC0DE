@@ -3,7 +3,7 @@ package store
 import (
 	"context"
 
-	"github.com/pkg/errors"
+	"github.com/cockroachdb/errors"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )

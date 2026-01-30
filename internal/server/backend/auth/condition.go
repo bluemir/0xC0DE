@@ -1,8 +1,8 @@
 package auth
 
 import (
+	"github.com/cockroachdb/errors"
 	"github.com/expr-lang/expr"
-	"github.com/pkg/errors"
 )
 
 type Condition string

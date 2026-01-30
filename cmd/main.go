@@ -6,7 +6,7 @@ import (
 	"runtime"
 
 	"github.com/alecthomas/kingpin/v2"
-	"github.com/pkg/errors"
+	"github.com/cockroachdb/errors"
 	"github.com/sirupsen/logrus"
 
 	clientCmd "github.com/bluemir/0xC0DE/cmd/client"

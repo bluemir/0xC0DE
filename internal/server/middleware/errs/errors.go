@@ -84,6 +84,7 @@ func negotiate(c *gin.Context) string {
 	return "text/plain"
 }
 
+// rfc 7807
 type ProblemDetails struct {
 	Type     string `json:"type"`               // URI reference that identifies the problem type
 	Title    string `json:"title"`              // Short, human-readable summary of the problem type
