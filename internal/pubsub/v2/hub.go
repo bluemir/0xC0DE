@@ -7,6 +7,7 @@ import (
 
 	"github.com/bluemir/0xC0DE/internal/datastruct"
 	"github.com/rs/xid"
+	"github.com/sirupsen/logrus"
 )
 
 type IHub interface {
@@ -66,23 +67,25 @@ func (hub *Hub) Publish(ctx context.Context, detail any) {
 	}
 
 	snapshot := []Handler{}
-	_ = handlers.Range(func(handler Handler) error {
+	if err := handlers.Range(func(handler Handler) error {
 		snapshot = append(snapshot, handler)
 		return nil
-	})
+	}); err != nil {
+		logrus.Debug(err)
+	}
 
 	for _, handler := range snapshot {
 		if err := handler.Handle(ctx, evt); err != nil {
-			// continue even if error
-			// TODO: collecting errors?
-			_ = err
+			logrus.Debug(err)
 		}
 	}
 
-	_ = hub.all.Range(func(ch chan<- Event) error {
+	if err := hub.all.Range(func(ch chan<- Event) error {
 		ch <- evt
 		return nil
-	})
+	}); err != nil {
+		logrus.Debug(err)
+	}
 }
 func (hub *Hub) AddHandler(kind any, handler Handler) {
 	handlers, _ := hub.handlers.GetOrSet(reflect.TypeOf(kind), datastruct.NewSet[Handler]())

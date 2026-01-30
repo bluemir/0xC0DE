@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/rs/xid"
+	"github.com/sirupsen/logrus"
 
 	"github.com/bluemir/0xC0DE/internal/datastruct"
 )
@@ -59,22 +60,25 @@ func (router *Router) Publish(ctx context.Context, kind string, detail any) {
 	}
 
 	snapshot := []Handler{}
-	_ = handlers.Range(func(handler Handler) error {
+	if err := handlers.Range(func(handler Handler) error {
 		snapshot = append(snapshot, handler)
 		return nil
-	})
+	}); err != nil {
+		logrus.Debug(err)
+	}
 
 	for _, handler := range snapshot {
 		if err := handler.Handle(ctx, evt); err != nil {
-			// continue even if error
-			_ = err
+			logrus.Debug(err)
 		}
 	}
 
-	_ = router.all.Range(func(ch chan<- Event) error {
+	if err := router.all.Range(func(ch chan<- Event) error {
 		ch <- evt
 		return nil
-	})
+	}); err != nil {
+		logrus.Debug(err)
+	}
 }
 func (router *Router) AddHandler(kind string, handler Handler) {
 	keys := strings.Split(kind, Separator)
