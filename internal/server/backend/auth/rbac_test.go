@@ -33,7 +33,7 @@ func TestRBAC(t *testing.T) {
 	// Role: admin-server
 	_, err = m.CreateRole("admin-server", []auth.Rule{
 		{
-			Verbs: []auth.Verb{"*"},
+			Verbs: []auth.Verb{},
 			Selector: auth.KeyValues{
 				"kind": "server",
 			},

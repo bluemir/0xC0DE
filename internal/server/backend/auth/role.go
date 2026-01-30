@@ -85,7 +85,7 @@ func (role *Role) IsAllow(ctx Context) bool {
 	})
 }
 func (rule *Rule) IsMatched(ctx Context) bool {
-	if !(functional.Contain(rule.Verbs, ctx.Verb) || functional.Contain(rule.Verbs, Verb("*")) || len(rule.Verbs) == 0) {
+	if !(functional.Contain(rule.Verbs, ctx.Verb) || len(rule.Verbs) == 0) {
 		return false
 	}
 
