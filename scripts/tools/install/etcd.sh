@@ -3,8 +3,10 @@ set -e
 VERSION=$1
 BIN_DIR=$(pwd)/${2:-/runtime/tools}
 
-OS=$(go env GOOS)
-ARCH=$(go env GOARCH)
+. $(dirname $0)/../detect_os_arch.sh
+
+initArch
+initOS
 
 TMP_DIR=$(mktemp -d)
 cd $TMP_DIR
