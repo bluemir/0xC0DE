@@ -19,8 +19,7 @@ import (
 func Middleware(c *gin.Context) {
 	c.Next()
 
-	errs := c.Errors.ByType(gin.ErrorTypeAny)
-	if len(errs) == 0 {
+	if len(c.Errors) == 0 {
 		return
 	}
 
@@ -45,36 +44,52 @@ func Middleware(c *gin.Context) {
 		logrus.Warnf("Server Error. code: %d, %s", code, err)
 	}
 
-	// with header or without header, or other processer/ maybe hook? depend on error type? or just code
+	switch negotiate(c) {
+	case "application/json":
+		c.JSON(code, ProblemDetails{
+			Type:   "about:blank",
+			Title:  http.StatusText(code),
+			Status: code,
+			Detail: err.Error(),
+		})
+	case "text/html":
+		/* basic auth
+		if code == http.StatusUnauthorized {
+			c.Header(auth.LoginHeader(c.Request))
+		}
+		*/
+		logrus.Trace(htmlName(code, err))
+		c.HTML(code, htmlName(code, err), c.Errors)
+	default:
+		c.String(code, "%#v", c.Errors)
+	}
+}
+
+func negotiate(c *gin.Context) string {
+	// 1. Check Accept Header
 	for _, accept := range strings.Split(c.Request.Header.Get("Accept"), ",") {
-		t, _, e := mime.ParseMediaType(accept)
-		if e != nil {
-			logrus.Error(e)
+		t, _, err := mime.ParseMediaType(accept)
+		if err != nil {
 			continue
 		}
 
 		switch t {
 		case "application/json":
-			// TODO make response json
-			c.JSON(code, gin.H{
-				"error": err.Err.Error(),
-			})
-			return
+			return "application/json"
 		case "text/html", "*/*":
-			/* basic auth
-			if code == http.StatusUnauthorized {
-				c.Header(auth.LoginHeader(c.Request))
-			}
-			*/
-			logrus.Trace(htmlName(code, err))
-			c.HTML(code, htmlName(code, err), c.Errors)
-			return
-		case "text/plain":
-			c.String(code, "%#v", c.Errors)
-			return
+			return "text/html"
 		}
 	}
-	c.String(code, "%#v", c.Errors)
+	// 2. Default
+	return "text/plain"
+}
+
+type ProblemDetails struct {
+	Type     string `json:"type"`               // URI reference that identifies the problem type
+	Title    string `json:"title"`              // Short, human-readable summary of the problem type
+	Status   int    `json:"status"`             // HTTP status code
+	Detail   string `json:"detail,omitempty"`   // Human-readable explanation specific to this occurrence of the problem
+	Instance string `json:"instance,omitempty"` // URI reference that identifies the specific occurrence of the problem
 }
 
 type HttpStatusCodeProvider interface {
