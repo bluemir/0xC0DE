@@ -24,6 +24,9 @@ find . -name "*.bak" | xargs rm
 find . -name init.sh -o -name Makefile -prune -o -type f -print | xargs -n 1 sed -i.bak "s#0xC0DE#$NAME#g" || true
 find . -name "*.bak" | xargs rm
 
+# AI rule 삭제
+rm .cursorrules
+
 read -p "Do you wish to remove init.sh(Y/n)? " yn
 case $yn in
 	[Nn]* ) exit;;
