@@ -10,7 +10,8 @@ type FowardHandler struct {
 	Hub pubsub.IHub
 }
 
-func (h FowardHandler) Handle(evt pubsub.Message) {
+func (h FowardHandler) Handle(evt pubsub.Message) error {
 	logrus.Trace(evt)
 	h.Hub.Publish(h.to, evt.Detail)
+	return nil
 }

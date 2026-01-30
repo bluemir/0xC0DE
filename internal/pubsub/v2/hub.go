@@ -39,6 +39,15 @@ func HubFrom(ctx context.Context) *Hub {
 	return ctx.Value(keyHub).(*Hub)
 }
 
+func (h chanEventHandler) Handle(ctx context.Context, evt Event) error {
+	h.ch <- evt
+	return nil
+}
+
+type chanEventHandler struct {
+	ch chan<- Event
+}
+
 func (hub *Hub) Publish(ctx context.Context, detail any) {
 	kind := reflect.TypeOf(detail)
 
@@ -56,12 +65,21 @@ func (hub *Hub) Publish(ctx context.Context, detail any) {
 		Kind:    kind.String(),
 	}
 
-	handlers.Range(func(handler Handler) error {
-		handler.Handle(ctx, evt)
+	snapshot := []Handler{}
+	_ = handlers.Range(func(handler Handler) error {
+		snapshot = append(snapshot, handler)
 		return nil
 	})
 
-	hub.all.Range(func(ch chan<- Event) error {
+	for _, handler := range snapshot {
+		if err := handler.Handle(ctx, evt); err != nil {
+			// continue even if error
+			// TODO: collecting errors?
+			_ = err
+		}
+	}
+
+	_ = hub.all.Range(func(ch chan<- Event) error {
 		ch <- evt
 		return nil
 	})

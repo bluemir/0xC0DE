@@ -184,8 +184,12 @@ func (c *HttpClient) makeRequest(method string, url string, reqObject any) (*htt
 }
 
 func (c *HttpClient) ensureReaderClosed(r io.ReadCloser) {
-	io.Copy(io.Discard, r)
-	r.Close()
+	if _, err := io.Copy(io.Discard, r); err != nil {
+		logrus.Tracef("failed to discard remaining body: %v", err)
+	}
+	if err := r.Close(); err != nil {
+		logrus.Tracef("failed to close body: %v", err)
+	}
 }
 
 type Response struct {

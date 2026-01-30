@@ -42,11 +42,12 @@ func NewRecordingHandler() *RecordingHandler {
 	}
 }
 
-func (rh *RecordingHandler) Handle(ctx context.Context, evt pubsub.Event) {
+func (rh *RecordingHandler) Handle(ctx context.Context, evt pubsub.Event) error {
 	rh.mu.Lock()
 	defer rh.mu.Unlock()
 	// evt.Context = nil // Avoid storing context if comparing events directly
 	rh.Events = append(rh.Events, evt)
+	return nil
 }
 
 func (rh *RecordingHandler) Count() int {
@@ -149,10 +150,11 @@ type ModifyingHandler struct {
 	recoder *RecordingHandler
 }
 
-func (h ModifyingHandler) Handle(ctx context.Context, evt pubsub.Event) {
+func (h ModifyingHandler) Handle(ctx context.Context, evt pubsub.Event) error {
 	hub := pubsub.HubFrom(ctx)
 
 	hub.AddHandler(EventForTest{}, h.recoder)
+	return nil
 }
 
 type EventAddHandler struct {

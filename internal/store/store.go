@@ -46,7 +46,10 @@ func New(ctx context.Context, endpoint string, opts ...OptionFn) (*Store, error)
 	}
 	go func() {
 		<-ctx.Done()
-		cli.Close()
+		if err := cli.Close(); err != nil {
+			// TODO: use logger
+			_ = err
+		}
 	}()
 
 	return &Store{cli}, nil

@@ -15,9 +15,9 @@ var (
 func Signature() string {
 	hashed := crypto.SHA512.New()
 
-	io.WriteString(hashed, AppName)
-	io.WriteString(hashed, Version)
-	io.WriteString(hashed, BuildTime)
+	_, _ = io.WriteString(hashed, AppName)
+	_, _ = io.WriteString(hashed, Version)
+	_, _ = io.WriteString(hashed, BuildTime)
 
 	return hex.EncodeToString(hashed.Sum(nil))
 }

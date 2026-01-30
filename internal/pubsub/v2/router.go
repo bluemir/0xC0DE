@@ -58,12 +58,20 @@ func (router *Router) Publish(ctx context.Context, kind string, detail any) {
 		Kind:    kind,
 	}
 
-	handlers.Range(func(handler Handler) error {
-		handler.Handle(ctx, evt)
+	snapshot := []Handler{}
+	_ = handlers.Range(func(handler Handler) error {
+		snapshot = append(snapshot, handler)
 		return nil
 	})
 
-	router.all.Range(func(ch chan<- Event) error {
+	for _, handler := range snapshot {
+		if err := handler.Handle(ctx, evt); err != nil {
+			// continue even if error
+			_ = err
+		}
+	}
+
+	_ = router.all.Range(func(ch chan<- Event) error {
 		ch <- evt
 		return nil
 	})

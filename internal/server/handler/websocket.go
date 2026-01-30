@@ -25,7 +25,9 @@ func Websocket(c *gin.Context) {
 		for {
 			msg := map[string]interface{}{}
 			if err := decoder.Decode(&msg); err != nil {
-				encoder.Encode(gin.H{"msg": err.Error(), "error": true})
+				if err := encoder.Encode(gin.H{"msg": err.Error(), "error": true}); err != nil {
+					logrus.Warnf("websocket encode error: %v", err)
+				}
 				return
 			}
 			logrus.Tracef("websocket msg: %#v", msg)

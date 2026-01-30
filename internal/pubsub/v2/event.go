@@ -16,5 +16,5 @@ type Event struct {
 }
 
 type Handler interface {
-	Handle(ctx context.Context, evt Event)
+	Handle(ctx context.Context, evt Event) error
 }

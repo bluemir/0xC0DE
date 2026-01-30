@@ -12,12 +12,13 @@ type CounterHandler struct {
 	count int
 }
 
-func (h *CounterHandler) Handle(evt pubsub.Message) {
+func (h *CounterHandler) Handle(evt pubsub.Message) error {
 	h.lock.Lock()
 	defer h.lock.Unlock()
 
 	logrus.Trace("counter called")
 	h.count++
+	return nil
 }
 func (h *CounterHandler) GetCount() int {
 	h.lock.RLock()

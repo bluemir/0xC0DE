@@ -9,7 +9,7 @@ import (
 func Hash(strs ...string) string {
 	hashed := crypto.SHA512.New()
 	for _, str := range strs {
-		io.WriteString(hashed, str)
+		_, _ = io.WriteString(hashed, str)
 	}
 	return hex.EncodeToString(hashed.Sum(nil))
 

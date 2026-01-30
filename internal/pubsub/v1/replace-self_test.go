@@ -6,7 +6,8 @@ type ReplaceSelfHandler struct {
 	Hub pubsub.IHub
 }
 
-func (h *ReplaceSelfHandler) Handle(evt pubsub.Message) {
+func (h *ReplaceSelfHandler) Handle(evt pubsub.Message) error {
 	h.Hub.RemoveHandler("do", h)
 	h.Hub.AddHandler("do", FowardHandler{to: "done", Hub: h.Hub})
+	return nil
 }

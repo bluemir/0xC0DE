@@ -98,7 +98,10 @@ func Login(c *gin.Context) {
 
 	session := sessions.Default(c)
 	session.Set(SessionKeyUser, user)
-	session.Save()
+	if err := session.Save(); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
 
 	c.JSON(http.StatusOK, user)
 }
@@ -107,7 +110,10 @@ func Login(c *gin.Context) {
 func Logout(c *gin.Context) {
 	session := sessions.Default(c)
 	session.Delete(SessionKeyUser)
-	session.Save()
+	if err := session.Save(); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "ok"})
 }

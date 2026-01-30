@@ -17,7 +17,7 @@ cert-secrets: runtime/deploy/local/server-certs.yaml
 runtime/deploy/local/server-certs.yaml: CA_CERT=$(CERT_DIR)/local/ca.crt
 runtime/deploy/local/server-certs.yaml: CERT=$(CERT_DIR)/local/app/server
 
-runtime/deploy/%-certs.yaml:
+runtime/deploy/%-certs.yaml: | runtime/tools/kubectl
 	@mkdir -p $(@D)
 	@if [ "$(CA_CERT)" == "" ] ; then echo "CA_CERT must be provideded.";  exit 1 ; fi
 	@if [ "$(CERT)" == "" ]   ; then echo "CERT must be provideded.";  exit 1 ; fi

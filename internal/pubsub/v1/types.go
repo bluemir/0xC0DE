@@ -17,7 +17,7 @@ type Message struct {
 }
 
 type Handler interface {
-	Handle(msg Message)
+	Handle(msg Message) error
 }
 
 type Listener chan<- Message

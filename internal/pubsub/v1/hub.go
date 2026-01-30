@@ -57,6 +57,16 @@ func (h *Hub) Publish(kind string, detail any) {
 		Detail: detail,
 	}
 }
+
+type chanEventHandler struct {
+	ch chan<- Message
+}
+
+func (h chanEventHandler) Handle(msg Message) error {
+	h.ch <- msg
+	return nil
+}
+
 func (h *Hub) broadcast(evt Message) {
 	logrus.Tracef("broadcast event: %s - %#v", evt.Kind, evt.Detail)
 
@@ -66,10 +76,17 @@ func (h *Hub) broadcast(evt Message) {
 
 		logrus.Tracef("%+v", &handlers)
 
-		handlers.Range(func(handler Handler) error {
-			handler.Handle(evt)
+		snapshot := []Handler{}
+		_ = handlers.Range(func(handler Handler) error {
+			snapshot = append(snapshot, handler)
 			return nil
 		})
+
+		for _, handler := range snapshot {
+			if err := handler.Handle(evt); err != nil {
+				logrus.Warnf("handler error: %v", err)
+			}
+		}
 	}
 	{
 		//handler star
@@ -77,10 +94,17 @@ func (h *Hub) broadcast(evt Message) {
 			keys[i-1] = "*"
 			handlers, _ := h.handlers.GetOrSet(keys[:i], datastruct.NewSet[Handler]())
 
-			handlers.Range(func(handler Handler) error {
-				handler.Handle(evt)
+			snapshot := []Handler{}
+			_ = handlers.Range(func(handler Handler) error {
+				snapshot = append(snapshot, handler)
 				return nil
 			})
+
+			for _, handler := range snapshot {
+				if err := handler.Handle(evt); err != nil {
+					logrus.Warnf("handler error: %v", err)
+				}
+			}
 		}
 	}
 }
