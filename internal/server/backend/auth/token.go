@@ -80,7 +80,10 @@ func (m *Manager) UpdatePassword(username string, unhashedPassword string) error
 		return errors.WithStack(err)
 	}
 
-	if err := m.db.Save(&Token{
+	if err := m.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "username"}, {Name: "kind"}, {Name: "index"}},
+		DoUpdates: clause.Assignments(map[string]interface{}{"hashed_secret": hashedSecret}),
+	}).Create(&Token{
 		Username:     username,
 		Kind:         TokenKindPassword,
 		Index:        0,

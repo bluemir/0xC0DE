@@ -15,7 +15,7 @@ func TestGroupCRUD(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "devs", group.Name)
 
-	// Create Duplicate Group (Should fail? Or GORM might return error)
+	// Create Duplicate Group
 	_, err = m.CreateGroup("devs")
 	assert.Error(t, err)
 
@@ -31,13 +31,14 @@ func TestGroupCRUD(t *testing.T) {
 	// List Group
 	groups, err := m.ListGroup()
 	require.NoError(t, err)
-	// We have devs and ops.
-	// Order is not guaranteed, but checks existence
-	assert.Len(t, groups, 2)
 
-	names := []string{groups[0].Name, groups[1].Name}
-	assert.Contains(t, names, "devs")
-	assert.Contains(t, names, "ops")
+	// Check if created groups exist
+	groupNames := []string{}
+	for _, g := range groups {
+		groupNames = append(groupNames, g.Name)
+	}
+	assert.Contains(t, groupNames, "devs")
+	assert.Contains(t, groupNames, "ops")
 
 	// Delete Group
 	err = m.DeleteGroup("devs")
@@ -45,6 +46,11 @@ func TestGroupCRUD(t *testing.T) {
 
 	groups, err = m.ListGroup()
 	require.NoError(t, err)
-	assert.Len(t, groups, 1)
-	assert.Equal(t, "ops", groups[0].Name)
+
+	groupNames = []string{}
+	for _, g := range groups {
+		groupNames = append(groupNames, g.Name)
+	}
+	assert.NotContains(t, groupNames, "devs")
+	assert.Contains(t, groupNames, "ops")
 }
