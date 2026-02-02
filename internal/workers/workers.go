@@ -52,10 +52,8 @@ func Run[InType any, OutType any](ctx context.Context, in <-chan InType, fn Work
 	}()
 
 	return datastruct.DynamicChan(outputCh), datastruct.DynamicChan(errorCh)
-
-	// result.Out, result.In, result.Err, result.Add(array...), return result.Collect(), result.Errs()
 }
-func worker[InType any, OutType any](ctx context.Context, fn WorkerFunc[InType, OutType], in <-chan InType, out chan<- OutType, errc chan<- error, doneCh chan<- struct{}) {
+func worker[InType any, OutType any](ctx context.Context, fn WorkerFunc[InType, OutType], in <-chan InType, outCh chan<- OutType, errCh chan<- error, doneCh chan<- struct{}) {
 	defer func() {
 		doneCh <- struct{}{}
 	}()
@@ -64,14 +62,14 @@ func worker[InType any, OutType any](ctx context.Context, fn WorkerFunc[InType, 
 		outV, err := fn(ctx, inV)
 		if err != nil {
 			select {
-			case errc <- err:
+			case errCh <- err:
 			default:
 				logrus.Error(err)
 			}
 			continue
 		}
 
-		out <- outV
+		outCh <- outV
 	}
 }
 
@@ -79,4 +77,52 @@ func WorkerNum(n int) OptionFn {
 	return func(opt *option) {
 		opt.workerNum = n
 	}
+}
+
+// RunSlice processes a slice of inputs concurrently and collects results.
+// It returns collected outputs and any errors that occurred.
+// This is a convenience wrapper around Run for slice-based inputs.
+func RunSlice[InType any, OutType any](ctx context.Context, inputs []InType, fn WorkerFunc[InType, OutType], opts ...OptionFn) ([]OutType, []error) {
+	if len(inputs) == 0 {
+		return nil, nil
+	}
+
+	in := make(chan InType)
+	go func() {
+		defer close(in)
+		for _, input := range inputs {
+			select {
+			case <-ctx.Done():
+				return
+			case in <- input:
+			}
+		}
+	}()
+
+	outCh, errCh := Run(ctx, in, fn, opts...)
+
+	var results []OutType
+	var errors []error
+
+	// Collect all results and errors
+	outDone := false
+	errDone := false
+	for !outDone || !errDone {
+		select {
+		case result, ok := <-outCh:
+			if !ok {
+				outDone = true
+				continue
+			}
+			results = append(results, result)
+		case err, ok := <-errCh:
+			if !ok {
+				errDone = true
+				continue
+			}
+			errors = append(errors, err)
+		}
+	}
+
+	return results, errors
 }
