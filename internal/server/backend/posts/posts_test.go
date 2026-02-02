@@ -9,7 +9,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	"github.com/bluemir/0xC0DE/internal/pubsub/v2"
+	"github.com/bluemir/0xC0DE/internal/pubsub"
 	"github.com/bluemir/0xC0DE/internal/server/backend/meta"
 	"github.com/bluemir/0xC0DE/internal/server/backend/posts"
 )

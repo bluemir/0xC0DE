@@ -8,7 +8,7 @@ import (
 	"golang.org/x/net/context"
 	"gorm.io/gorm"
 
-	"github.com/bluemir/0xC0DE/internal/pubsub/v2"
+	"github.com/bluemir/0xC0DE/internal/pubsub"
 	"github.com/bluemir/0xC0DE/internal/server/backend/meta"
 )
 

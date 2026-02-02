@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bluemir/0xC0DE/internal/pubsub/v2"
+	"github.com/bluemir/0xC0DE/internal/pubsub"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -3,7 +3,7 @@ package backend
 import (
 	"context"
 
-	"github.com/bluemir/0xC0DE/internal/pubsub/v2"
+	"github.com/bluemir/0xC0DE/internal/pubsub"
 	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
 	"github.com/bluemir/0xC0DE/internal/server/backend/posts"
 	"gorm.io/gorm"
