@@ -16,8 +16,21 @@ func NewBroadcaster[T any]() *Broadcaster[T] {
 	}
 }
 
-func (b *Broadcaster[T]) Watch(done <-chan struct{}) <-chan T {
-	ch := make(chan T)
+func (b *Broadcaster[T]) Watch(done <-chan struct{}, opts ...WatchOption) <-chan T {
+	conf := watchConfig{
+		bufferSize: -1,
+	}
+	for _, opt := range opts {
+		opt(&conf)
+	}
+
+	var ch chan T
+	if conf.bufferSize >= 0 {
+		ch = make(chan T, conf.bufferSize)
+	} else {
+		ch = make(chan T)
+	}
+
 	b.channels.Add(ch)
 
 	go func() {
@@ -30,6 +43,10 @@ func (b *Broadcaster[T]) Watch(done <-chan struct{}) <-chan T {
 		case <-b.closed:
 		}
 	}()
+
+	if conf.bufferSize >= 0 {
+		return ch
+	}
 
 	return datastruct.DynamicChan(ch)
 }

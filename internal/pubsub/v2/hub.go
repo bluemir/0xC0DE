@@ -14,8 +14,20 @@ type IHub interface {
 	Publish(ctx context.Context, detail any)
 	AddHandler(kind any, handler Handler)
 	RemoveHandler(kind any, handler Handler)
-	Watch(kind any, done <-chan struct{}) <-chan Event
-	WatchAll(done <-chan struct{}) <-chan Event
+	Watch(kind any, done <-chan struct{}, opts ...WatchOption) <-chan Event
+	WatchAll(done <-chan struct{}, opts ...WatchOption) <-chan Event
+}
+
+type watchConfig struct {
+	bufferSize int
+}
+
+type WatchOption func(*watchConfig)
+
+func WithBuffer(n int) WatchOption {
+	return func(c *watchConfig) {
+		c.bufferSize = n
+	}
 }
 
 var _ IHub = (*Hub)(nil)
@@ -90,8 +102,20 @@ func (hub *Hub) RemoveHandler(kind any, handler Handler) {
 	handlers, _ := hub.handlers.GetOrSet(reflect.TypeOf(kind), datastruct.NewSet[Handler]())
 	handlers.Remove(handler)
 }
-func (hub *Hub) Watch(kind any, done <-chan struct{}) <-chan Event {
-	ch := make(chan Event)
+func (hub *Hub) Watch(kind any, done <-chan struct{}, opts ...WatchOption) <-chan Event {
+	conf := watchConfig{
+		bufferSize: -1,
+	}
+	for _, opt := range opts {
+		opt(&conf)
+	}
+
+	var ch chan Event
+	if conf.bufferSize >= 0 {
+		ch = make(chan Event, conf.bufferSize)
+	} else {
+		ch = make(chan Event)
+	}
 
 	h := chanEventHandler{
 		ch: ch,
@@ -104,8 +128,13 @@ func (hub *Hub) Watch(kind any, done <-chan struct{}) <-chan Event {
 		close(ch)
 	}()
 
-	return ch
+	if conf.bufferSize >= 0 {
+		return ch
+	}
+
+	// Use DynamicChan to prevent deadlock during recursive publishing
+	return datastruct.DynamicChan(ch)
 }
-func (hub *Hub) WatchAll(done <-chan struct{}) <-chan Event {
-	return hub.broadcaster.Watch(done)
+func (hub *Hub) WatchAll(done <-chan struct{}, opts ...WatchOption) <-chan Event {
+	return hub.broadcaster.Watch(done, opts...)
 }

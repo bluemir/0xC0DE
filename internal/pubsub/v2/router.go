@@ -15,8 +15,8 @@ type IRouter interface {
 	Publish(ctx context.Context, kind string, detail any)
 	AddHandler(kind string, handler Handler)
 	RemoveHandler(kind string, handler Handler)
-	Watch(kind string, done <-chan struct{}) <-chan Event
-	WatchAll(done <-chan struct{}) <-chan Event
+	Watch(kind string, done <-chan struct{}, opts ...WatchOption) <-chan Event
+	WatchAll(done <-chan struct{}, opts ...WatchOption) <-chan Event
 }
 
 var _ IRouter = (*Router)(nil)
@@ -85,8 +85,20 @@ func (router *Router) RemoveHandler(kind string, handler Handler) {
 
 	handlers.Remove(handler)
 }
-func (router *Router) Watch(kind string, done <-chan struct{}) <-chan Event {
-	ch := make(chan Event)
+func (router *Router) Watch(kind string, done <-chan struct{}, opts ...WatchOption) <-chan Event {
+	conf := watchConfig{
+		bufferSize: -1,
+	}
+	for _, opt := range opts {
+		opt(&conf)
+	}
+
+	var ch chan Event
+	if conf.bufferSize >= 0 {
+		ch = make(chan Event, conf.bufferSize)
+	} else {
+		ch = make(chan Event)
+	}
 
 	h := chanEventHandler{
 		ch: ch,
@@ -99,8 +111,13 @@ func (router *Router) Watch(kind string, done <-chan struct{}) <-chan Event {
 		close(ch)
 	}()
 
-	return ch
+	if conf.bufferSize >= 0 {
+		return ch
+	}
+
+	// Use DynamicChan to prevent deadlock during recursive publishing
+	return datastruct.DynamicChan(ch)
 }
-func (router *Router) WatchAll(done <-chan struct{}) <-chan Event {
-	return router.broadcaster.Watch(done)
+func (router *Router) WatchAll(done <-chan struct{}, opts ...WatchOption) <-chan Event {
+	return router.broadcaster.Watch(done, opts...)
 }
