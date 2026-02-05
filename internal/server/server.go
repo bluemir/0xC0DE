@@ -14,6 +14,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v3"
 
+	"github.com/bluemir/0xC0DE/assets"
 	"github.com/bluemir/0xC0DE/internal/server/backend"
 	"github.com/bluemir/0xC0DE/internal/server/store"
 )
@@ -38,6 +39,10 @@ type Server struct {
 }
 
 func Run(ctx context.Context, args *Args) error {
+	if err := assets.CheckDevAssets(); err != nil {
+		return err
+	}
+
 	conf, err := readCofigFile(args.ConfigFilePath)
 	if err != nil {
 		return errors.Wrapf(err, "config file not exist. path: %s", args.ConfigFilePath)

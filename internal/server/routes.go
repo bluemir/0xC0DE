@@ -71,7 +71,7 @@ func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) 
 	// Static Pages
 	{
 		// js, css, etc.
-		app.Group("/static").Group(cache.Rev(), cache.Set(cache.ForRevvedResource)).StaticFS("/", http.FS(assets.Static))
+		app.Group("/static").Group(cache.Rev(), cache.Set(cache.ForRevvedResource)).StaticFS("/", http.FS(assets.Static()))
 
 		app.GET("/", html("index.html"))
 		app.GET("/users/register", html("register.html"))

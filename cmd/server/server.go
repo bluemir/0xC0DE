@@ -42,6 +42,8 @@ func Register(cmd *kingpin.CmdClause) {
 	cmd.Action(func(*kingpin.ParseContext) error {
 		logrus.Trace("called")
 
+		logrus.Infof("Build mode: %s", buildinfo.BuildMode)
+
 		ctx, stop := signal.NotifyContext(context.Background(),
 			syscall.SIGTERM,
 			syscall.SIGINT,
