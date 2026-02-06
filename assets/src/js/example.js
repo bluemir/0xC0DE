@@ -1,7 +1,7 @@
 import * as $ from "bm.js/bm.module.js";
 //import {html, render} from '/lib/lit-html/lit-html.js';
 import {html, render} from 'lit-html';
-import * as common from "common.js";
+import * as common from "@/common.js";
 
 class CustomElement extends HTMLElement {
 	template(params) {
