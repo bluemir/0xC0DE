@@ -16,12 +16,12 @@ func TestWHelper(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	// Success case
-	wSuccess := w(func(c *gin.Context) error {
+	wSuccess := api(func(c *gin.Context) error {
 		c.Status(http.StatusOK)
 		return nil
 	})
 
-	wFailure := w(func(c *gin.Context) error {
+	wFailure := api(func(c *gin.Context) error {
 		return errors.New("handler error")
 	})
 

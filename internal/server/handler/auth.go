@@ -58,64 +58,61 @@ func Can(verb auth.Verb, r ResourceGetter) gin.HandlerFunc {
 	}
 }
 
-func Register(c *gin.Context) {
+func Register(c *gin.Context) error {
 	req := struct {
 		Username string `form:"username"     validate:"required,min=4"`
 		Password string `form:"password"     validate:"required,min=4"`
 	}{}
 
 	if err := c.ShouldBind(&req); err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
+		return err
 	}
 
 	u, _, err := backends(c).Auth.Register(req.Username, req.Password, auth.WithGroup("user"))
 	if err != nil {
-		c.Error(err)
-		return
+		return err
 	}
 
 	c.JSON(http.StatusOK, u)
+	return nil
 }
 
 // @Router /api/v1/login [post]
-func Login(c *gin.Context) {
+func Login(c *gin.Context) error {
 	req := struct {
 		Username string `form:"username"`
 		Password string `form:"password"`
 	}{}
 
 	if err := c.ShouldBind(&req); err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
+		return err
 	}
 
 	user, err := backends(c).Auth.Default(req.Username, req.Password)
 	if err != nil {
-		c.AbortWithError(http.StatusUnauthorized, err)
-		return
+		return err
 	}
 
 	session := sessions.Default(c)
 	session.Set(SessionKeyUser, user)
 	if err := session.Save(); err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
+		return err
 	}
 
 	c.JSON(http.StatusOK, user)
+	return nil
 }
 
 // @Router /api/v1/logout [get]
-func Logout(c *gin.Context) {
+func Logout(c *gin.Context) error {
 	session := sessions.Default(c)
 	session.Delete(SessionKeyUser)
 	if err := session.Save(); err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
+		return err
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "ok"})
+	return nil
 }
 
 func me(c *gin.Context) (*auth.User, error) {
@@ -145,33 +142,31 @@ func me(c *gin.Context) (*auth.User, error) {
 	return user, nil
 }
 
-func Me(c *gin.Context) {
+func Me(c *gin.Context) error {
 	u, err := me(c)
-
 	if err != nil {
-		c.Error(err)
-		return
+		return err
 	}
 	c.JSON(http.StatusOK, u)
+	return nil
 }
 
 // @Router /api/v1/users [get]
-func ListUsers(c *gin.Context) {
+func ListUsers(c *gin.Context) error {
 	users, err := backends(c).Auth.ListUser()
 	if err != nil {
-		c.Error(err)
-		return
+		return err
 	}
 
 	c.JSON(http.StatusOK, users)
+	return nil
 }
 
 // @Router /api/v1/groups [get]
-func ListGroups(c *gin.Context) {
+func ListGroups(c *gin.Context) error {
 	groups, err := backends(c).Auth.ListGroup()
 	if err != nil {
-		c.Error(err)
-		return
+		return err
 	}
 
 	res := []GroupWithBindingRoles{}
@@ -181,8 +176,7 @@ func ListGroups(c *gin.Context) {
 			Name: group.Name,
 		})
 		if err != nil {
-			c.Error(err)
-			return
+			return err
 		}
 
 		roleNames := []string{}
@@ -198,6 +192,7 @@ func ListGroups(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+	return nil
 }
 
 type GroupWithBindingRoles struct {
@@ -207,17 +202,18 @@ type GroupWithBindingRoles struct {
 }
 
 // @Router /api/v1/roles [get]
-func ListRoles(c *gin.Context) {
+func ListRoles(c *gin.Context) error {
 	roles, err := backends(c).Auth.ListRole()
 	if err != nil {
-		c.Error(err)
-		return
+
+		return err
 	}
 
 	c.JSON(http.StatusOK, roles)
+	return nil
 }
 
-func CanAPI(c *gin.Context) {
+func CanAPI(c *gin.Context) error {
 	verb := c.Param("verb")
 	kind := c.Param("resource")
 
@@ -235,6 +231,7 @@ func CanAPI(c *gin.Context) {
 	} else {
 		c.Status(http.StatusForbidden)
 	}
+	return nil
 }
 
 type AuthzRequest struct {
@@ -252,12 +249,11 @@ type AuthzResponse struct {
 // @Summary authz request
 // @Param "" body array AuthzRequest "request"
 // @Router /api/v1/can [get]
-func CanBulkAPI(c *gin.Context) {
+func CanBulkAPI(c *gin.Context) error {
 	req := []AuthzRequest{}
 
 	if err := c.ShouldBind(&req); err != nil {
-		c.Error(err)
-		return
+		return err
 	}
 
 	user, _ := me(c)
@@ -274,4 +270,5 @@ func CanBulkAPI(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+	return nil
 }

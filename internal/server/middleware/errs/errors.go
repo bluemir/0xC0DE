@@ -49,7 +49,7 @@ func Middleware(c *gin.Context) {
 		data, _ := json.Marshal(problem)
 		c.Data(statusCode, ContentTypeProblemJSON, data)
 	case ContentTypeHTML:
-		c.HTML(statusCode, htmlName(statusCode, err), c.Errors)
+		c.HTML(statusCode, htmlName(statusCode, err), c)
 	case ContentTypeText:
 		c.String(statusCode, "%#v", c.Errors)
 	}

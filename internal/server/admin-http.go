@@ -34,7 +34,7 @@ func (server *Server) RunAdminHTTPServer(ctx context.Context, bind string) func(
 		app := gin.New()
 
 		// ping
-		app.GET("/ping", handler.Ping)
+		app.GET("/ping", api(handler.Ping))
 
 		// prometheus for monitoring
 		app.GET("/metric", prom.Handler())

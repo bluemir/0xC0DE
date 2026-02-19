@@ -35,9 +35,19 @@ func Websocket(c *gin.Context) {
 	}).ServeHTTP(c.Writer, c.Request)
 }
 
-func Stream(c *gin.Context) {
+func Stream(c *gin.Context) error {
+	req := struct {
+		//Uri struct {}
+		Query struct {
+			Interval time.Duration
+		}
+	}{}
+	if err := c.ShouldBindQuery(req.Query); err != nil {
+		return err
+	}
+
 	// it is oneway... server -> client
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(req.Query.Interval)
 	defer ticker.Stop()
 
 	c.SSEvent("time", time.Now().Format(time.RFC3339Nano))
@@ -54,18 +64,19 @@ func Stream(c *gin.Context) {
 		logrus.Debug("client gone")
 	}
 	// stream = new EventSource("/stream")
+	return nil
 }
-func Push(c *gin.Context) {
+func Push(c *gin.Context) error {
 	pusher := c.Writer.Pusher()
 	if pusher == nil {
 		c.JSON(http.StatusBadRequest, "Not supported")
-		return
+		return nil
 	}
 	// use web url address. it request http 1.1 request to itself, and reply it.
 	// https://go.dev/blog/h2push
 	if err := pusher.Push("/static/js/index.js", nil); err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
+		return err
 	}
 	c.JSON(http.StatusOK, "hello")
+	return nil
 }

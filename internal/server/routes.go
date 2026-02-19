@@ -6,6 +6,7 @@ import (
 	"mime"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -28,11 +29,11 @@ func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) 
 
 	// API
 	{
-		v1 := app.Group("/api/v1", markAPI)
+		v1 := app.Group("/api/v1", markAcceptJSON)
 
-		v1.GET("/ping", handler.Ping)
-		v1.GET("/authn/ping", requireLogin, handler.Ping)
-		v1.GET("/authz/ping", can(verb.Create, resource.Server), handler.Ping)
+		v1.GET("/ping", api(handler.Ping))
+		v1.GET("/authn/ping", requireLogin, api(handler.Ping))
+		v1.GET("/authz/ping", can(verb.Create, resource.Server), api(handler.Ping))
 		// roles:
 		// - name: admin
 		//   rules:
@@ -41,31 +42,31 @@ func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) 
 		//       name: bar
 		//     verb: create
 
-		v1.POST("/login", handler.Login)
-		v1.GET("/logout", handler.Logout)
-		v1.POST("/users", handler.Register)
-		v1.GET("/users/me", handler.Me)
+		v1.POST("/login", api(handler.Login))
+		v1.GET("/logout", api(handler.Logout))
+		v1.POST("/users", api(handler.Register))
+		v1.GET("/users/me", api(handler.Me))
 
-		v1.POST("/bootstrap", bodyReaderTweak, bootstrap.CheckBootstrapToken, handler.Register)
+		v1.POST("/bootstrap", bodyReaderTweak, bootstrap.CheckBootstrapToken, api(handler.Register))
 
-		v1.GET("/can/:verb/:resource", handler.CanAPI)
-		v1.GET("/can/:verb", handler.CanAPI)
-		v1.GET("/can", handler.CanBulkAPI)
+		v1.GET("/can/:verb/:resource", api(handler.CanAPI))
+		v1.GET("/can/:verb", api(handler.CanAPI))
+		v1.GET("/can", api(handler.CanBulkAPI))
 
-		v1.GET("/users", handler.ListUsers)
-		v1.GET("/groups", handler.ListGroups)
-		v1.GET("/roles", handler.ListRoles)
+		v1.GET("/users", api(handler.ListUsers))
+		v1.GET("/groups", api(handler.ListGroups))
+		v1.GET("/roles", api(handler.ListRoles))
 
-		v1.POST("/posts", handler.CreatePost)
-		v1.GET("/posts", w(handler.FindPost))
-		v1.GET("/posts/stream", handler.StreamPost)
+		v1.POST("/posts", api(handler.CreatePost))
+		v1.GET("/posts", api(handler.FindPost))
+		v1.GET("/posts/stream", sse(handler.StreamPost))
 
 		// WebSocket
 		v1.GET("/ws", handler.Websocket)
 		// Server Sent Event
-		v1.GET("/stream", handler.Stream)
+		v1.GET("/stream", sse(handler.Stream))
 		// http2 Server Push
-		v1.GET("/push", handler.Push)
+		v1.GET("/push", api(handler.Push))
 	}
 
 	// Static Pages
@@ -114,7 +115,8 @@ func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) 
 		}
 	})
 }
-func w(fn func(c *gin.Context) error) gin.HandlerFunc {
+func api(fn func(c *gin.Context) error) gin.HandlerFunc {
+
 	return func(c *gin.Context) {
 		if err := fn(c); err != nil {
 			c.Error(err)
@@ -122,6 +124,32 @@ func w(fn func(c *gin.Context) error) gin.HandlerFunc {
 		}
 	}
 }
+
+type ServerSentEventErrorData struct {
+	Type       string         `json:"type"`
+	Title      string         `json:"title"`
+	Status     int            `json:"status,omitempty"`
+	Detail     string         `json:"detail,omitempty"`
+	Instance   string         `json:"instance,omitempty"`
+	Extensions map[string]any `json:"-"`
+}
+
+func sse(fn func(c *gin.Context) error) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		rc := http.NewResponseController(c.Writer)
+		rc.SetWriteDeadline(time.Time{})
+		rc.SetReadDeadline(time.Time{})
+
+		if err := fn(c); err != nil {
+			c.SSEvent("error", ServerSentEventErrorData{
+				Type:   "about:blank",
+				Title:  "Error",
+				Detail: err.Error(),
+			})
+		}
+	}
+}
+
 func bodyReaderTweak(c *gin.Context) {
 	// body 를 여러번 읽지 못하는 것을 대응 하기 위한 tweak
 	body := c.Request.Body

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"io"
 	"net/http"
 
@@ -12,22 +13,23 @@ import (
 	"github.com/bluemir/0xC0DE/internal/server/backend/posts"
 )
 
-func CreatePost(c *gin.Context) {
+func CreatePost(c *gin.Context) error {
 	req := struct {
 		Message string `form:"message"`
 	}{}
 	if err := c.ShouldBind(&req); err != nil {
-		c.Error(err)
-		return
+		return err
+
 	}
 
 	post, err := backends(c).Posts.Create(c.Request.Context(), req.Message)
 	if err != nil {
-		c.Error(err)
-		return
+
+		return err
 	}
 
 	c.JSON(http.StatusOK, post)
+	return nil
 }
 
 type Query struct {
@@ -66,11 +68,10 @@ func FindPost(c *gin.Context) error {
 	return nil
 }
 
-func StreamPost(c *gin.Context) {
+func StreamPost(c *gin.Context) error {
 	list, err := backends(c).Posts.List(c.Request.Context(), meta.Limit(-1))
-	if err != nil && err != gorm.ErrRecordNotFound {
-		c.Error(err)
-		return
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
 	}
 	for _, post := range list.Items {
 		c.SSEvent("post", post)
@@ -88,4 +89,5 @@ func StreamPost(c *gin.Context) {
 	if gone {
 		logrus.Debug("client gone")
 	}
+	return nil
 }
