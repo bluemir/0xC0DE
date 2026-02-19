@@ -12,7 +12,7 @@ import (
 //go:generate esbuild src/js/index.js --outdir=dist/js --bundle --minify --format=esm --external:lit-html --external:bm.js/bm.module.js --alias:@=./src/js
 //go:generate esbuild src/css/page.css src/css/element.css --outdir=dist/css --bundle --minify
 
-//go:embed dist/js/* dist/css/* lib/*
+//go:embed dist/js/* dist/css/* bundle/*
 var staticFS embed.FS
 
 // Static returns the embedded filesystem with path mapping:
@@ -25,3 +25,6 @@ func Static() fs.FS {
 func CheckDevAssets() error {
 	return nil
 }
+
+//go:embed html-templates
+var HtmlTemplates embed.FS

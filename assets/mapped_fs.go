@@ -21,5 +21,5 @@ func (m *mappedFS) Open(name string) (fs.File, error) {
 	if strings.HasPrefix(name, "js/") || strings.HasPrefix(name, "css/") {
 		return m.fs.Open(path.Join(m.prefix, name))
 	}
-	return m.fs.Open(name) // lib/*
+	return m.fs.Open(name) // bundle/*
 }

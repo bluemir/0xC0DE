@@ -5,7 +5,7 @@ JS_SOURCES    := $(shell find assets/src/js         -type f -name '*.js' ! -name
                                                     -type f -name '*.jsx'  -print -o \
                                                     -type f -name '*.json' -print)
 CSS_SOURCES   := $(shell find assets/src/css        -type f -name '*.css'  -print)
-WEB_LIBS      := $(shell find assets/lib            -type f                -print)
+WEB_LIBS      := $(shell find assets/vendor         -type f                -print)
 HTML_SOURCES  := $(shell find assets/html-templates -type f -name '*.html' -print)
 IMAGES        := $(shell find assets/images         -type f                -print)
 WEB_META      := assets/manifest.json assets/favicon.ico
@@ -42,3 +42,21 @@ build-tools: runtime/tools/esbuild runtime/tools/npm
 
 ## prod build uses dist folder
 OPTIONAL_CLEAN += assets/dist
+
+## vendor → bundle 빌드 (외부 라이브러리)
+OPTIONAL_CLEAN += assets/bundle
+
+assets/bundle/bm.js/bm.module.js: assets/vendor/bm.module.js assets/vendor/bm.js/* | runtime/tools/esbuild
+	@mkdir -p $(dir $@)
+	esbuild $< --bundle --format=esm --outfile=$@
+
+assets/bundle/lit-html/lit-html.js: assets/vendor/lit-html.js package.json package-lock.json | runtime/tools/esbuild runtime/tools/npm
+	@mkdir -p $(dir $@)
+	esbuild $< --bundle --format=esm --outfile=$@
+
+assets/bundle/fonts/fonts.css: assets/vendor/fonts.css package.json package-lock.json | runtime/tools/esbuild runtime/tools/npm
+	@mkdir -p $(dir $@)
+	esbuild $< --bundle --outdir=assets/bundle/fonts --loader:.woff2=file --asset-names=[name]
+
+build/$(APP_NAME):            assets/bundle/bm.js/bm.module.js assets/bundle/lit-html/lit-html.js assets/bundle/fonts/fonts.css
+build/$(APP_NAME)-$(VERSION): assets/bundle/bm.js/bm.module.js assets/bundle/lit-html/lit-html.js assets/bundle/fonts/fonts.css

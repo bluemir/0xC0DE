@@ -2,12 +2,13 @@
 	{
 		"imports": {
 			"@/": "/static/{{rev .}}/js/",
-			"lit-html": "https://unpkg.com/lit-html/lit-html.js",
-			"bm.js/bm.module.js": "/static/{{rev .}}/lib/bm.js/bm.module.js",
+			"lit-html": "/static/{{rev .}}/bundle/lit-html/lit-html.js",
+			"bm.js/bm.module.js": "/static/{{rev .}}/bundle/bm.js/bm.module.js",
 			"index.js": "/static/{{rev .}}/js/index.js"
 		}
 	}
 </script>
+<link href="/static/{{rev .}}/bundle/fonts/fonts.css" rel="stylesheet">
 <style>@import "/static/{{rev .}}/css/page.css";</style>
 <script type="module">
 	import "index.js";

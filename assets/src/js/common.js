@@ -4,6 +4,7 @@ let rev = $.get(`head script[type="importmap"]`).attr("rev");
 
 export let css = `
 @import url("/static/${rev}/css/element.css");
+@import "/static/${rev}/bundle/fonts/fonts.css";
 `;
 
 

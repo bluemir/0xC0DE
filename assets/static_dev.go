@@ -9,7 +9,7 @@ import (
 )
 
 // Static returns the filesystem for serving static files in dev mode.
-// Path mapping: js/* -> src/js/*, css/* -> src/css/*, lib/* -> lib/*
+// Path mapping: js/* -> src/js/*, css/* -> src/css/*, bundle/* -> bundle/*
 func Static() fs.FS {
 	return &mappedFS{fs: os.DirFS("assets"), prefix: src}
 }
@@ -20,7 +20,8 @@ func CheckDevAssets() error {
 	requiredFiles := []string{
 		"assets/src/js/index.js",
 		"assets/src/css/page.css",
-		"assets/lib/bm.js/bm.module.js",
+		"assets/bundle/bm.js/bm.module.js",
+		"assets/bundle/lit-html/lit-html.js",
 	}
 	for _, f := range requiredFiles {
 		if _, err := os.Stat(f); os.IsNotExist(err) {
@@ -30,3 +31,5 @@ func CheckDevAssets() error {
 	}
 	return nil
 }
+
+var HtmlTemplates fs.FS = os.DirFS("assets")

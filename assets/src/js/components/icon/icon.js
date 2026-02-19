@@ -4,13 +4,31 @@ import {css} from "@/common.js";
 
 class Icon extends HTMLElement {
 	template() {
+		if (this.fa) {
+			let prefix = this.fa === "brand" ? "fa-brands" : "fa-solid";
+			return html`
+				<style>
+					${css}
+
+					:host {
+						display: inline-flex;
+					}
+
+					i {
+						${this.size}
+					}
+				</style>
+
+				<i class="${prefix} fa-${this.attr("kind")}"></i>
+			`;
+		}
+
 		return html`
-			<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 			<style>
 				${css}
 
 				:host {
-					display: inline;
+					display: inline-flex;
 				}
 
 				span.material-symbols-outlined {
@@ -28,18 +46,8 @@ class Icon extends HTMLElement {
 
 		this.attachShadow({mode:'open'});
 	}
-	onConnected() {
-		if ($.get(document, "head link#icons")) {
-			return
-		}
-		$.get(document, "head").appendChild($.create("link", {
-			href: "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined",
-			rel: "stylesheet",
-			id: "icons",
-		}));
-	}
 	static get observedAttributes() {
-		return ["kind", "size"];
+		return ["kind", "size", "fa"];
 	}
 	onAttributeChanged(name, old, v) {
 		this.render();
@@ -52,6 +60,8 @@ class Icon extends HTMLElement {
 		let n = this.attr("size");
 		return n ? `font-size: ${n};` : ""
 	}
+	get fa() {
+		return this.attr("fa");
+	}
 }
 customElements.define("c-icon", Icon);
-
