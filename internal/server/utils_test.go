@@ -22,8 +22,8 @@ func TestHtmlMiddleware(t *testing.T) {
 	// So we might just test markHTML directly or wrap appropriately.
 
 	// Testing markHTML
-	markHTML(c)
-	markHTML(c)
+	markAcceptHTML(c)
+	markAcceptHTML(c)
 	assert.Equal(t, "text/html", c.NegotiateFormat("text/html", "application/json"))
 	// Actually c.SetAccepted sets the accepted header in the response? No.
 	// Let's look at implementation: c.SetAccepted sets Context.Accepted.
@@ -51,10 +51,10 @@ func TestGlobals(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request, _ = http.NewRequest("GET", "/", nil)
 
-	markAPI(c)
+	markAcceptJSON(c)
 	// markAPI implementation: c.SetAccepted("application/json")
 	// This usually is used for content negotiation.
 
-	markHTML(c)
+	markAcceptHTML(c)
 	// markHTML implementation: c.SetAccepted("text/html")
 }

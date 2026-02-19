@@ -10,7 +10,7 @@ import (
 
 func html(path string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		markHTML(c)
+		markAcceptHTML(c)
 		c.HTML(http.StatusOK, path, c)
 	}
 }
@@ -35,9 +35,9 @@ func fixURL(c *gin.Context) {
 	c.Request.URL.Scheme = url.Scheme
 	c.Request.URL.Host = url.Host
 }
-func markAPI(c *gin.Context) {
+func markAcceptJSON(c *gin.Context) {
 	c.SetAccepted("application/json")
 }
-func markHTML(c *gin.Context) {
+func markAcceptHTML(c *gin.Context) {
 	c.SetAccepted("text/html")
 }
