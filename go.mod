@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
-	github.com/bluemir/functional v0.1.0
+	github.com/bluemir/functional/v2 v2.0.1
 	github.com/cockroachdb/errors v1.12.0
 	github.com/expr-lang/expr v1.17.7
 	github.com/gin-contrib/location v1.0.3
@@ -38,6 +38,7 @@ require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/bluemir/functional v0.1.0 // indirect
 	github.com/bytedance/gopkg v0.1.3 // indirect
 	github.com/bytedance/sonic v1.15.0 // indirect
 	github.com/bytedance/sonic/loader v0.5.0 // indirect

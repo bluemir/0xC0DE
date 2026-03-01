@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/bluemir/functional"
+	"github.com/bluemir/functional/v2"
 	"github.com/cockroachdb/errors"
 	"github.com/sirupsen/logrus"
 

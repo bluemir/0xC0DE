@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/bluemir/functional"
+	"github.com/bluemir/functional/v2"
 	"github.com/cockroachdb/errors"
 	"github.com/rs/xid"
 
@@ -33,7 +33,7 @@ type CreateUserOption func(u *User)
 
 func WithGroup(groups ...string) func(*User) {
 	return func(u *User) {
-		u.Groups = functional.Map(groups, func(g string) Group {
+		u.Groups = functional.SliceMap(groups, func(g string) Group {
 			return Group{
 				Name: g,
 			}
