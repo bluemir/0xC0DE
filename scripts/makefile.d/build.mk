@@ -45,6 +45,14 @@ build/$(APP_NAME)-$(VERSION): $(GO_SOURCES) $(MAKEFILE_LIST) | fmt vet gen test 
 		-o $@ .
 
 
+INSTALL_DIR?=$(HOME)/.local/bin
+
+.PHONY: install
+install: build/$(APP_NAME)-$(VERSION) ## Install prod binary to $(INSTALL_DIR)
+	@mkdir -p $(INSTALL_DIR)
+	cp $< $(INSTALL_DIR)/$(APP_NAME)-$(VERSION)
+	ln -sf $(APP_NAME)-$(VERSION) $(INSTALL_DIR)/$(APP_NAME)
+
 .PHONY: fmt
 fmt: ## Run go fmt against code
 	go fmt ./...
