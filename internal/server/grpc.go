@@ -1,6 +1,7 @@
 package server
 
 import (
+	context0 "context"
 	"net"
 
 	"github.com/cockroachdb/errors"
@@ -8,13 +9,12 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/sirupsen/logrus"
 	"github.com/tmc/grpc-websocket-proxy/wsproxy"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
 	v1 "github.com/bluemir/0xC0DE/pkg/api/v1"
 )
 
-func (server *Server) RunGRPCServer(ctx context.Context, bind string) func() error {
+func (server *Server) RunGRPCServer(ctx context0.Context, bind string) func() error {
 	return func() error {
 		grpcServer := grpc.NewServer()
 
@@ -43,10 +43,10 @@ type HelloServiceServer struct {
 	v1.UnimplementedHelloServiceServer
 }
 
-func (server *Server) grpcGatewayHandler(ctx context.Context, grpcBind string) (gin.HandlerFunc, error) {
+func (server *Server) grpcGatewayHandler(ctx context0.Context, grpcBind string) (gin.HandlerFunc, error) {
 	mux := runtime.NewServeMux()
 
-	registerFuncs := []func(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error{
+	registerFuncs := []func(ctx context0.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error{
 		// TODO register GRPC Gateway
 		v1.RegisterHelloServiceHandlerFromEndpoint,
 	}

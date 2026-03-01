@@ -3,6 +3,7 @@ package errs
 import (
 	"encoding/json"
 	"errors"
+	"maps"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -85,9 +86,7 @@ func (p *ProblemDetail) MarshalJSON() ([]byte, error) {
 		m["instance"] = p.Instance
 	}
 
-	for k, v := range p.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, p.Extensions)
 
 	return json.Marshal(m)
 }

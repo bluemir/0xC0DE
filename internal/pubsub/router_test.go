@@ -15,7 +15,7 @@ func TestRouter_BasicFlow(t *testing.T) {
 	ctx, cancel := testContext(t, 1*time.Second)
 	defer cancel()
 
-	router, err := pubsub.NewRoute(ctx)
+	router, err := pubsub.NewRoute[any](ctx)
 	require.NoError(t, err)
 
 	recoder := NewRecordingHandler()
@@ -54,7 +54,7 @@ func TestRouter_HeirarchicalRouting(t *testing.T) {
 	ctx, cancel := testContext(t, 1*time.Second)
 	defer cancel()
 
-	router, err := pubsub.NewRoute(ctx)
+	router, err := pubsub.NewRoute[any](ctx)
 	require.NoError(t, err)
 
 	recoderA := NewRecordingHandler()
@@ -80,7 +80,7 @@ func TestRouter_RemoveHandler(t *testing.T) {
 	ctx, cancel := testContext(t, 1*time.Second)
 	defer cancel()
 
-	router, err := pubsub.NewRoute(ctx)
+	router, err := pubsub.NewRoute[any](ctx)
 	require.NoError(t, err)
 
 	recoder := NewRecordingHandler()
@@ -99,7 +99,7 @@ func TestRouter_Watch(t *testing.T) {
 	ctx, cancel := testContext(t, 1*time.Second)
 	defer cancel()
 
-	router, err := pubsub.NewRoute(ctx)
+	router, err := pubsub.NewRoute[any](ctx)
 	require.NoError(t, err)
 
 	done := make(chan struct{})
@@ -131,7 +131,7 @@ func TestRouter_WatchAll(t *testing.T) {
 	ctx, cancel := testContext(t, 1*time.Second)
 	defer cancel()
 
-	router, err := pubsub.NewRoute(ctx)
+	router, err := pubsub.NewRoute[any](ctx)
 	require.NoError(t, err)
 
 	done := make(chan struct{})
@@ -161,19 +161,19 @@ func TestRouter_WatchAll(t *testing.T) {
 
 func TestRouter_RouterFrom(t *testing.T) {
 	ctx := context.Background()
-	router := &pubsub.Router{}
+	router := &pubsub.Router[any]{}
 
 	// This relies on internal implementation of context key which is private.
 	// We can tested via Publish which puts it in context.
 	// But we cannot easily inject it without using `Publish`'s internal logic.
 	// However, `router.Publish` calls handler with a context containing the router.
 
-	router, _ = pubsub.NewRoute(ctx)
+	router, _ = pubsub.NewRoute[any](ctx)
 
 	called := false
 	handler := &FunctionalHandler{
-		Fn: func(c context.Context, e pubsub.Event) error {
-			r := pubsub.RouterFrom(c)
+		Fn: func(c context.Context, e pubsub.Event[any]) error {
+			r := pubsub.RouterFrom[any](c)
 			assert.Equal(t, router, r)
 			called = true
 			return nil
@@ -186,9 +186,9 @@ func TestRouter_RouterFrom(t *testing.T) {
 }
 
 type FunctionalHandler struct {
-	Fn func(context.Context, pubsub.Event) error
+	Fn func(context.Context, pubsub.Event[any]) error
 }
 
-func (h *FunctionalHandler) Handle(ctx context.Context, evt pubsub.Event) error {
+func (h *FunctionalHandler) Handle(ctx context.Context, evt pubsub.Event[any]) error {
 	return h.Fn(ctx, evt)
 }

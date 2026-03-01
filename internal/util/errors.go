@@ -1,17 +1,20 @@
 package util
 
+import "strings"
+
 type MultipleError struct {
 	Causes []error
 }
 
 func (errs MultipleError) Error() string {
-	str := "multiple error occur. cause:\n"
+	var str strings.Builder
+	str.WriteString("multiple error occur. cause:\n")
 
 	for _, err := range errs.Causes {
-		str += err.Error() + "\n"
+		str.WriteString(err.Error() + "\n")
 	}
 
-	return str
+	return str.String()
 }
 
 func MergeErrors(errs ...error) error {

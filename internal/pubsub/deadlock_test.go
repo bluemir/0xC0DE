@@ -89,7 +89,7 @@ func TestRouter_RecursivePublish_Deadlock(t *testing.T) {
 	ctx, cancel := testContext(t, 2*time.Second)
 	defer cancel()
 
-	router, err := pubsub.NewRoute(ctx) // NOTE: Router constructor is NewRoute in current code
+	router, err := pubsub.NewRoute[any](ctx) // NOTE: Router constructor is NewRoute in current code
 	require.NoError(t, err)
 
 	done := make(chan struct{})

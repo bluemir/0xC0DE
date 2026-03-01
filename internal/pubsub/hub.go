@@ -12,10 +12,10 @@ import (
 
 type IHub interface {
 	Publish(ctx context.Context, detail any)
-	AddHandler(kind any, handler Handler)
-	RemoveHandler(kind any, handler Handler)
-	Watch(kind any, done <-chan struct{}, opts ...WatchOption) <-chan Event
-	WatchAll(done <-chan struct{}, opts ...WatchOption) <-chan Event
+	AddHandler(kind any, handler Handler[any])
+	RemoveHandler(kind any, handler Handler[any])
+	Watch(kind any, done <-chan struct{}, opts ...WatchOption) <-chan Event[any]
+	WatchAll(done <-chan struct{}, opts ...WatchOption) <-chan Event[any]
 }
 
 type watchConfig struct {
@@ -33,13 +33,13 @@ func WithBuffer(n int) WatchOption {
 var _ IHub = (*Hub)(nil)
 
 type Hub struct {
-	handlers    datastruct.Map[reflect.Type, datastruct.Set[Handler]]
-	broadcaster *Broadcaster[Event]
+	handlers    datastruct.Map[reflect.Type, datastruct.Set[Handler[any]]]
+	broadcaster *Broadcaster[Event[any]]
 }
 
 func NewHub(ctx context.Context) (*Hub, error) {
 	return &Hub{
-		broadcaster: NewBroadcaster[Event](),
+		broadcaster: NewBroadcaster[Event[any]](),
 	}, nil
 }
 
@@ -51,20 +51,20 @@ func HubFrom(ctx context.Context) *Hub {
 	return ctx.Value(keyHub).(*Hub)
 }
 
-func (h chanEventHandler) Handle(ctx context.Context, evt Event) error {
+func (h chanEventHandler[T]) Handle(ctx context.Context, evt Event[T]) error {
 	h.ch <- evt
 	return nil
 }
 
-type chanEventHandler struct {
-	ch chan<- Event
+type chanEventHandler[T any] struct {
+	ch chan<- Event[T]
 }
 
 func (hub *Hub) Publish(ctx context.Context, detail any) {
 	kind := reflect.TypeOf(detail)
 
 	ctx = context.WithValue(ctx, keyHub, hub)
-	evt := Event{
+	evt := Event[any]{
 		Context: ctx,
 		Id:      xid.New().String(),
 		At:      time.Now(),
@@ -79,8 +79,8 @@ func (hub *Hub) Publish(ctx context.Context, detail any) {
 		return
 	}
 
-	snapshot := []Handler{}
-	if err := handlers.Range(func(handler Handler) error {
+	snapshot := []Handler[any]{}
+	if err := handlers.Range(func(handler Handler[any]) error {
 		snapshot = append(snapshot, handler)
 		return nil
 	}); err != nil {
@@ -94,15 +94,15 @@ func (hub *Hub) Publish(ctx context.Context, detail any) {
 	}
 
 }
-func (hub *Hub) AddHandler(kind any, handler Handler) {
-	handlers, _ := hub.handlers.GetOrSet(reflect.TypeOf(kind), datastruct.NewSet[Handler]())
+func (hub *Hub) AddHandler(kind any, handler Handler[any]) {
+	handlers, _ := hub.handlers.GetOrSet(reflect.TypeOf(kind), datastruct.NewSet[Handler[any]]())
 	handlers.Add(handler)
 }
-func (hub *Hub) RemoveHandler(kind any, handler Handler) {
-	handlers, _ := hub.handlers.GetOrSet(reflect.TypeOf(kind), datastruct.NewSet[Handler]())
+func (hub *Hub) RemoveHandler(kind any, handler Handler[any]) {
+	handlers, _ := hub.handlers.GetOrSet(reflect.TypeOf(kind), datastruct.NewSet[Handler[any]]())
 	handlers.Remove(handler)
 }
-func (hub *Hub) Watch(kind any, done <-chan struct{}, opts ...WatchOption) <-chan Event {
+func (hub *Hub) Watch(kind any, done <-chan struct{}, opts ...WatchOption) <-chan Event[any] {
 	conf := watchConfig{
 		bufferSize: -1,
 	}
@@ -110,14 +110,14 @@ func (hub *Hub) Watch(kind any, done <-chan struct{}, opts ...WatchOption) <-cha
 		opt(&conf)
 	}
 
-	var ch chan Event
+	var ch chan Event[any]
 	if conf.bufferSize >= 0 {
-		ch = make(chan Event, conf.bufferSize)
+		ch = make(chan Event[any], conf.bufferSize)
 	} else {
-		ch = make(chan Event)
+		ch = make(chan Event[any])
 	}
 
-	h := chanEventHandler{
+	h := chanEventHandler[any]{
 		ch: ch,
 	}
 
@@ -135,6 +135,6 @@ func (hub *Hub) Watch(kind any, done <-chan struct{}, opts ...WatchOption) <-cha
 	// Use DynamicChan to prevent deadlock during recursive publishing
 	return datastruct.DynamicChan(ch)
 }
-func (hub *Hub) WatchAll(done <-chan struct{}, opts ...WatchOption) <-chan Event {
+func (hub *Hub) WatchAll(done <-chan struct{}, opts ...WatchOption) <-chan Event[any] {
 	return hub.broadcaster.Watch(done, opts...)
 }

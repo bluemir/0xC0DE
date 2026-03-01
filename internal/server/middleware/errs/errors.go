@@ -87,7 +87,7 @@ func negotiateResponseFormat(header http.Header) string {
 
 // negotiateContentType parses Accept header and returns the preferred content type.
 func negotiateContentType(acceptHeader string) string {
-	for _, accept := range strings.Split(acceptHeader, ",") {
+	for accept := range strings.SplitSeq(acceptHeader, ",") {
 		t, _, err := mime.ParseMediaType(accept)
 		if err != nil {
 			continue

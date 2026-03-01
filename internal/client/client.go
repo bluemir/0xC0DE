@@ -1,9 +1,10 @@
 package client
 
 import (
+	context0 "context"
+
 	"github.com/cockroachdb/errors"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
 	v1 "github.com/bluemir/0xC0DE/pkg/api/v1"
@@ -21,7 +22,7 @@ func Run(conf *Config) error {
 	defer conn.Close()
 
 	client := v1.NewHelloServiceClient(conn)
-	res, err := client.SayHello(context.Background(), &v1.HelloRequest{Name: "tom"})
+	res, err := client.SayHello(context0.Background(), &v1.HelloRequest{Name: "tom"})
 	if err != nil {
 		return errors.Wrap(err, "fail to call say hello")
 	}

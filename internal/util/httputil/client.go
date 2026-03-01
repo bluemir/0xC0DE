@@ -238,7 +238,7 @@ func (res *Response) ShouldBindWith(onSuccess, onError any, binder func(buf []by
 	return res.raw.StatusCode, nil
 }
 func TextBinder(buf []byte, v any) error {
-	if reflect.ValueOf(v).Kind() != reflect.Ptr {
+	if reflect.ValueOf(v).Kind() != reflect.Pointer {
 		return errors.Errorf("Must be Ptr")
 	}
 

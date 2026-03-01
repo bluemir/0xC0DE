@@ -54,8 +54,7 @@ func TestRunWithError(t *testing.T) {
 		Addr: "invalid-address",
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	err := graceful.Run(ctx, server)
 	assert.Error(t, err)

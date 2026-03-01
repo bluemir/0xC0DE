@@ -21,7 +21,7 @@ func TestSimpleWorker(t *testing.T) {
 		return a * a, nil
 	}, workers.WorkerNum(1))
 
-	for i := 0; i < 30; i++ {
+	for i := range 30 {
 		in <- i
 	}
 	close(in)
@@ -48,7 +48,7 @@ func TestMultipleWorker(t *testing.T) {
 		return a * a, nil
 	})
 
-	for i := 0; i < 30; i++ {
+	for i := range 30 {
 		in <- i
 	}
 	close(in)
@@ -72,7 +72,7 @@ func TestWorkerWithLargeNumber(t *testing.T) {
 		return a * a, nil
 	}, workers.WorkerNum(128))
 
-	for i := 0; i < 30; i++ {
+	for i := range 30 {
 		in <- i
 	}
 	close(in)
@@ -96,7 +96,7 @@ func TestWorkerWithDelay(t *testing.T) {
 		return a * a, nil
 	}, workers.WorkerNum(16))
 
-	for i := 0; i < 30; i++ {
+	for i := range 30 {
 		in <- i
 	}
 	close(in)
@@ -120,7 +120,7 @@ func TestManyJob(t *testing.T) {
 	})
 
 	go func() {
-		for i := 0; i < 128; i++ {
+		for i := range 128 {
 			in <- i
 		}
 		close(in)
@@ -144,7 +144,7 @@ func TestOptionReadBufSize(t *testing.T) {
 		return a * a, nil
 	})
 
-	for i := 0; i < 128; i++ {
+	for i := range 128 {
 		in <- i
 	}
 	close(in)
@@ -171,7 +171,7 @@ func TestErrorOnWorker(t *testing.T) {
 		return a * a, nil
 	})
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		in <- i
 	}
 	close(in)
@@ -199,7 +199,7 @@ func TestErrorHandler(t *testing.T) {
 			return a * a, nil
 		})
 
-		for i := 0; i < 20; i++ {
+		for i := range 20 {
 			in <- i
 		}
 		close(in)
@@ -240,7 +240,7 @@ func TestMultipleErrorOnWorker(t *testing.T) {
 		return a * a, nil
 	})
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		in <- i
 	}
 	close(in)
@@ -264,7 +264,7 @@ func TestWorkerWithDynamicChannel(t *testing.T) {
 		return a * a, nil
 	})
 
-	for i := 0; i < 3000; i++ {
+	for i := range 3000 {
 		in <- i
 	}
 	close(in)

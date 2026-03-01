@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"os"
@@ -10,12 +11,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hjson/hjson-go/v4"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/net/context"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v3"
 
 	"github.com/bluemir/0xC0DE/assets"
 	"github.com/bluemir/0xC0DE/internal/server/backend"
+	"github.com/bluemir/0xC0DE/internal/server/controller"
 	"github.com/bluemir/0xC0DE/internal/server/store"
 )
 
@@ -97,6 +98,7 @@ func Run(ctx context.Context, args *Args) error {
 	eg.Go(server.RunServiceHTTPServer(nCtx, args.ServiceHttpBind, tlsConfig, gwHandler))
 	eg.Go(server.RunAdminHTTPServer(nCtx, args.AdminHttpBind))
 	eg.Go(server.RunGRPCServer(nCtx, args.GRPCBind))
+	eg.Go(server.RunController(nCtx))
 
 	// TODO run grpc, http, https, http2https redirect servers by config
 
@@ -147,6 +149,14 @@ func getTLSConfig(serverCert *tls.Certificate, clientAuthCACert *tls.Certificate
 	}
 
 	return &conf, nil
+}
+
+// RunController returns a function that runs the Controller event loop.
+func (s *Server) RunController(ctx context.Context) func() error {
+	return func() error {
+		ctrl := controller.New(ctx, s.backends)
+		return ctrl.Run(ctx)
+	}
 }
 
 func readCofigFile(configFilePath string) (*Config, error) {

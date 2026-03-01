@@ -23,7 +23,7 @@ func Websocket(c *gin.Context) {
 		decoder := json.NewDecoder(conn)
 
 		for {
-			msg := map[string]interface{}{}
+			msg := map[string]any{}
 			if err := decoder.Decode(&msg); err != nil {
 				if err := encoder.Encode(gin.H{"msg": err.Error(), "error": true}); err != nil {
 					logrus.Warnf("websocket encode error: %v", err)

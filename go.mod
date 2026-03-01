@@ -1,6 +1,6 @@
 module github.com/bluemir/0xC0DE
 
-go 1.24.3
+go 1.26.0
 
 require (
 	github.com/alecthomas/kingpin/v2 v2.4.0

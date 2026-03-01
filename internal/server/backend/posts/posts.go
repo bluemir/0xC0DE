@@ -1,11 +1,11 @@
 package posts
 
 import (
+	context0 "context"
 	"time"
 
 	"github.com/cockroachdb/errors"
 	"github.com/rs/xid"
-	"golang.org/x/net/context"
 	"gorm.io/gorm"
 
 	"github.com/bluemir/0xC0DE/internal/pubsub"
@@ -19,7 +19,7 @@ type Manager struct {
 	events *pubsub.Hub
 }
 
-func New(ctx context.Context, conf *Config, db *gorm.DB, events *pubsub.Hub) (*Manager, error) {
+func New(ctx context0.Context, conf *Config, db *gorm.DB, events *pubsub.Hub) (*Manager, error) {
 	if err := db.AutoMigrate(&Post{}); err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ type EventPostCreated struct {
 	Post Post
 }
 
-func (m *Manager) Create(ctx context.Context, message string) (*Post, error) {
+func (m *Manager) Create(ctx context0.Context, message string) (*Post, error) {
 	post := &Post{
 		Id:      xid.New().String(),
 		At:      time.Now(),
@@ -50,7 +50,7 @@ func (m *Manager) Create(ctx context.Context, message string) (*Post, error) {
 	return post, nil
 }
 
-func (m *Manager) List(ctx context.Context, opts ...meta.ListOptionFn) (*meta.List[Post], error) {
+func (m *Manager) List(ctx context0.Context, opts ...meta.ListOptionFn) (*meta.List[Post], error) {
 	opt := meta.ListOption{
 		Limit: 20,
 	}
@@ -61,7 +61,7 @@ func (m *Manager) List(ctx context.Context, opts ...meta.ListOptionFn) (*meta.Li
 
 	return m.ListWithOption(ctx, &opt)
 }
-func (m *Manager) ListWithOption(ctx context.Context, opt *meta.ListOption) (*meta.List[Post], error) {
+func (m *Manager) ListWithOption(ctx context0.Context, opt *meta.ListOption) (*meta.List[Post], error) {
 	list := meta.List[Post]{}
 
 	if err := m.db.WithContext(ctx).Limit(opt.Limit).Find(&list.Items).Error; err != nil {
@@ -75,7 +75,7 @@ type Query struct {
 	Message *string
 }
 
-func (m *Manager) FindWithOption(ctx context.Context, query Query, opt meta.ListOption) (*meta.List[Post], error) {
+func (m *Manager) FindWithOption(ctx context0.Context, query Query, opt meta.ListOption) (*meta.List[Post], error) {
 	tx := m.db.WithContext(ctx).Model(&Post{})
 
 	if query.Message != nil && len(*query.Message) > 0 {

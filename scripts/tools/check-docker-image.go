@@ -35,8 +35,8 @@ func reqAuthHead(registry, image, tag string) authInfo {
 
 	info := authInfo{}
 
-	arr := strings.Split(data, ",")
-	for _, str := range arr {
+	arr := strings.SplitSeq(data, ",")
+	for str := range arr {
 		k, v := split2(str, "=")
 		switch k {
 		case "realm":
