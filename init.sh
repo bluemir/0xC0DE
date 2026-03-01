@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
@@ -19,13 +19,13 @@ if [ "$NAME" =  "" ] ; then
 fi
 echo $NAME
 
-find . -name init.sh -o -name Makefile -prune -o -type f -print | xargs -n 1 sed -i.bak "s#github.com/bluemir/0xC0DE#$REPO#g" || true
-find . -name "*.bak" | xargs rm
-find . -name init.sh -o -name Makefile -prune -o -type f -print | xargs -n 1 sed -i.bak "s#0xC0DE#$NAME#g" || true
-find . -name "*.bak" | xargs rm
+find . -name init.sh -o -name Makefile -prune -o -type f -print0 | xargs -0 -n 1 sed -i.bak "s#github.com/bluemir/0xC0DE#$REPO#g" || true
+find . -name "*.bak" -delete
+find . -name init.sh -o -name Makefile -prune -o -type f -print0 | xargs -0 -n 1 sed -i.bak "s#0xC0DE#$NAME#g" || true
+find . -name "*.bak" -delete
 
 # AI rule 삭제
-rm .cursorrules
+rm -f .cursorrules
 
 read -p "Do you wish to remove init.sh(Y/n)? " yn
 case $yn in
