@@ -1,7 +1,7 @@
 set -e
 
-TAG=${1:-25.1}
-BIN_DIR=$(pwd)/${2:-/runtime/tools}
+TAG=${1:-34.0}
+BIN_DIR=$(pwd)/${2:-runtime/tools}
 
 . $(dirname $0)/../detect_os_arch.sh
 

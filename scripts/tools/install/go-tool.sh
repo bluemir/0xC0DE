@@ -1,7 +1,7 @@
 set -e
 
 
-BIN_DIR=$(pwd)/${2:-/runtime/tools}
+BIN_DIR=$(pwd)/${2:-runtime/tools}
 export GOBIN=$BIN_DIR
 
 TMP_DIR=$(mktemp -d)
