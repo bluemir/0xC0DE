@@ -70,7 +70,7 @@ sec: runtime/tools/gosec ## Run gosec
 	./runtime/tools/gosec -quiet ./...
 
 .PHONY: gen
-gen: runtime/tools/esbuild assets/src/js/index.js ## Run go generate
+gen: assets/src/js/index.js ## Run go generate
 	PATH=$(shell pwd)/runtime/tools:$(PATH) go generate -tags prod -x ./...
 
 

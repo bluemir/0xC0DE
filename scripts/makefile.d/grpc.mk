@@ -37,20 +37,20 @@ build/proto_generated: | runtime/tools/protoc-gen-grpc-gateway runtime/tools/pro
 
 build/docker-image: $(PROTO_SOURCE)
 
-## grpc
+## grpc (protoc 플러그인은 PATH 필요 → go build -o 로 go.mod 버전 고정)
 build-tools: | runtime/tools/protoc runtime/tools/protoc-gen-go runtime/tools/protoc-gen-go-grpc
 runtime/tools/protoc: ./scripts/tools/install/protoc.sh
 	@which $(@F) || ($<)
-runtime/tools/protoc-gen-go: ./scripts/tools/install/go-tool.sh |  runtime/tools/go
-	@which $(@F) || ($< google.golang.org/protobuf/cmd/protoc-gen-go)
-runtime/tools/protoc-gen-go-grpc: ./scripts/tools/install/go-tool.sh | runtime/tools/go
-	@which $(@F) || ($< google.golang.org/grpc/cmd/protoc-gen-go-grpc)
+runtime/tools/protoc-gen-go: go.mod go.sum
+	go build -o $@ google.golang.org/protobuf/cmd/protoc-gen-go
+runtime/tools/protoc-gen-go-grpc: go.mod go.sum
+	go build -o $@ google.golang.org/grpc/cmd/protoc-gen-go-grpc
 
 build-tools: runtime/tools/protoc-gen-grpc-gateway
-runtime/tools/protoc-gen-grpc-gateway: | runtime/tools/go
-	@which $(@F) || (./scripts/tools/install/go-tool.sh github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway)
+runtime/tools/protoc-gen-grpc-gateway: go.mod go.sum
+	go build -o $@ github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
 
 build-tools: runtime/tools/protoc-gen-openapiv2
-runtime/tools/protoc-gen-openapiv2: | runtime/tools/go
-	@which $(@F) || (./scripts/tools/install/go-tool.sh github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2)
+runtime/tools/protoc-gen-openapiv2: go.mod go.sum
+	go build -o $@ github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
 

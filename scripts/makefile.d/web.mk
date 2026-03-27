@@ -34,11 +34,8 @@ package-lock.json: package.json | runtime/tools/npm
 runtime/tools/npm:
 	@which $(notdir $@)
 
-## Go esbuild (npm/npx 대신 사용)
-runtime/tools/esbuild:
-	GOBIN=$(shell pwd)/runtime/tools go install github.com/evanw/esbuild/cmd/esbuild@latest
-
-build-tools: runtime/tools/esbuild runtime/tools/npm
+## Go esbuild (go tool 사용 - go.mod tool 디렉티브로 버전 고정)
+build-tools: runtime/tools/npm
 
 ## prod build uses dist folder
 OPTIONAL_CLEAN += assets/dist
@@ -46,17 +43,17 @@ OPTIONAL_CLEAN += assets/dist
 ## vendor → bundle 빌드 (외부 라이브러리)
 OPTIONAL_CLEAN += assets/bundle
 
-assets/bundle/bm.js/bm.module.js: assets/vendor/bm.module.js assets/vendor/bm.js/* | runtime/tools/esbuild
+assets/bundle/bm.js/bm.module.js: assets/vendor/bm.module.js assets/vendor/bm.js/*
 	@mkdir -p $(dir $@)
-	esbuild $< --bundle --format=esm --outfile=$@
+	go tool esbuild $< --bundle --format=esm --outfile=$@
 
-assets/bundle/lit-html/lit-html.js: assets/vendor/lit-html.js package.json package-lock.json | runtime/tools/esbuild runtime/tools/npm
+assets/bundle/lit-html/lit-html.js: assets/vendor/lit-html.js package.json package-lock.json | runtime/tools/npm
 	@mkdir -p $(dir $@)
-	esbuild $< --bundle --format=esm --outfile=$@
+	go tool esbuild $< --bundle --format=esm --outfile=$@
 
-assets/bundle/fonts/fonts.css: assets/vendor/fonts.css package.json package-lock.json | runtime/tools/esbuild runtime/tools/npm
+assets/bundle/fonts/fonts.css: assets/vendor/fonts.css package.json package-lock.json | runtime/tools/npm
 	@mkdir -p $(dir $@)
-	esbuild $< --bundle --outdir=assets/bundle/fonts --loader:.woff2=file --asset-names=[name]
+	go tool esbuild $< --bundle --outdir=assets/bundle/fonts --loader:.woff2=file --asset-names=[name]
 
 build/$(APP_NAME):            assets/bundle/bm.js/bm.module.js assets/bundle/lit-html/lit-html.js assets/bundle/fonts/fonts.css
 build/$(APP_NAME)-$(VERSION): assets/bundle/bm.js/bm.module.js assets/bundle/lit-html/lit-html.js assets/bundle/fonts/fonts.css

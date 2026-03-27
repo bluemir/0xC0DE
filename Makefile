@@ -7,6 +7,7 @@ APP_NAME=$(notdir $(IMPORT_PATH))
 export GO111MODULE=on
 export GOPRIVATE=
 export PATH:=./runtime/tools:$(PATH)
+export GOTOOLCHAIN=go1.26.0+auto
 
 # go build args
 OPTIONAL_BUILD_ARGS?=
@@ -37,7 +38,7 @@ tools: build-tools ## Install tools(include build tools)
 .PHONY: help
 help: ## Display this help
 	# requirement
-	#  - golang: 1.18.x
+	#  - golang: 1.26.x
 	#  - node  : 14.16.x
 	#  - make  : 4.3 (*CAUTION* osx has lower verion of make)
 	#

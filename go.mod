@@ -2,6 +2,15 @@ module github.com/bluemir/0xC0DE
 
 go 1.26.0
 
+tool (
+	github.com/evanw/esbuild/cmd/esbuild
+	github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
+	github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
+	github.com/swaggo/swag/cmd/swag
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc
+	google.golang.org/protobuf/cmd/protoc-gen-go
+)
+
 require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/bluemir/functional/v2 v2.0.1
@@ -49,6 +58,7 @@ require (
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/evanw/esbuild v0.27.4 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
 	github.com/getsentry/sentry-go v0.43.0 // indirect
 	github.com/gin-contrib/sse v1.1.0 // indirect
