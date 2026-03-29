@@ -17,7 +17,7 @@ ifneq ($(shell printf '%s\n' "$(MIN_MAKE_VERSION)" "$(MAKE_VERSION)" | sort -V |
 endif
 
 .PHONY: default
-default:
+default: | runtime/tools/go
 	@go run -C scripts/tools/make-select .
 
 # sub-makefiles
@@ -37,6 +37,7 @@ tools: build-tools ## Install tools(include build tools)
 	# Tool installed
 
 .PHONY: help
+help: | runtime/tools/go
 help: ## Display this help
 	@go run -C scripts/tools/make-select . --print-only
 
