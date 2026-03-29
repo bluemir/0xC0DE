@@ -24,10 +24,11 @@ build/$(APP_NAME): assets/src/js/index.js
 ## resolve dependency
 OPTIONAL_CLEAN += node_modules
 
-build/$(APP_NAME):            package.json package-lock.json
-build/$(APP_NAME)-$(VERSION): package.json package-lock.json
+build/$(APP_NAME):            package.json node_modules/.package-lock.json
+build/$(APP_NAME)-$(VERSION): package.json node_modules/.package-lock.json
 
-package-lock.json: package.json | runtime/tools/npm
+
+node_modules/.package-lock.json: package.json package-lock.json | runtime/tools/npm
 	@mkdir -p $(dir $@)
 	npm install
 

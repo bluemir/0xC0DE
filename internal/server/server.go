@@ -17,7 +17,6 @@ import (
 	"github.com/bluemir/0xC0DE/assets"
 	"github.com/bluemir/0xC0DE/internal/server/backend"
 	"github.com/bluemir/0xC0DE/internal/server/controller"
-	"github.com/bluemir/0xC0DE/internal/server/store"
 )
 
 type Args struct {
@@ -52,7 +51,7 @@ func Run(ctx context.Context, args *Args) error {
 	// pass cmd to config
 	conf.Backend.Auth.Salt = args.Salt
 
-	db, err := store.Initialize(ctx, args.DBPath)
+	db, err := initializeDB(ctx, args.DBPath)
 	if err != nil {
 		return err
 	}

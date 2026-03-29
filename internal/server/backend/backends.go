@@ -5,6 +5,7 @@ import (
 
 	"github.com/bluemir/0xC0DE/internal/pubsub"
 	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
+	"github.com/bluemir/0xC0DE/internal/server/backend/jobs"
 	"github.com/bluemir/0xC0DE/internal/server/backend/posts"
 	"gorm.io/gorm"
 )
@@ -15,11 +16,13 @@ type Config struct {
 		Salt string
 	}
 	Posts posts.Config
+	Jobs  jobs.Config
 }
 type Backends struct {
 	Auth   *auth.Manager
 	Events *pubsub.Hub
 	Posts  *posts.Manager
+	Jobs   *jobs.Manager
 }
 
 func Initialize(ctx context.Context, conf *Config, db *gorm.DB) (*Backends, error) {
@@ -33,7 +36,11 @@ func Initialize(ctx context.Context, conf *Config, db *gorm.DB) (*Backends, erro
 	if err != nil {
 		return nil, err
 	}
-	postManager, err := posts.New(ctx, &conf.Posts, db, events)
+	posts, err := posts.New(ctx, &conf.Posts, db, events)
+	if err != nil {
+		return nil, err
+	}
+	jobs, err := jobs.New(ctx, &conf.Jobs, db, events)
 	if err != nil {
 		return nil, err
 	}
@@ -41,6 +48,7 @@ func Initialize(ctx context.Context, conf *Config, db *gorm.DB) (*Backends, erro
 	return &Backends{
 		Events: events,
 		Auth:   authManager,
-		Posts:  postManager,
+		Posts:  posts,
+		Jobs:   jobs,
 	}, nil
 }
