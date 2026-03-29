@@ -5,3 +5,7 @@
 
 }
 
+body header:has(global-navigation-bar) {
+	/* header background color */
+
+}

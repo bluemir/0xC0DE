@@ -1,16 +1,14 @@
+/**
+ * <textarea is="enhanced-textarea">
+ *
+ * Attributes:
+ *   auto-resize       - textarea 높이를 내용에 맞게 자동 조절
+ *   indent="tab"      - Tab/Shift+Tab 들여쓰기 및 Enter 자동 인덴트 ("tab" | "2space" | "4space")
+ *   tab-size="4"      - 탭 표시 너비 (ch 단위, indent 와 함께 사용)
+ *   submit-shortcut   - Ctrl+S 로 부모 form 제출
+ */
 import * as $ from "bm.js/bm.module.js";
 
-function getIndentCharacter(attr) {
-    switch(attr) {
-        case "2space":
-            return "  ";
-        case "4space":
-            return "    ";
-        case "tab":
-        default:
-            return "\t";
-    }
-}
 
 class EnhancedTextarea extends HTMLTextAreaElement{
 	constructor() {
@@ -142,3 +140,15 @@ class EnhancedTextarea extends HTMLTextAreaElement{
 }
 customElements.define("enhanced-textarea", EnhancedTextarea, {extends: "textarea"});
 
+
+function getIndentCharacter(attr) {
+    switch(attr) {
+        case "2space":
+            return "  ";
+        case "4space":
+            return "    ";
+        case "tab":
+        default:
+            return "\t";
+    }
+}
