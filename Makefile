@@ -17,7 +17,8 @@ ifneq ($(shell printf '%s\n' "$(MIN_MAKE_VERSION)" "$(MAKE_VERSION)" | sort -V |
 endif
 
 .PHONY: default
-default: build
+default:
+	@go run -C scripts/tools/make-select .
 
 # sub-makefiles
 # for build tools, docker build, deploy, static web files.
@@ -37,16 +38,7 @@ tools: build-tools ## Install tools(include build tools)
 
 .PHONY: help
 help: ## Display this help
-	# requirement
-	#  - golang: 1.26.x
-	#  - node  : 14.16.x
-	#  - make  : 4.3 (*CAUTION* osx has lower verion of make)
-	#
-	@printf "# Usage:\n"
-	@printf "#   make \033[36m<target>\033[0m\n"
-	@awk 'BEGIN {FS = ":.*##";} /^[a-zA-Z_0-9-]+:.*?##/ { printf "#   \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "#\n# \033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
-	@printf "#\n"
-	@printf "# This project used https://github.com/bluemir/0xC0DE as template.\n"
+	@go run -C scripts/tools/make-select . --print-only
 
 %/.placeholder:
 	@mkdir -p $(dir $@)
