@@ -2,8 +2,8 @@
 
 run: build/$(APP_NAME) assets/src/js/index.js ## Run web app
 	$< -vvv server --config runtime/config.hjson #--cert runtime/certs/server.crt --key runtime/certs/server.key
-dev-run: | runtime/tools/watcher ## Run dev server. If detect file change, automatically rebuild&restart server
-	watcher \
+dev-run: | runtime/tools/go ## Run dev server. If detect file change, automatically rebuild&restart server
+	go tool watcher \
 		--include "go.mod" \
 		--include "go.sum" \
 		--include "**.go" \
@@ -25,9 +25,5 @@ dev-run: | runtime/tools/watcher ## Run dev server. If detect file change, autom
 
 reset: ## Kill all make process. Use when dev-run stuck.
 	ps -e | grep $(APP_NAME) | grep -v grep | awk '{print $$1}' | xargs kill
-
-tools: runtime/tools/watcher
-runtime/tools/watcher: runtime/tools/go
-	@which $(notdir $@) || (./scripts/tools/install/go-tool.sh github.com/bluemir/watcher)
 
 .PHONY: run dev-run reset
