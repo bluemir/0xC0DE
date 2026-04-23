@@ -1,5 +1,5 @@
 ARG VERSION=dev
-FROM fedora:40 as build-env
+FROM fedora:43 as build-env
 
 RUN echo "fastestmirror=1" >> /etc/dnf/dnf.conf
 RUN dnf install -y \
@@ -10,6 +10,7 @@ RUN dnf install -y \
 
 ENV GOPATH=/root/go
 ENV PATH=$PATH:/root/go/bin
+ENV GOTOOLCHAIN=go1.26.0+auto
 
 # pre build
 WORKDIR /src
@@ -46,7 +47,7 @@ RUN make build/0xC0DE
 
 ################################################################################
 # running image
-FROM fedora:40
+FROM fedora:43
 
 WORKDIR /
 COPY --from=build-env /src/build/0xC0DE /bin/
