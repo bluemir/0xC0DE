@@ -12,6 +12,7 @@ class GlobalNavigationBar extends HTMLElement {
 				:host {
 					display: flex;
 					justify-content: space-between;
+					align-items: flex-end;
 				}
 				a {
 					color: inherit;
