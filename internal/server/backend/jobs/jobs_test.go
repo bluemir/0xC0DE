@@ -20,6 +20,15 @@ func newTestManager(t *testing.T) *jobs.Manager {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(t, err)
 
+	// A :memory: SQLite database is per-connection, so a second pooled
+	// connection sees an empty DB without the migrated tables. runJob does a
+	// concurrent Save in the background while the test queries, which forces
+	// the pool open a second connection and triggers "no such table: jobs".
+	// Pin the pool to one connection so every operation shares the same DB.
+	sqlDB, err := db.DB()
+	require.NoError(t, err)
+	sqlDB.SetMaxOpenConns(1)
+
 	ctx := context.Background()
 	hub, err := pubsub.NewHub(ctx)
 	require.NoError(t, err)

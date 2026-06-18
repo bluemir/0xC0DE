@@ -19,15 +19,20 @@
 	- interface 는 반드시 필요하기 전에는 도입하지 않는다.
 	- Depandancy Injection 은 최소화 한다.
 
-
-
 ## 문서
 
 ### Roadmap
 
-- 로드맵은 vivid 가 제공하는 기능과 앞으로 구현될 내용을 모두 담고 있어야 한다.
+- 로드맵은 제공하는 기능과 앞으로 구현될 내용을 모두 담고 있어야 한다.
+	- `docs/roadmap.md` 에 기록 한다.
 - 로드맵은 project 가 진행 되면서 조금씩 변경 될수 있다.
 	- 구현 도중 로드맵의 변경이 필요한 사항은 한번더 확인하고 진행 한다.
+
+### Todo
+
+- 실행 계획이나 추후 개선점 등 해야 할일은 `docs/todo.md` 에 기록한다.
+- `- [ ] 내용` 처럼 checklist 형태로 기록 한다.
+- 하나의 list가 되도록 기록한다.
 
 ### ADR (Architecture Decision Records)
 

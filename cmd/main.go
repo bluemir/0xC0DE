@@ -11,6 +11,7 @@ import (
 
 	clientCmd "github.com/bluemir/0xC0DE/cmd/client"
 	serverCmd "github.com/bluemir/0xC0DE/cmd/server"
+	tuiCmd "github.com/bluemir/0xC0DE/cmd/tui"
 	"github.com/bluemir/0xC0DE/internal/buildinfo"
 )
 
@@ -61,6 +62,7 @@ func Run() error {
 
 	serverCmd.Register(app.Command("server", "server"))
 	clientCmd.Register(app.Command("client", "client"))
+	tuiCmd.Register(app.Command("tui", "tui example"))
 
 	cmd, err := app.Parse(os.Args[1:])
 	if err != nil {
