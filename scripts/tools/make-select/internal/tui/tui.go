@@ -125,7 +125,7 @@ func (m Model) View() string {
 
 		if i == m.cursor {
 			b.WriteString(cursorStyle.Render(
-				"▸ " + cursorName.Render(it.target.Name) + " " + descStyle.Render(it.target.Description),
+				"> " + cursorName.Render(it.target.Name) + " " + descStyle.Render(it.target.Description),
 			))
 		} else {
 			b.WriteString(targetStyle.Render(

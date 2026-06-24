@@ -10,7 +10,6 @@ import (
 )
 
 func Run(ctx context.Context) error {
-
 	final, err := tea.NewProgram(
 		&viewMainMenu{},
 		tea.WithContext(ctx),
