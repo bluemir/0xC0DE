@@ -17,11 +17,11 @@ func TestSelectWraps(t *testing.T) {
 }
 
 func TestNumberClamps(t *testing.T) {
-	n := component.NewNumber(5, 5, 7, 1, "")
+	n := component.NewNumber(component.WithInitial(5), component.WithRange(5, 7))
 	if n.Dec().Int() != 5 {
 		t.Fatalf("dec below min = %d, want 5", n.Dec().Int())
 	}
-	hi := component.NewNumber(7, 5, 7, 1, "")
+	hi := component.NewNumber(component.WithInitial(7), component.WithRange(5, 7))
 	if hi.Inc().Int() != 7 {
 		t.Fatalf("inc above max = %d, want 7", hi.Inc().Int())
 	}

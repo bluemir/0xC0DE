@@ -13,7 +13,7 @@ import (
 func FormExample() (tea.Model, tea.Cmd) {
 	inputs := formInputs{
 		Name:   components.NewText(""),
-		Age:    components.NewNumber(0, 0, 100, 1, ""),
+		Age:    components.NewNumber(components.WithRange(0, 100)),
 		Gender: components.NewSelect([]string{"male", "female"}, 0),
 		Habby:  components.NewText(""),
 	}

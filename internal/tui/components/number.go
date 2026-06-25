@@ -2,9 +2,43 @@ package components
 
 import (
 	"fmt"
+	"math"
 
 	tea "charm.land/bubbletea/v2"
 )
+
+// NewNumber 는 [min,max] 범위·step 단위·unit 표기를 가진 Number 를 만든다.
+// 옵션을 주지 않으면 [math.MinInt, math.MaxInt] 범위에 step 1, unit 없음으로 시작한다.
+func NewNumber(opts ...NumberOptionFn) Number {
+	opt := NumberOption{
+		// Defaults
+		min:  math.MinInt,
+		max:  math.MaxInt,
+		step: 1,
+		unit: "",
+	}
+
+	for _, fn := range opts {
+		fn(&opt)
+	}
+	return NewNumberWithOption(opt)
+}
+func NewNumberWithOption(opt NumberOption) Number {
+	value := opt.initial
+	if value < opt.min {
+		value = opt.min
+	}
+	if value > opt.max {
+		value = opt.max
+	}
+	return Number{
+		value: value,
+		min:   opt.min,
+		max:   opt.max,
+		step:  opt.step,
+		unit:  opt.unit,
+	}
+}
 
 // Number 는 [min,max] 범위 안에서 step 만큼 ←→ 로 조정하는 수치 위젯이다(예: 나이·키·치수).
 type Number struct {
@@ -13,10 +47,34 @@ type Number struct {
 	focused               bool
 }
 
-// NewNumber 는 value 에서 시작해 [min,max] 범위·step 단위·unit 표기를 가진 Number 를 만든다.
-func NewNumber(value, min, max, step int, unit string) Number {
-	// TODO functional parameter
-	return Number{value: value, min: min, max: max, step: step, unit: unit}
+type NumberOption struct {
+	initial  int
+	min, max int
+	step     int
+	unit     string
+}
+type NumberOptionFn func(*NumberOption)
+
+func WithRange(min, max int) NumberOptionFn {
+	return func(opt *NumberOption) {
+		opt.max = max
+		opt.min = min
+	}
+}
+func WithStep(step int) NumberOptionFn {
+	return func(opt *NumberOption) {
+		opt.step = step
+	}
+}
+func WithUnit(unit string) NumberOptionFn {
+	return func(opt *NumberOption) {
+		opt.unit = unit
+	}
+}
+func WithInitial(initial int) NumberOptionFn {
+	return func(opt *NumberOption) {
+		opt.initial = initial
+	}
 }
 
 // Dec/Inc 는 step 만큼 값을 옮긴다(범위에서 클램프).
