@@ -70,6 +70,8 @@ func (v viewFormExampleSummary) View() tea.View {
 		fmt.Sprintf("나이: %d", v.inputs.Age.Int()),
 		fmt.Sprintf("성별: %s", v.inputs.Gender.Value()),
 		fmt.Sprintf("취미: %s", v.inputs.Habby.Value()),
+		//
+		"Tab: 다음 탭  Ctrl+C: 종료",
 	))
 }
 
@@ -145,6 +147,8 @@ func (v *viewFormExampleTab1) View() tea.View {
 			Row("나이", v.inputs.Age.String()).
 			Row("성별", v.inputs.Gender.String()).
 			Render(),
+		//
+		"↑/↓: 이동  Tab: 다음 탭  Shift+Tab: 이전 탭  Ctrl+C: 종료",
 	))
 }
 
@@ -187,12 +191,14 @@ func (v *viewFormExampleTab2) View() tea.View {
 		newTable().
 			Row("취미", v.inputs.Habby.String()).
 			Render(),
+		//
+		"Shift+Tab: 이전 탭  Ctrl+C: 종료",
 	))
 }
 func newTable() *table.Table {
 	return table.New().
 		Border(lipgloss.HiddenBorder()).
-		BorderTop(false).BorderBottom(false).
+		BorderTop(true).BorderBottom(true).
 		BorderLeft(false).BorderRight(false).
 		BorderColumn(true).BorderRow(false)
 }
