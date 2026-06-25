@@ -45,7 +45,10 @@ require (
 	gorm.io/gorm v1.31.1
 )
 
+require github.com/atotto/clipboard v0.1.4 // indirect
+
 require (
+	charm.land/bubbles/v2 v2.1.0
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect

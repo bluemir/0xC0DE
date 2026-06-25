@@ -2,7 +2,6 @@ package tui
 
 import (
 	"context"
-	"fmt"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -53,13 +52,26 @@ func (m viewMainMenu) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			switch m.cursor {
 			case 0:
-				fmt.Printf("world")
-				return m, nil
+				return m, tea.Println("world") // bubbletea program 이 실행중에는 tea.Print 를 써야 함.
 			case 1:
+				return FormExample()
+			case 2:
 				return QuitConfirm(m)
 			default:
 				return ExitWithError(errors.Errorf("Invalid state"))
 			}
+		case "up":
+			m.cursor--
+			if m.cursor < 0 {
+				m.cursor = 0
+			}
+			return m, nil
+		case "down":
+			m.cursor++
+			if m.cursor > 2 {
+				m.cursor = 2
+			}
+			return m, nil
 		default:
 			return m, nil
 		}
@@ -71,7 +83,8 @@ func (m viewMainMenu) View() tea.View {
 	return tea.NewView(lipgloss.JoinVertical(
 		lipgloss.Left,
 		cursor(m.cursor == 0, "hello"),
-		cursor(m.cursor == 1, "exit"),
+		cursor(m.cursor == 1, "form example"),
+		cursor(m.cursor == 2, "exit"),
 	))
 }
 
@@ -94,10 +107,10 @@ func (m viewQuitConfirm) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c":
 			return Exit()
-		case "right", "y":
+		case "left", "y":
 			m.cursor = 0
 			return m, nil
-		case "left", "n":
+		case "right", "n":
 			m.cursor = 1
 			return m, nil
 		case "esc":
