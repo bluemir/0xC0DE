@@ -5,6 +5,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/table"
 
 	"github.com/bluemir/0xC0DE/internal/tui/components"
 )
@@ -139,9 +140,11 @@ func (v *viewFormExampleTab1) View() tea.View {
 		lipgloss.Left,
 		"[ summary ] [>tab1<] [ tab2 ]",
 		//
-		v.inputs.Name.String(),
-		v.inputs.Age.String(),
-		v.inputs.Gender.String(),
+		newTable().
+			Row("이름", v.inputs.Name.String()).
+			Row("나이", v.inputs.Age.String()).
+			Row("성별", v.inputs.Gender.String()).
+			Render(),
 	))
 }
 
@@ -181,6 +184,15 @@ func (v *viewFormExampleTab2) View() tea.View {
 		lipgloss.Left,
 		"[ summary ] [ tab1 ] [>tab2<]",
 		//
-		v.inputs.Habby.String(),
+		newTable().
+			Row("취미", v.inputs.Habby.String()).
+			Render(),
 	))
+}
+func newTable() *table.Table {
+	return table.New().
+		Border(lipgloss.HiddenBorder()).
+		BorderTop(false).BorderBottom(false).
+		BorderLeft(false).BorderRight(false).
+		BorderColumn(true).BorderRow(false)
 }

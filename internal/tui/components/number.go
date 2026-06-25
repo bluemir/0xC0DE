@@ -10,6 +10,7 @@ import (
 type Number struct {
 	value, min, max, step int
 	unit                  string
+	focused               bool
 }
 
 // NewNumber 는 value 에서 시작해 [min,max] 범위·step 단위·unit 표기를 가진 Number 를 만든다.
@@ -47,6 +48,8 @@ func (n *Number) Update(msg tea.Msg) tea.Cmd {
 }
 
 func (n Number) Int() int       { return n.value }
-func (n Number) String() string { return fmt.Sprintf("< %d%s >", n.value, n.unit) }
-func (n Number) Focus() tea.Cmd { return nil }
-func (n Number) Blur()          {}
+func (n Number) String() string { return renderArrows(fmt.Sprintf("%d%s", n.value, n.unit), n.focused) }
+
+// Focus/Blur 는 포커스 상태를 토글한다(화살표 색에 반영). 호스트가 이 입력을 현재 행으로 들이고 낼 때 부른다.
+func (n *Number) Focus() tea.Cmd { n.focused = true; return nil }
+func (n *Number) Blur()          { n.focused = false }

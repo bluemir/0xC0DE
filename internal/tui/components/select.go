@@ -14,6 +14,7 @@ func NewSelect(options []string, idx int) Select {
 type Select struct {
 	options []string
 	idx     int
+	focused bool
 }
 
 var _ Input = (*Select)(nil)
@@ -44,6 +45,8 @@ func (s *Select) Update(msg tea.Msg) tea.Cmd {
 
 func (s Select) Value() string  { return s.options[s.idx] }
 func (s Select) Index() int     { return s.idx }
-func (s Select) String() string { return "< " + s.options[s.idx] + " >" }
-func (s Select) Focus() tea.Cmd { return nil }
-func (s Select) Blur()          {}
+func (s Select) String() string { return renderArrows(s.options[s.idx], s.focused) }
+
+// Focus/Blur 는 포커스 상태를 토글한다(화살표 색에 반영). 호스트가 이 입력을 현재 행으로 들이고 낼 때 부른다.
+func (s *Select) Focus() tea.Cmd { s.focused = true; return nil }
+func (s *Select) Blur()          { s.focused = false }

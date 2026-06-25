@@ -133,9 +133,18 @@ func (m viewQuitConfirm) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 func (m viewQuitConfirm) View() tea.View {
 	style := lipgloss.NewStyle().Padding(2)
-	return tea.NewView(style.Render(lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		cursor(m.cursor == 0, "Yes"),
-		cursor(m.cursor == 1, "No"),
-	)))
+	return tea.NewView(
+		style.Render(
+			lipgloss.JoinVertical(
+				lipgloss.Left,
+				"정말 종료 하시겠습니까?",
+				"",
+				lipgloss.JoinHorizontal(
+					lipgloss.Top,
+					cursor(m.cursor == 0, "Yes"),
+					cursor(m.cursor == 1, "No"),
+				),
+			),
+		),
+	)
 }

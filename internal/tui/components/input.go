@@ -1,6 +1,21 @@
 package components
 
-import tea "charm.land/bubbletea/v2"
+import (
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+)
+
+// arrowBlurStyle 는 포커스가 없을 때 ←→ 화살표를 흐린 회색으로 칠한다.
+var arrowBlurStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+
+// renderArrows 는 value 를 ←→ 화살표로 감싼다. 포커스가 있으면 화살표를 글자색 그대로 두고,
+// 없으면 회색으로 칠해 조정 가능한 행임을 흐리게 보여준다(Select·Number 공용).
+func renderArrows(value string, focused bool) string {
+	if focused {
+		return "< " + value + " >"
+	}
+	return arrowBlurStyle.Render("<") + " " + value + " " + arrowBlurStyle.Render(">")
+}
 
 // Input 은 포커스된 행이 키를 위임받아 자기 상태를 제자리에서 갱신하는 위젯이다.
 // 호스트가 포인터(예: &pawnInput.Sex)를 들고 Update 를 부르면 그 자리에서 바뀐다.
