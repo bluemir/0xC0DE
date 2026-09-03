@@ -3,8 +3,6 @@
 GO_SOURCES = $(shell find . -name "vendor"  -prune -o \
                             -type f -name "*.go" -print)
 
-build/docker-image: $(GO_SOURCES)
-
 # dev build (default, serves source files directly)
 # no tag means //go:build !prod is used automatically
 .PHONY: build
@@ -19,6 +17,7 @@ build/$(APP_NAME): $(GO_SOURCES) $(MAKEFILE_LIST) | fmt vet test runtime/tools/g
 	go build -v  \
 		-trimpath \
 		-ldflags "\
+			-X '$(IMPORT_PATH)/internal/buildinfo.BuildMode=dev' \
 			-X '$(IMPORT_PATH)/internal/buildinfo.AppName=$(APP_NAME)' \
 			-X '$(IMPORT_PATH)/internal/buildinfo.Version=$(VERSION)' \
 			-X '$(IMPORT_PATH)/internal/buildinfo.BuildTime=$(shell go run scripts/tools/date/main.go)' \
@@ -37,6 +36,7 @@ build/$(APP_NAME)-$(VERSION): $(GO_SOURCES) $(MAKEFILE_LIST) | fmt vet gen test 
 		-tags prod \
 		-trimpath \
 		-ldflags "\
+			-X '$(IMPORT_PATH)/internal/buildinfo.BuildMode=prod' \
 			-X '$(IMPORT_PATH)/internal/buildinfo.AppName=$(APP_NAME)' \
 			-X '$(IMPORT_PATH)/internal/buildinfo.Version=$(VERSION)' \
 			-X '$(IMPORT_PATH)/internal/buildinfo.BuildTime=$(shell go run scripts/tools/date/main.go)' \
@@ -70,7 +70,7 @@ sec: runtime/tools/gosec ## Run gosec
 	./runtime/tools/gosec -quiet ./...
 
 .PHONY: gen
-gen: assets/src/js/index.js ## Run go generate
+gen: ## Run go generate
 	PATH=$(shell pwd)/runtime/tools:$(PATH) go generate -tags prod -x ./...
 
 

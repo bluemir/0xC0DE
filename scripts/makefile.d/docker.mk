@@ -1,6 +1,8 @@
 ##@ Docker
 IMAGE_NAME=$(shell echo $(APP_NAME)| tr A-Z a-z)
 
+build/docker-image: $(GO_SOURCES)
+
 docker: build/docker-image ## Build docker image
 
 DOCKER?=$(shell scripts/tools/find-docker-alt.sh)

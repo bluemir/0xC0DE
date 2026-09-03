@@ -10,6 +10,7 @@ var (
 	Version   string
 	AppName   string
 	BuildTime string
+	BuildMode string
 )
 
 func Signature() string {

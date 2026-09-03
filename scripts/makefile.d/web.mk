@@ -58,3 +58,5 @@ assets/bundle/fonts/fonts.css: assets/vendor/fonts.css package.json package-lock
 
 build/$(APP_NAME):            assets/bundle/bm.js/bm.module.js assets/bundle/lit-html/lit-html.js assets/bundle/fonts/fonts.css
 build/$(APP_NAME)-$(VERSION): assets/bundle/bm.js/bm.module.js assets/bundle/lit-html/lit-html.js assets/bundle/fonts/fonts.css
+
+gen: assets/src/js/index.js
