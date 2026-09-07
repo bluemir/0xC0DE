@@ -16,7 +16,7 @@ func newTestManager(t *testing.T) *auth.Manager {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(t, err)
 
-	m, err := auth.New(db, "test-salt")
+	m, err := auth.New(db, &auth.Config{Salt: "test-salt"})
 	require.NoError(t, err)
 	return m
 }

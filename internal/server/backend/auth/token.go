@@ -17,6 +17,13 @@ type Token struct {
 	Index        int       `gorm:"primaryKey;size:256"`
 	HashedSecret []byte
 	ExpiredAt    *time.Time
+	CreatedAt    time.Time
+
+	// passkey 전용. Kind == TokenKindPasskey 일 때만 채워진다.
+	// 공개키는 비밀이 아니므로 HashedSecret 대신 별도 컬럼에 담는다.
+	CredentialID []byte `gorm:"uniqueIndex"` // 로그인 시 사용자를 찾는 키
+	Credential   []byte // webauthn.Credential JSON
+	Label        string // 사용자가 붙인 이름
 }
 
 type TokenKind string
@@ -24,6 +31,7 @@ type TokenKind string
 const (
 	TokenKindPassword  TokenKind = "password"
 	TokenKindAccessKey TokenKind = "access-key"
+	TokenKindPasskey   TokenKind = "passkey"
 )
 
 func (token *Token) Validate(unhashedSecret string) error {
@@ -47,17 +55,26 @@ func (m *Manager) IssueToken(username string, kind TokenKind, unhashedSecret str
 		fn(token)
 	}
 
+	if err := m.createToken(token); err != nil {
+		return nil, err
+	}
+
+	return token, nil
+}
+
+// createToken 은 같은 (username, kind) 안에서 다음 index 를 붙여 token 을 저장한다.
+func (m *Manager) createToken(token *Token) error {
 	tx := m.db.Begin()
 	defer tx.Rollback()
 
 	lastToken := Token{}
 
 	result := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-		Where("username = ? AND kind = ?", username, kind).
+		Where("username = ? AND kind = ?", token.Username, token.Kind).
 		Order("`index` desc").
 		First(&lastToken)
 	if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		return nil, errors.WithStack(result.Error)
+		return errors.WithStack(result.Error)
 	}
 	if result.RowsAffected > 0 {
 		token.Index = lastToken.Index + 1
@@ -66,13 +83,13 @@ func (m *Manager) IssueToken(username string, kind TokenKind, unhashedSecret str
 	}
 
 	if err := tx.Create(token).Error; err != nil {
-		return nil, errors.WithStack(err)
+		return errors.WithStack(err)
 	}
 	if err := tx.Commit().Error; err != nil {
-		return nil, errors.WithStack(err)
+		return errors.WithStack(err)
 	}
 
-	return token, nil
+	return nil
 }
 func (m *Manager) UpdatePassword(username string, unhashedPassword string) error {
 	hashedSecret, err := bcrypt.GenerateFromPassword([]byte(unhashedPassword), bcrypt.DefaultCost)

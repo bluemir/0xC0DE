@@ -12,9 +12,7 @@ import (
 
 // Config from file
 type Config struct {
-	Auth struct {
-		Salt string
-	}
+	Auth  auth.Config
 	Posts posts.Config
 	Jobs  jobs.Config
 }
@@ -32,7 +30,7 @@ func Initialize(ctx context.Context, conf *Config, db *gorm.DB) (*Backends, erro
 	}
 	// init components
 
-	authManager, err := auth.New(db, conf.Auth.Salt)
+	authManager, err := auth.New(db, &conf.Auth)
 	if err != nil {
 		return nil, err
 	}

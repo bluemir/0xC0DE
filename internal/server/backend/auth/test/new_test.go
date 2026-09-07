@@ -32,7 +32,7 @@ func newManager() (*auth.Manager, error) {
 	}
 	sqlDB.SetMaxOpenConns(1)
 
-	m, err := auth.New(db, "")
+	m, err := auth.New(db, &auth.Config{})
 	if err != nil {
 		return nil, err
 	}

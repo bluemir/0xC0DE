@@ -16,16 +16,19 @@
 				<form>
 					<label>Username</label>
 					<section>
-						<input name="username"/>
+						<input name="username" autocomplete="username"/>
 					</section>
 					<label>Password</label>
 					<section>
-						<input name="password" type="password"/>
+						<input name="password" type="password" autocomplete="current-password"/>
 					</section>
 					<div>
 						<button enhanced>Login</button>
 					</div>
 				</form>
+				<div>
+					<passkey-login redirect="/posts">Login with Passkey</passkey-login>
+				</div>
 			</section>
 		</main>
 		<dialog>

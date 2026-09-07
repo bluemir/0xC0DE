@@ -18,7 +18,7 @@
 							<label>Username</label>
 						</section>
 						<section col="9">
-							<input name="username" />
+							<input name="username" autocomplete="username" />
 						</section>
 					</section>
 					<section grid>
@@ -26,7 +26,7 @@
 							<label>Password</label>
 						</section>
 						<section col="9">
-							<input name="password" type="password" />
+							<input name="password" type="password" autocomplete="new-password" />
 						</section>
 					</section>
 					<section grid>
@@ -34,10 +34,11 @@
 							<label>Password Confirm</label>
 						</section>
 						<section col="9">
-							<input name="confirm" type="password" />
+							<input name="confirm" type="password" autocomplete="new-password" />
 						</section>
 					</section>
 					<button>Register</button>
+					<passkey-register username-from="form [name=username]" redirect="/">Register with Passkey</passkey-register>
 				</form>
 			</section>
 		</main>

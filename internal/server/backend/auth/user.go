@@ -9,8 +9,11 @@ import (
 )
 
 type User struct {
-	Name   string  `gorm:"primaryKey;size:256" json:"name" expr:"name"`
-	Salt   string  `json:"-"`
+	Name string `gorm:"primaryKey;size:256" json:"name" expr:"name"`
+	Salt string `json:"-"`
+	// Handle 은 WebAuthn user handle 이다.
+	// authenticator 에 노출되는 값이라 사용자 이름과 분리한다.
+	Handle []byte  `gorm:"uniqueIndex" json:"-"`
 	Groups []Group `gorm:"many2many:members;" json:"groups"`
 	Labels Labels  `gorm:"type:bytes;serializer:gob" json:"labels" expr:"labels"`
 }
@@ -31,6 +34,14 @@ func (m *Manager) Register(username, unhashedPassword string, opts ...CreateUser
 
 type CreateUserOption func(u *User)
 
+// withHandle 은 이미 만들어 둔 WebAuthn user handle 을 그대로 쓴다.
+// passkey 가입은 ceremony 를 시작할 때 handle 을 먼저 만들기 때문에 필요하다.
+func withHandle(handle []byte) func(*User) {
+	return func(u *User) {
+		u.Handle = handle
+	}
+}
+
 func WithGroup(groups ...string) func(*User) {
 	return func(u *User) {
 		u.Groups = functional.SliceMap(groups, func(g string) Group {
@@ -42,9 +53,15 @@ func WithGroup(groups ...string) func(*User) {
 }
 
 func (m *Manager) CreateUser(username string, opts ...CreateUserOption) (*User, error) {
+	handle, err := newPasskeyHandle()
+	if err != nil {
+		return nil, err
+	}
+
 	u := User{
 		Name:   username,
 		Salt:   xid.New().String(),
+		Handle: handle,
 		Groups: []Group{},
 	}
 	for _, fn := range opts {

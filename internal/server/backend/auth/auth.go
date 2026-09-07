@@ -2,8 +2,11 @@ package auth
 
 import (
 	"net/http"
+	"net/url"
 
 	"gorm.io/gorm"
+
+	"github.com/go-webauthn/webauthn/protocol"
 
 	"github.com/bluemir/0xC0DE/internal/server/backend/meta"
 	"github.com/cockroachdb/errors"
@@ -20,6 +23,14 @@ type IManager interface {
 
 	// Shotcuts
 	Register(username, unhashedKey string, opts ...CreateUserOption) (*User, *Token, error)
+
+	// Passkey(WebAuthn)
+	BeginPasskeyRegistration(site *url.URL, username string) (*protocol.CredentialCreation, *PasskeyRegistration, error)
+	FinishPasskeyRegistration(site *url.URL, reg *PasskeyRegistration, label string, req *http.Request) (*User, *Token, error)
+	BeginPasskeyLogin(site *url.URL) (*protocol.CredentialAssertion, []byte, error)
+	FinishPasskeyLogin(site *url.URL, sessionData []byte, req *http.Request) (*User, error)
+	ListPasskey(username string) ([]Token, error)
+	RevokePasskey(username string, index int) error
 
 	// User
 	CreateUser(username string, opts ...CreateUserOption) (*User, error)
@@ -58,12 +69,19 @@ type IManager interface {
 
 var _ IManager = (*Manager)(nil)
 
-type Manager struct {
-	db   *gorm.DB
-	salt string
+// Config from file
+type Config struct {
+	Salt    string
+	Passkey PasskeyConfig
 }
 
-func New(db *gorm.DB, salt string) (*Manager, error) {
+type Manager struct {
+	db      *gorm.DB
+	salt    string
+	passkey PasskeyConfig
+}
+
+func New(db *gorm.DB, conf *Config) (*Manager, error) {
 
 	if err := db.AutoMigrate(
 		&User{},
@@ -76,7 +94,7 @@ func New(db *gorm.DB, salt string) (*Manager, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	m := &Manager{db, salt}
+	m := &Manager{db, conf.Salt, conf.Passkey}
 
 	if err := m.initialize(); err != nil {
 		return nil, err

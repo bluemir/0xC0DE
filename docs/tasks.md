@@ -8,3 +8,24 @@
 - epic example
 	- [ ] job1
 	- [ ] job2
+- passkey(WebAuthn)
+	- [x] passkey 로그인/등록 추가
+		- [ADR-0001](adr/ADR-0001-passkey-login.md)
+	- [ ] conditional UI(autofill)로 passkey 제안하기
+		- 지금은 "Login with Passkey" 버튼을 눌러야 시작한다
+		- username 필드 `autocomplete="username webauthn"` + `mediation: "conditional"`
+	- [ ] passkey 마지막 사용 시각 기록
+		- 목록에서 어느 기기를 지워도 되는지 판단할 근거가 없다
+	- [ ] AAGUID로 authenticator 이름 보여주기
+		- FIDO MDS 또는 aaguid 목록이 필요하다
+	- [ ] sign counter 역행(CloneWarning) 시 처리 방침 정하기
+		- 지금은 경고 로그만 남기고 로그인은 통과시킨다
+	- [ ] 마지막 로그인 수단을 지우지 못하게 막기
+		- passkey 로만 가입한 계정이 마지막 passkey 를 지우면 로그인할 수 없다
+- [ ] `docs/roadmap.md` 작성
+- [ ] handler 의 `validate:` 태그가 실제로 검증되지 않는다
+	- gin 기본 validator 는 `binding:` 태그를 본다
+	- `binding.Validator` 에 `SetTagName("validate")` 를 하거나 태그를 `binding:` 으로 통일
+	- `handler.Register` 는 지금 빈 username 도 통과한다
+- [ ] 세션 쿠키가 서명만 되고 암호화되지 않는다
+	- `cookie.NewStore` 에 block key 를 주지 않았다

@@ -19,10 +19,12 @@ require (
 	github.com/bluemir/functional/v2 v2.0.2
 	github.com/cockroachdb/errors v1.14.0
 	github.com/expr-lang/expr v1.17.8
+	github.com/fxamacker/cbor/v2 v2.9.3
 	github.com/gin-contrib/location v1.0.3
 	github.com/gin-contrib/sessions v1.1.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-playground/validator/v10 v10.30.3
+	github.com/go-webauthn/webauthn v0.18.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.30.0
 	github.com/hjson/hjson-go/v4 v4.7.0
 	github.com/mattn/go-sqlite3 v1.14.50
@@ -48,6 +50,14 @@ require (
 require (
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/go-openapi/swag/pools v0.29.1 // indirect
+	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
+	github.com/go-webauthn/x v0.3.0 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
+	github.com/google/go-tpm v0.9.8 // indirect
+	github.com/google/uuid v1.6.0 // indirect
+	github.com/philhofer/fwd v1.2.0 // indirect
+	github.com/tinylib/msgp v1.6.4 // indirect
+	github.com/x448/float16 v0.8.4 // indirect
 )
 
 require (
@@ -56,7 +66,6 @@ require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bluemir/functional v0.1.0 // indirect
 	github.com/bluemir/watcher v0.1.5 // indirect
 	github.com/bytedance/gopkg v0.1.4 // indirect
 	github.com/bytedance/sonic v1.15.3 // indirect
@@ -74,7 +83,6 @@ require (
 	github.com/cockroachdb/logtags v0.0.0-20241215232642-bb51bb14a506 // indirect
 	github.com/cockroachdb/redact v1.1.8 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d // indirect
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/evanw/esbuild v0.27.4 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.15 // indirect
@@ -84,7 +92,6 @@ require (
 	github.com/go-openapi/jsonreference v1.0.1 // indirect
 	github.com/go-openapi/spec v1.0.0 // indirect
 	github.com/go-openapi/swag/conv v0.29.1 // indirect
-	github.com/go-openapi/swag/jsonname v0.29.1 // indirect
 	github.com/go-openapi/swag/jsonutils v0.29.1 // indirect
 	github.com/go-openapi/swag/loading v0.29.1 // indirect
 	github.com/go-openapi/swag/stringutils v0.29.1 // indirect
@@ -103,7 +110,6 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.19.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
@@ -133,7 +139,6 @@ require (
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	github.com/xo/terminfo v1.0.0 // indirect
 	go.mongodb.org/mongo-driver/v2 v2.8.2 // indirect
-	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/arch v0.30.0 // indirect
 	golang.org/x/exp v0.0.0-20260824195058-e88cd73687aa // indirect

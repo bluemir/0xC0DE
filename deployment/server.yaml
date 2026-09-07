@@ -5,6 +5,13 @@ metadata:
 data:
   config.yaml: |
     # config file
+    # auth:
+    #   passkey:
+    #     # WebAuthn Relying Party. 비워두면 요청 host/origin 을 쓴다.
+    #     displayName: 0xC0DE
+    #     id: example.com
+    #     origins:
+    #     - https://example.com
 ---
 apiVersion: apps/v1
 kind: Deployment
