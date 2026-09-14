@@ -50,3 +50,7 @@
 	- `handler.Register` 는 지금 빈 username 도 통과한다
 - [ ] 세션 쿠키가 서명만 되고 암호화되지 않는다
 	- `cookie.NewStore` 에 block key 를 주지 않았다
+- [ ] gorm 에 넘어가지 않는 죽은 `serializer:gob` 태그 정리
+	- `auth.Rule` 의 `Verbs`, `Selector`, `Conditions`
+	- `pubsub.Event.Detail`
+	- 지우거나, 왜 있는지 주석으로 남긴다 ([ADR-0004](adr/ADR-0004-keep-gorm-gob-serializer.md))
