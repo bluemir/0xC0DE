@@ -27,6 +27,22 @@
 		- 지금은 경고 로그만 남기고 로그인은 통과시킨다
 	- [ ] 마지막 로그인 수단을 지우지 못하게 막기
 		- passkey 로만 가입한 계정이 마지막 passkey 를 지우면 로그인할 수 없다
+- oauth(social login)
+	- [x] Token 에 소셜 로그인 자리 만들기
+		- [ADR-0003](adr/ADR-0003-oauth-social-login-model.md)
+		- provider 와 주고받는 부분 없이 연결 생성/조회/해제만 있다
+	- [ ] provider 설정을 config 에 두기
+		- client id/secret, redirect URL, scope
+		- `auth.PasskeyConfig` 와 같은 자리에 붙인다
+	- [ ] authorization code 흐름 구현
+		- state 와 PKCE 는 passkey ceremony 처럼 세션에 담는다
+		- `golang.org/x/oauth2` 의존성이 생긴다
+	- [ ] provider 프로필 조회
+		- Google 은 OIDC id_token, GitHub 은 `/user` API 로 서로 다르다
+	- [ ] 연결된 사용자가 없을 때 가입시킬지 정하기
+		- passkey 는 `FinishPasskeyRegistration` 이 정한다. 그에 해당하는 자리가 없다
+		- 이메일이 같은 기존 계정에 자동으로 붙이면 계정 탈취가 된다
+	- [ ] handler 와 route, UI
 - [ ] `docs/roadmap.md` 작성
 - [ ] handler 의 `validate:` 태그가 실제로 검증되지 않는다
 	- gin 기본 validator 는 `binding:` 태그를 본다

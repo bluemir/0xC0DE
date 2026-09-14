@@ -89,7 +89,7 @@ func TestTokenSecret(t *testing.T) {
 	require.NotNil(t, got.Secret.Password)
 	assert.Nil(t, got.Secret.AccessKey)
 	assert.Nil(t, got.Secret.Passkey)
-	assert.Empty(t, got.CredentialID)
+	assert.Empty(t, got.ExternalID)
 	assert.NoError(t, got.Validate("secret"))
 
 	key, _, err := m.GenerateAccessKey(username)
@@ -111,10 +111,10 @@ func TestTokenSecret(t *testing.T) {
 
 	// passkey 는 나눠 가진 비밀이 없으므로 Validate 로 통과할 수 없다
 	passkey := auth.Token{
-		Username:     username,
-		Kind:         auth.TokenKindPasskey,
-		CredentialID: []byte("credential-id"),
-		Secret:       auth.Secret{Passkey: &auth.PasskeySecret{Credential: []byte(`{}`)}},
+		Username:   username,
+		Kind:       auth.TokenKindPasskey,
+		ExternalID: []byte("credential-id"),
+		Secret:     auth.Secret{Passkey: &auth.PasskeySecret{Credential: []byte(`{}`)}},
 	}
 	assert.Error(t, passkey.Validate(""))
 }

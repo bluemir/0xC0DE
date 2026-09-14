@@ -13,15 +13,17 @@ import (
 
 type Token struct {
 	Username  string    `gorm:"primaryKey;size:256"`
-	Kind      TokenKind `gorm:"primaryKey;size:256"` // Secret 중 어느 것이 채워졌는지 가리키는 조회 키
+	Kind      TokenKind `gorm:"primaryKey;size:256;uniqueIndex:idx_tokens_external,priority:1"` // Secret 중 어느 것이 채워졌는지 가리키는 조회 키
 	Index     int       `gorm:"primaryKey;size:256"`
 	ExpiredAt *time.Time
 	CreatedAt time.Time
 
-	// CredentialID 는 passkey 로그인에서 credential 로 사용자를 역추적하는 조회 키다.
+	// ExternalID 는 바깥에서 온 식별자로 사용자를 역추적하는 조회 키다.
+	// passkey 는 credential ID, OAuth 는 provider 가 준 사용자 ID 를 담는다.
 	// Secret 안에 두면 인덱스를 걸 수 없어 Kind 와 마찬가지로 밖에 둔다.
-	// passkey 가 아닌 토큰에서는 비어 있다.
-	CredentialID []byte `gorm:"uniqueIndex"`
+	// 값의 유일함은 provider 안에서만 보장되므로 Kind 와 묶어 인덱스를 건다.
+	// 사용자가 직접 증명하는 수단(password, access-key)에서는 비어 있다.
+	ExternalID []byte `gorm:"uniqueIndex:idx_tokens_external,priority:2"`
 
 	Secret Secret `gorm:"type:bytes;serializer:gob"`
 }
@@ -32,6 +34,7 @@ type Secret struct {
 	Password  *PasswordSecret
 	AccessKey *AccessKeySecret
 	Passkey   *PasskeySecret
+	OAuth     *OAuthSecret // 어느 provider 인지는 Kind 가 말해준다
 }
 
 type PasswordSecret struct {
@@ -47,12 +50,24 @@ type PasskeySecret struct {
 	Label      string // 사용자가 붙인 이름
 }
 
+// OAuthSecret 은 연결된 외부 계정의 프로필이다.
+// 로그인에 필요한 값은 Kind 와 ExternalID 가 다 가지고 있고, 여기 있는 것은 보여주기 위한 것이다.
+type OAuthSecret struct {
+	Email       string
+	Name        string
+	RefreshedAt time.Time // 프로필을 마지막으로 provider 에서 가져온 시각
+}
+
 type TokenKind string
 
 const (
 	TokenKindPassword  TokenKind = "password"
 	TokenKindAccessKey TokenKind = "access-key"
 	TokenKindPasskey   TokenKind = "passkey"
+
+	// OAuth provider 는 Kind 하나씩 차지한다. Secret.OAuth 는 공유한다.
+	TokenKindGoogle TokenKind = "google"
+	TokenKindGitHub TokenKind = "github"
 )
 
 func (token *Token) Validate(unhashedSecret string) error {
@@ -76,30 +91,42 @@ func (token *Token) Validate(unhashedSecret string) error {
 // validateSecret 은 Kind 와 Secret 이 어긋나지 않는지 본다.
 // Kind 는 조회용 인덱스일 뿐이라 둘이 따로 놀 수 있어 저장 직전에 맞춰 둔다.
 func (token *Token) validateSecret() error {
-	filled := []TokenKind{}
+	filled := 0
 	if token.Secret.Password != nil {
-		filled = append(filled, TokenKindPassword)
+		filled++
 	}
 	if token.Secret.AccessKey != nil {
-		filled = append(filled, TokenKindAccessKey)
+		filled++
 	}
 	if token.Secret.Passkey != nil {
-		filled = append(filled, TokenKindPasskey)
+		filled++
+	}
+	if token.Secret.OAuth != nil {
+		filled++
 	}
 
+	matched := false
+	external := false // 바깥에서 온 식별자로 역추적되는 수단인가
+
 	switch token.Kind {
-	case TokenKindPassword, TokenKindAccessKey, TokenKindPasskey:
+	case TokenKindPassword:
+		matched = token.Secret.Password != nil
+	case TokenKindAccessKey:
+		matched = token.Secret.AccessKey != nil
+	case TokenKindPasskey:
+		matched, external = token.Secret.Passkey != nil, true
+	case TokenKindGoogle, TokenKindGitHub:
+		matched, external = token.Secret.OAuth != nil, true
 	default:
 		return errors.Errorf("unknown token kind %q", token.Kind)
 	}
 
-	if len(filled) != 1 || filled[0] != token.Kind {
-		return errors.Errorf("token kind %q does not match secret %v", token.Kind, filled)
+	if filled != 1 || !matched {
+		return errors.Errorf("secret does not match token kind %q", token.Kind)
 	}
 
-	// passkey 만 credential id 로 역추적된다.
-	if (token.Kind == TokenKindPasskey) != (len(token.CredentialID) > 0) {
-		return errors.Errorf("credential id does not match token kind %q", token.Kind)
+	if external != (len(token.ExternalID) > 0) {
+		return errors.Errorf("external id does not match token kind %q", token.Kind)
 	}
 
 	return nil

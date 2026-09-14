@@ -47,6 +47,13 @@ type IManager interface {
 	ListPasskey(username string) ([]Token, error)
 	RevokePasskey(username string, index int) error
 
+	// OAuth(social login)
+	LinkOAuth(username string, kind TokenKind, externalID string, profile OAuthSecret) (*Token, error)
+	FindOAuthUser(kind TokenKind, externalID string) (*User, error)
+	UpdateOAuthProfile(kind TokenKind, externalID string, profile OAuthSecret) error
+	ListOAuth(username string) ([]Token, error)
+	RevokeOAuth(username string, kind TokenKind, index int) error
+
 	// Group
 	CreateGroup(name string) (*Group, error)
 	ListGroup(opts ...meta.ListOptionFn) ([]Group, error)

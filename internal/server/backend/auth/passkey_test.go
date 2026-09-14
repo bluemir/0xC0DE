@@ -194,7 +194,7 @@ func TestPasskeyRegisterAndLogin(t *testing.T) {
 	passkeys, err := m.ListPasskey("alice")
 	require.NoError(t, err)
 	require.Len(t, passkeys, 1)
-	assert.Equal(t, device.credentialID, passkeys[0].CredentialID)
+	assert.Equal(t, device.credentialID, passkeys[0].ExternalID)
 
 	// sign counter 가 저장되어야 한다
 	credential, err := passkeys[0].PasskeyCredential()

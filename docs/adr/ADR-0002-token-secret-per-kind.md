@@ -3,6 +3,7 @@
 - 상태: 채택
 - 날짜: 2026-09-14
 - 관련: [ADR-0001](ADR-0001-passkey-login.md) 의 "2. credential 은 기존 `Token` 테이블에 `kind = "passkey"` 로 저장한다" 를 대체한다
+- 후속: `CredentialID` 는 [ADR-0003](ADR-0003-oauth-social-login-model.md) 에서 `ExternalID` 로 일반화되었다
 
 ## 배경
 
@@ -45,6 +46,9 @@ type Secret struct {
 - 단점: `Secret` 안의 값으로는 쿼리도 인덱스도 걸 수 없다. DB 에서 눈으로 읽을 수 없다.
 
 ### 2. `CredentialID` 는 `Secret` 밖에 남긴다
+
+> ADR-0003 에서 이 컬럼은 `ExternalID` 가 되고 인덱스도 `(kind, external_id)` 복합이 되었다.
+> 조회 키를 밖에 둔다는 결정 자체는 그대로다.
 
 passkey 로그인은 username 을 받지 않고 authenticator 가 준 credential ID 로 사용자를 역추적한다.
 `Secret` 안에 넣으면 unique index 를 걸 수 없어 이 조회가 불가능하다.
@@ -91,6 +95,7 @@ GORM 이 새 행으로 보고 INSERT 를 내보낸다.
 ## 결과
 
 - 테이블은 `username, kind, index, expired_at, created_at, credential_id, secret` 이 된다.
+  (`credential_id` 는 ADR-0003 에서 `external_id` 가 되었다.)
 - `Token.HashedSecret`, `Token.Credential`, `Token.Label` 은 사라졌다.
   각각 `Secret.Password.HashedSecret`(또는 `Secret.AccessKey.HashedSecret`),
   `Secret.Passkey.Credential`, `Secret.Passkey.Label` 이다.

@@ -200,9 +200,9 @@ func (m *Manager) FinishPasskeyRegistration(site *url.URL, reg *PasskeyRegistrat
 	}
 
 	token := &Token{
-		Username:     user.Name,
-		Kind:         TokenKindPasskey,
-		CredentialID: credential.ID,
+		Username:   user.Name,
+		Kind:       TokenKindPasskey,
+		ExternalID: credential.ID,
 		Secret: Secret{Passkey: &PasskeySecret{
 			Credential: buf,
 			Label:      label,
@@ -285,7 +285,7 @@ func (m *Manager) FinishPasskeyLogin(site *url.URL, sessionData []byte, req *htt
 	// Update("secret", ...) 는 serializer 를 거치지 않고,
 	// Save 는 Index 0 을 새 행으로 봐서 INSERT 가 된다. 구조체 Updates 를 쓴다.
 	if err := m.db.Model(&Token{}).
-		Where("credential_id = ?", credential.ID).
+		Where("kind = ? AND external_id = ?", TokenKindPasskey, credential.ID).
 		Updates(Token{Secret: matched.Secret}).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -295,7 +295,7 @@ func (m *Manager) FinishPasskeyLogin(site *url.URL, sessionData []byte, req *htt
 
 func (m *Manager) getPasskeyToken(credentialID []byte) (*Token, error) {
 	token := Token{}
-	if err := m.db.Where("kind = ? AND credential_id = ?", TokenKindPasskey, credentialID).
+	if err := m.db.Where("kind = ? AND external_id = ?", TokenKindPasskey, credentialID).
 		Take(&token).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
