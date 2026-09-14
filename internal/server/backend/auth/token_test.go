@@ -57,7 +57,7 @@ func TestTokenExpiration(t *testing.T) {
 	require.NoError(t, err)
 
 	// Issue expired token
-	expiredToken, err := m.IssueToken(username, "test-kind", "secret", auth.ExpiredAfter(-1*time.Hour))
+	expiredToken, err := m.IssueToken(username, auth.TokenKindAccessKey, "secret", auth.ExpiredAfter(-1*time.Hour))
 	require.NoError(t, err)
 
 	// Validate should fail
@@ -66,10 +66,73 @@ func TestTokenExpiration(t *testing.T) {
 	assert.Contains(t, err.Error(), "expired")
 
 	// Issue valid token
-	validToken, err := m.IssueToken(username, "test-kind-2", "secret", auth.ExpiredAfter(1*time.Hour))
+	validToken, err := m.IssueToken(username, auth.TokenKindAccessKey, "secret", auth.ExpiredAfter(1*time.Hour))
 	require.NoError(t, err)
 
 	// Validate should succeed
 	err = validToken.Validate("secret")
 	assert.NoError(t, err)
+}
+
+func TestTokenSecret(t *testing.T) {
+	m := newTestManager(t)
+	username := "user-secret-test"
+	_, err := m.CreateUser(username)
+	require.NoError(t, err)
+
+	// 해당하는 것만 채워지고 나머지는 nil 로 남아야 한다
+	issued, err := m.IssueToken(username, auth.TokenKindPassword, "secret")
+	require.NoError(t, err)
+
+	got, err := m.GetToken(username, auth.TokenKindPassword, issued.Index)
+	require.NoError(t, err)
+	require.NotNil(t, got.Secret.Password)
+	assert.Nil(t, got.Secret.AccessKey)
+	assert.Nil(t, got.Secret.Passkey)
+	assert.Empty(t, got.CredentialID)
+	assert.NoError(t, got.Validate("secret"))
+
+	key, _, err := m.GenerateAccessKey(username)
+	require.NoError(t, err)
+
+	gotKey, err := m.GetToken(username, auth.TokenKindAccessKey, key.Index)
+	require.NoError(t, err)
+	require.NotNil(t, gotKey.Secret.AccessKey)
+	assert.Nil(t, gotKey.Secret.Password)
+
+	// UpdatePassword 도 Secret 을 통째로 갈아끼운다
+	require.NoError(t, m.UpdatePassword(username, "next"))
+
+	updated, err := m.GetToken(username, auth.TokenKindPassword, 0)
+	require.NoError(t, err)
+	require.NotNil(t, updated.Secret.Password)
+	assert.NoError(t, updated.Validate("next"))
+	assert.Error(t, updated.Validate("secret"))
+
+	// passkey 는 나눠 가진 비밀이 없으므로 Validate 로 통과할 수 없다
+	passkey := auth.Token{
+		Username:     username,
+		Kind:         auth.TokenKindPasskey,
+		CredentialID: []byte("credential-id"),
+		Secret:       auth.Secret{Passkey: &auth.PasskeySecret{Credential: []byte(`{}`)}},
+	}
+	assert.Error(t, passkey.Validate(""))
+}
+
+func TestTokenSecretMismatch(t *testing.T) {
+	m := newTestManager(t)
+	username := "user-mismatch-test"
+	_, err := m.CreateUser(username)
+	require.NoError(t, err)
+
+	// Kind 와 Secret 이 어긋나면 저장되지 않아야 한다
+	_, err = m.IssueToken(username, auth.TokenKindPasskey, "secret")
+	assert.Error(t, err)
+
+	_, err = m.IssueToken(username, "no-such-kind", "secret")
+	assert.Error(t, err)
+
+	tokens, err := m.ListToken(username)
+	require.NoError(t, err)
+	assert.Len(t, tokens, 0)
 }

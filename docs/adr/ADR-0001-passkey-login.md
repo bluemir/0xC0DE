@@ -23,6 +23,9 @@ attestation 파싱, CBOR/COSE 해석, origin·challenge·서명·sign counter �
 
 ### 2. credential 은 기존 `Token` 테이블에 `kind = "passkey"` 로 저장한다
 
+> 이 절은 [ADR-0002](ADR-0002-token-secret-per-kind.md) 로 대체되었다.
+> 테이블을 재사용하는 결정은 유지하되, 컬럼 구성이 바뀌었다.
+
 테이블을 새로 만들지 않고 인증 수단을 한 곳에서 관리한다.
 `Token` 에 passkey 전용 컬럼을 더했다.
 

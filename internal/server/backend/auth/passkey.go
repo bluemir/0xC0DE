@@ -203,8 +203,10 @@ func (m *Manager) FinishPasskeyRegistration(site *url.URL, reg *PasskeyRegistrat
 		Username:     user.Name,
 		Kind:         TokenKindPasskey,
 		CredentialID: credential.ID,
-		Credential:   buf,
-		Label:        label,
+		Secret: Secret{Passkey: &PasskeySecret{
+			Credential: buf,
+			Label:      label,
+		}},
 	}
 	if err := m.createToken(token); err != nil {
 		return nil, nil, err
@@ -246,7 +248,8 @@ func (m *Manager) FinishPasskeyLogin(site *url.URL, sessionData []byte, req *htt
 		return nil, errors.WithStack(err)
 	}
 
-	username := ""
+	// 검증에 쓰인 토큰을 밖으로 꺼내 sign counter 를 되돌려 저장한다.
+	matched := (*Token)(nil)
 
 	_, credential, err := rp.FinishPasskeyLogin(func(rawID, userHandle []byte) (webauthn.User, error) {
 		token, err := m.getPasskeyToken(rawID)
@@ -262,7 +265,7 @@ func (m *Manager) FinishPasskeyLogin(site *url.URL, sessionData []byte, req *htt
 			return nil, ErrUnauthorized
 		}
 
-		username = token.Username
+		matched = token
 		return identity, nil
 	}, session, req)
 	if err != nil {
@@ -270,21 +273,24 @@ func (m *Manager) FinishPasskeyLogin(site *url.URL, sessionData []byte, req *htt
 	}
 
 	if credential.Authenticator.CloneWarning {
-		logrus.Warnf("passkey sign counter went backwards. user: %s", username)
+		logrus.Warnf("passkey sign counter went backwards. user: %s", matched.Username)
 	}
 
-	// sign counter 와 backup 상태를 되돌려 저장한다.
 	buf, err := json.Marshal(credential)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	matched.Secret.Passkey.Credential = buf
+
+	// Update("secret", ...) 는 serializer 를 거치지 않고,
+	// Save 는 Index 0 을 새 행으로 봐서 INSERT 가 된다. 구조체 Updates 를 쓴다.
 	if err := m.db.Model(&Token{}).
 		Where("credential_id = ?", credential.ID).
-		Update("credential", buf).Error; err != nil {
+		Updates(Token{Secret: matched.Secret}).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	return m.GetUser(username)
+	return m.GetUser(matched.Username)
 }
 
 func (m *Manager) getPasskeyToken(credentialID []byte) (*Token, error) {
@@ -312,8 +318,12 @@ func (m *Manager) RevokePasskey(username string, index int) error {
 
 // PasskeyCredential 은 저장된 WebAuthn credential 을 되살린다.
 func (token *Token) PasskeyCredential() (*webauthn.Credential, error) {
+	if token.Secret.Passkey == nil {
+		return nil, errors.Errorf("token %s/%s/%d is not a passkey", token.Username, token.Kind, token.Index)
+	}
+
 	credential := webauthn.Credential{}
-	if err := json.Unmarshal(token.Credential, &credential); err != nil {
+	if err := json.Unmarshal(token.Secret.Passkey.Credential, &credential); err != nil {
 		return nil, errors.WithStack(err)
 	}
 	return &credential, nil

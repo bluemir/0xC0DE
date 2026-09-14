@@ -11,6 +11,11 @@
 - passkey(WebAuthn)
 	- [x] passkey 로그인/등록 추가
 		- [ADR-0001](adr/ADR-0001-passkey-login.md)
+	- [x] Token 의 자격증명을 종류별 구조체로 나누기
+		- [ADR-0002](adr/ADR-0002-token-secret-per-kind.md)
+	- [ ] `Secret` 에 담긴 자격증명을 운영 중에 들여다볼 방법 마련
+		- gob 이라 DB 에서 직접 읽을 수 없다
+		- 덤프용 CLI 하위 명령이나 관리 API 를 붙일지 정한다
 	- [ ] conditional UI(autofill)로 passkey 제안하기
 		- 지금은 "Login with Passkey" 버튼을 눌러야 시작한다
 		- username 필드 `autocomplete="username webauthn"` + `mediation: "conditional"`

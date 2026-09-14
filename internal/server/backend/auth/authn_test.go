@@ -84,7 +84,7 @@ func TestTokenLifecycle(t *testing.T) {
 	// Get Token
 	gotToken, err := m.GetToken("user1", auth.TokenKindAccessKey, 1)
 	assert.NoError(t, err)
-	assert.Equal(t, token2.HashedSecret, gotToken.HashedSecret)
+	assert.Equal(t, token2.Secret.AccessKey.HashedSecret, gotToken.Secret.AccessKey.HashedSecret)
 
 	// Revoke Token
 	err = m.RevokeToken("user1", auth.TokenKindAccessKey, 0)

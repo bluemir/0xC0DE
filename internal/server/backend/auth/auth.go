@@ -24,14 +24,6 @@ type IManager interface {
 	// Shotcuts
 	Register(username, unhashedKey string, opts ...CreateUserOption) (*User, *Token, error)
 
-	// Passkey(WebAuthn)
-	BeginPasskeyRegistration(site *url.URL, username string) (*protocol.CredentialCreation, *PasskeyRegistration, error)
-	FinishPasskeyRegistration(site *url.URL, reg *PasskeyRegistration, label string, req *http.Request) (*User, *Token, error)
-	BeginPasskeyLogin(site *url.URL) (*protocol.CredentialAssertion, []byte, error)
-	FinishPasskeyLogin(site *url.URL, sessionData []byte, req *http.Request) (*User, error)
-	ListPasskey(username string) ([]Token, error)
-	RevokePasskey(username string, index int) error
-
 	// User
 	CreateUser(username string, opts ...CreateUserOption) (*User, error)
 	GetUser(username string) (*User, error)
@@ -46,6 +38,14 @@ type IManager interface {
 	GetToken(username string, kind TokenKind, index int) (*Token, error)
 	ListToken(username string) ([]Token, error)
 	RevokeToken(username string, kind TokenKind, index int) error
+
+	// Passkey(WebAuthn)
+	BeginPasskeyRegistration(site *url.URL, username string) (*protocol.CredentialCreation, *PasskeyRegistration, error)
+	FinishPasskeyRegistration(site *url.URL, reg *PasskeyRegistration, label string, req *http.Request) (*User, *Token, error)
+	BeginPasskeyLogin(site *url.URL) (*protocol.CredentialAssertion, []byte, error)
+	FinishPasskeyLogin(site *url.URL, sessionData []byte, req *http.Request) (*User, error)
+	ListPasskey(username string) ([]Token, error)
+	RevokePasskey(username string, index int) error
 
 	// Group
 	CreateGroup(name string) (*Group, error)

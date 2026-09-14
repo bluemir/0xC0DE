@@ -192,9 +192,12 @@ type PasskeyResponse struct {
 }
 
 func toPasskeyResponse(token *auth.Token) PasskeyResponse {
-	return PasskeyResponse{
+	res := PasskeyResponse{
 		Index:     token.Index,
-		Label:     token.Label,
 		CreatedAt: token.CreatedAt,
 	}
+	if token.Secret.Passkey != nil {
+		res.Label = token.Secret.Passkey.Label
+	}
+	return res
 }

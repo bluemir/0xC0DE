@@ -175,7 +175,7 @@ func TestPasskeyRegisterAndLogin(t *testing.T) {
 		device.create(t, rpID, origin, creation.Response.Challenge.String()))
 	require.NoError(t, err)
 	assert.Equal(t, "alice", user.Name)
-	assert.Equal(t, "my laptop", token.Label)
+	assert.Equal(t, "my laptop", token.Secret.Passkey.Label)
 
 	// password 는 없으므로 ID/PW 로그인은 실패해야 한다
 	_, err = m.Default("alice", "")
