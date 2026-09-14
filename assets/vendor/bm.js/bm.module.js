@@ -99,7 +99,10 @@ export async function request(method, url, options = {}) {
 				};
 
 				let contentType = req.getResponseHeader("Content-Type") || "";
-				if(contentType.includes("application/json")) {
+				// Treat the +json structured syntax suffix(RFC 6839) as JSON too,
+				// so responses like application/problem+json get parsed.
+				let mimeType = contentType.split(";")[0].trim();
+				if(mimeType === "application/json" || mimeType.endsWith("+json")) {
 					result.json = JSON.parse(result.text);
 				}
 

@@ -21,10 +21,8 @@ export function errorMessage(e) {
 	}
 
 	// 서버는 RFC 9457 problem+json 으로 응답한다.
-	try {
-		let problem = JSON.parse(e.text);
-		return problem.detail || problem.title;
-	} catch {
-		return e.text || `error: ${e.statusCode}`;
+	if (e.json) {
+		return e.json.detail || e.json.title;
 	}
+	return e.text || `error: ${e.statusCode}`;
 }
