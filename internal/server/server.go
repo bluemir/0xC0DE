@@ -15,6 +15,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/bluemir/0xC0DE/assets"
+	"github.com/bluemir/0xC0DE/internal/mail"
 	"github.com/bluemir/0xC0DE/internal/server/backend"
 	"github.com/bluemir/0xC0DE/internal/server/controller"
 )
@@ -32,10 +33,12 @@ type Args struct {
 
 type Config struct {
 	Backend backend.Config
+	Mail    mail.Config
 }
 
 type Server struct {
 	backends *backend.Backends
+	mail     *mail.Sender
 }
 
 func Run(ctx context.Context, args *Args) error {
@@ -71,6 +74,7 @@ func Run(ctx context.Context, args *Args) error {
 	server := &Server{
 		// backends
 		backends: bs,
+		mail:     mail.New(&conf.Mail),
 	}
 
 	if !logrus.IsLevelEnabled(logrus.DebugLevel) {
