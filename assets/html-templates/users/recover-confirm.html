@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>0xC0DE - Recover Account</title>
+		{{ template "snippet/header.html" . }}
+	</head>
+	<body layout="one-page">
+		<header>
+			<section row>
+				<global-navigation-bar></global-navigation-bar>
+			</section>
+		</header>
+		<main>
+			<section row>
+				<h1>Recover Account</h1>
+				<p><output name="username"></output> 계정의 로그인 수단을 다시 설정합니다.</p>
+
+				<h2>새 비밀번호</h2>
+				<form>
+					<label>Password</label>
+					<section>
+						<input name="password" type="password" autocomplete="new-password" required />
+					</section>
+					<label>Password Confirm</label>
+					<section>
+						<input name="confirm" type="password" autocomplete="new-password" required />
+					</section>
+					<div>
+						<button enhanced>비밀번호 설정</button>
+					</div>
+				</form>
+
+				<h2>또는 passkey 등록</h2>
+				<p>이 기기에 passkey 를 만들어 비밀번호 없이 로그인합니다.</p>
+				<passkey-register redirect="/">Register with Passkey</passkey-register>
+
+				<p role="alert" hidden></p>
+			</section>
+		</main>
+		<script type="module">
+			import * as $ from "bm.js/bm.module.js";
+
+			let alert = $.get(`p[role="alert"]`);
+
+			// 복구 세션이 누구의 것인지 보여준다. 끊겼으면 처음부터 다시 받아야 한다.
+			try {
+				let res = await $.request("GET", "/api/v1/recover/session");
+
+				$.get(`output[name="username"]`).textContent = res.json.username;
+			} catch(e) {
+				console.error(e);
+
+				location.href = "/users/recover";
+			}
+
+			$.get("form").on("submit", async evt => {
+				evt.preventDefault();
+
+				alert.hidden = true;
+
+				try {
+					let fd = new FormData(evt.target);
+
+					if (fd.get("confirm") != fd.get("password")) {
+						throw new Error("비밀번호가 서로 다릅니다");
+					}
+
+					await $.request("POST", "/api/v1/recover/password", {body: fd});
+
+					location.href = "/";
+				} catch(e) {
+					console.error(e);
+
+					alert.textContent = e.message || "비밀번호를 설정하지 못했습니다";
+					alert.hidden = false;
+				}
+			});
+		</script>
+	</body>
+</html>

@@ -27,6 +27,7 @@
 		- 지금은 경고 로그만 남기고 로그인은 통과시킨다
 	- [ ] 마지막 로그인 수단을 지우지 못하게 막기
 		- passkey 로만 가입한 계정이 마지막 passkey 를 지우면 로그인할 수 없다
+		- 이메일을 등록해 뒀다면 계정 복구로 되살릴 수 있다 ([ADR-0006](adr/ADR-0006-account-recovery.md))
 - oauth(social login)
 	- [x] Token 에 소셜 로그인 자리 만들기
 		- [ADR-0003](adr/ADR-0003-oauth-social-login-model.md)
@@ -43,6 +44,35 @@
 		- passkey 는 `FinishPasskeyRegistration` 이 정한다. 그에 해당하는 자리가 없다
 		- 이메일이 같은 기존 계정에 자동으로 붙이면 계정 탈취가 된다
 	- [ ] handler 와 route, UI
+- mail(SMTP)
+	- [x] `internal/mail` 패키지와 `Send` 추가
+		- [ADR-0005](adr/ADR-0005-smtp-without-library.md)
+	- [x] `Sender` 를 handler 에서 쓸 수 있게 injector 로 넘기기
+	- [x] 메일 문구를 템플릿 파일로 분리
+		- `internal/server/handler/mail-templates/` 에 두고 `//go:embed` 한다
+	- [ ] 라이브러리(`wneessen/go-mail`) 도입 조건에 닿았는지 확인
+		- 첨부, DKIM, 465/OAuth2 인증, 대량 발송, 발송 큐 중 하나라도 생기면
+		- 조건과 근거는 [ADR-0005](adr/ADR-0005-smtp-without-library.md) §5
+- 계정 복구
+	- [x] `User.Email` 과 등록 경로(가입 폼, `PATCH /api/v1/users/me`)
+		- [ADR-0006](adr/ADR-0006-account-recovery.md)
+	- [x] `auth.Recovery` 모델과 발급·검증·폐기
+	- [x] 복구 세션과 비밀번호 재설정, 복구 중 passkey 등록
+	- [ ] 이메일 확인(verification) 절차
+		- 지금은 사용자가 적은 주소를 그대로 믿는다. 오타면 남에게 간다
+		- `EmailVerifiedAt` 을 두고 확인된 주소만 복구에 쓸지 정한다
+	- [ ] 복구 요청에 IP 기준 rate limit
+		- 계정당 15분 간격만 있다. 모르는 주소로 퍼붓는 것은 안 막는다
+	- [ ] 복구 완료 시 access-key 를 폐기할지 정하기
+		- 탈취당한 계정이면 공격자가 발급해 둔 키가 살아남는다
+		- 지우면 정상 사용자의 자동화가 조용히 끊긴다
+	- [ ] 이메일 없는 계정에 복구 수단이 없다는 것을 알려주기
+		- passkey 로만 가입하면 이메일을 적을 자리를 거치지 않는다
+	- [ ] 만료된 `Recovery` 행 청소
+		- 사용자당 한 행이라 쌓이지는 않지만, 탈퇴한 계정의 행은 남는다
+- [ ] `util.RandomString` 이 `math/rand` 라 예측할 수 있다
+	- `GenerateAccessKey` 의 비밀이 여기서 나온다
+	- 복구 비밀은 `crypto/rand` 를 따로 썼다 ([ADR-0006](adr/ADR-0006-account-recovery.md))
 - [ ] `docs/roadmap.md` 작성
 - [ ] handler 의 `validate:` 태그가 실제로 검증되지 않는다
 	- gin 기본 validator 는 `binding:` 태그를 본다

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>0xC0DE - Recover Account</title>
+		{{ template "snippet/header.html" . }}
+	</head>
+	<body layout="one-page">
+		<header>
+			<section row>
+				<global-navigation-bar></global-navigation-bar>
+			</section>
+		</header>
+		<main>
+			<section row>
+				<h1>Recover Account</h1>
+				<p>가입할 때 등록한 이메일 주소를 적으면 복구 링크를 보냅니다.</p>
+				<form>
+					<label>Email</label>
+					<section>
+						<input name="email" type="email" autocomplete="email" required />
+					</section>
+					<div>
+						<button enhanced>복구 메일 보내기</button>
+					</div>
+				</form>
+				<p role="status" hidden></p>
+			</section>
+		</main>
+		<script type="module">
+			import * as $ from "bm.js/bm.module.js";
+
+			let status = $.get(`p[role="status"]`);
+
+			$.get("form").on("submit", async evt => {
+				evt.preventDefault();
+
+				// 등록된 주소인지 여부는 서버가 알려주지 않는다. 응답을 그대로 보여준다.
+				try {
+					let res = await $.request("POST", "/api/v1/recover", {
+						body: new FormData(evt.target),
+					});
+
+					status.textContent = res.json.message;
+				} catch(e) {
+					console.error(e);
+
+					status.textContent = "요청을 보내지 못했습니다. 잠시 뒤에 다시 시도하세요.";
+				}
+
+				status.hidden = false;
+			});
+		</script>
+	</body>
+</html>

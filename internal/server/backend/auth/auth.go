@@ -27,7 +27,9 @@ type IManager interface {
 	// User
 	CreateUser(username string, opts ...CreateUserOption) (*User, error)
 	GetUser(username string) (*User, error)
+	FindUserByEmail(email string) (*User, error)
 	ListUser(opts ...meta.ListOptionFn) ([]User, error)
+	UpdateEmail(username string, email string) error
 	UpdateUser(user *User) error
 	DeleteUser(username string) error
 
@@ -38,6 +40,11 @@ type IManager interface {
 	GetToken(username string, kind TokenKind, index int) (*Token, error)
 	ListToken(username string) ([]Token, error)
 	RevokeToken(username string, kind TokenKind, index int) error
+
+	// Recovery(계정 복구)
+	IssueRecovery(username string) (string, error)
+	ValidateRecovery(username string, unhashedSecret string) (*User, error)
+	RevokeRecovery(username string) error
 
 	// Passkey(WebAuthn)
 	BeginPasskeyRegistration(site *url.URL, username string) (*protocol.CredentialCreation, *PasskeyRegistration, error)
@@ -95,6 +102,7 @@ func New(db *gorm.DB, conf *Config) (*Manager, error) {
 		&Group{},
 		&ServiceAccount{},
 		&Token{},
+		&Recovery{},
 		&Role{},
 		&Assign{},
 	); err != nil {

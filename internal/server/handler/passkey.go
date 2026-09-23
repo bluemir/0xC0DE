@@ -23,7 +23,8 @@ func init() {
 
 // PasskeyRegisterBegin 은 passkey 등록 ceremony 를 시작한다.
 // 로그인한 사용자는 자기 계정에 passkey 를 추가하고,
-// 로그인하지 않았으면 아직 없는 username 으로 새로 가입한다.
+// 복구 세션이면 복구 중인 계정에 추가하고,
+// 둘 다 아니면 아직 없는 username 으로 새로 가입한다.
 //
 // @Router /api/v1/passkeys/register/begin [post]
 func PasskeyRegisterBegin(c *gin.Context) error {
@@ -31,6 +32,9 @@ func PasskeyRegisterBegin(c *gin.Context) error {
 
 	if user, err := me(c); err == nil {
 		username = user.Name
+	} else if recovery, ok := recoverySession(c); ok {
+		// 메일로 계정을 증명했으므로 기존 계정에 붙이는 것을 허용한다
+		username = recovery.Username
 	} else {
 		// gin 기본 validator 는 binding 태그를 본다. 검증 실패는 400 으로 내려간다.
 		req := struct {
@@ -84,6 +88,16 @@ func PasskeyRegisterFinish(c *gin.Context) error {
 		location.Get(c), registration, c.Query("label"), c.Request)
 	if err != nil {
 		return err
+	}
+
+	// 복구 중이었다면 여기서 복구 비밀을 폐기한다. 링크는 한 번만 쓰인다.
+	if recovery, ok := recoverySession(c); ok && recovery.Username == user.Name {
+		if _, err := finishRecovery(c, user.Name); err != nil {
+			return err
+		}
+
+		c.JSON(http.StatusOK, toPasskeyResponse(token))
+		return nil
 	}
 
 	// passkey 로 가입한 경우 바로 로그인 상태로 만든다.

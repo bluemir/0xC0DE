@@ -10,6 +10,7 @@ dev-run: | runtime/tools/go ## Run dev server. If detect file change, automatica
 		--include "package.json" \
 		--include "yarn.lock" \
 		--include "assets/**" \
+		--include "internal/**/mail-templates/**" \
 		--include "api/proto/**" \
 		--include "Makefile" \
 		--include "scripts/makefile.d/*.mk" \

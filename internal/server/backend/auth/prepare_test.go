@@ -12,6 +12,13 @@ import (
 )
 
 func newManager() (*auth.Manager, error) {
+	m, _, err := newManagerWithDB()
+	return m, err
+}
+
+// newManagerWithDB 는 db 도 같이 돌려준다.
+// 만료나 재발송 간격처럼 시각에 걸린 동작을 시험하려면 저장된 값을 직접 되돌려야 한다.
+func newManagerWithDB() (*auth.Manager, *gorm.DB, error) {
 	logrus.SetLevel(logrus.TraceLevel)
 
 	logrus.SetFormatter(&logrus.TextFormatter{DisableQuote: true, CallerPrettyfier: func(f *runtime.Frame) (string, string) {
@@ -22,18 +29,18 @@ func newManager() (*auth.Manager, error) {
 
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	sqlDB, err := db.DB()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	sqlDB.SetMaxOpenConns(1)
 
 	m, err := auth.New(db, &auth.Config{})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return m, nil
+	return m, db, nil
 }

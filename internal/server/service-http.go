@@ -59,7 +59,7 @@ func (server *Server) RunServiceHTTPServer(ctx context.Context, bind string, tls
 		app.Use(location.Default(), fixURL)
 		app.Use(cache.CacheBusting)
 
-		app.Use(injector.Inject(server.backends))
+		app.Use(injector.Inject(server.backends, server.mail))
 
 		// prometheus for monitoring
 		app.Use(prom.Metrics())

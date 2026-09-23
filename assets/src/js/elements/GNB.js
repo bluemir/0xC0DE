@@ -33,6 +33,7 @@ class GlobalNavigationBar extends HTMLElement {
 					<a href="/admin"><c-icon kind="construction" /></a>
 					<a href="/users/profile">Profile</a>
 					<a href="/users/passkeys">Passkeys</a>
+					<a href="/users/settings">Settings</a>
 					<a href="/users/logout" >Logout</a>
 				` : html`
 					<a href="/users/login">Login</a>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>0xC0DE - Settings</title>
+		{{ template "snippet/header.html" . }}
+	</head>
+	<body layout="one-page">
+		<header>
+			<section row>
+				<global-navigation-bar></global-navigation-bar>
+			</section>
+		</header>
+		<main>
+			<section row>
+				<h1>Settings</h1>
+
+				<h2>Email</h2>
+				<p>계정 복구 메일을 받을 주소입니다. 비워두면 복구할 수 없습니다.</p>
+				<form>
+					<label>Email</label>
+					<section>
+						<input name="email" type="email" autocomplete="email" />
+					</section>
+					<div>
+						<button enhanced>저장</button>
+					</div>
+				</form>
+				<p role="status" hidden></p>
+			</section>
+		</main>
+		<script type="module">
+			import * as $ from "bm.js/bm.module.js";
+
+			let status = $.get(`p[role="status"]`);
+			let input = $.get(`input[name="email"]`);
+
+			try {
+				let res = await $.request("GET", "/api/v1/users/me");
+
+				input.value = res.json.email || "";
+			} catch(e) {
+				console.error(e);
+
+				location.href = "/users/login";
+			}
+
+			$.get("form").on("submit", async evt => {
+				evt.preventDefault();
+
+				try {
+					await $.request("PATCH", "/api/v1/users/me", {
+						body: new FormData(evt.target),
+					});
+
+					status.textContent = "저장했습니다.";
+				} catch(e) {
+					console.error(e);
+
+					status.textContent = "저장하지 못했습니다.";
+				}
+
+				status.hidden = false;
+			});
+		</script>
+	</body>
+</html>

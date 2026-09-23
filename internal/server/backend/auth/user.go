@@ -4,13 +4,18 @@ import (
 	"github.com/bluemir/functional/v2"
 	"github.com/cockroachdb/errors"
 	"github.com/rs/xid"
+	"gorm.io/gorm"
 
 	"github.com/bluemir/0xC0DE/internal/server/backend/meta"
 )
 
 type User struct {
 	Name string `gorm:"primaryKey;size:256" json:"name" expr:"name"`
-	Salt string `json:"-"`
+	// Email 은 계정 복구 메일을 받을 주소다. 비어 있을 수 있다.
+	// 확인(verification) 절차가 없으므로 사용자가 적은 값을 그대로 믿는다.
+	// 같은 주소를 여러 계정이 쓸 수 있어 uniqueIndex 가 아니다.
+	Email string `gorm:"index;size:256" json:"email" expr:"email"`
+	Salt  string `json:"-"`
 	// Handle 은 WebAuthn user handle 이다.
 	// authenticator 에 노출되는 값이라 사용자 이름과 분리한다.
 	Handle []byte  `gorm:"uniqueIndex" json:"-"`
@@ -39,6 +44,12 @@ type CreateUserOption func(u *User)
 func withHandle(handle []byte) func(*User) {
 	return func(u *User) {
 		u.Handle = handle
+	}
+}
+
+func WithEmail(email string) func(*User) {
+	return func(u *User) {
+		u.Email = email
 	}
 }
 
@@ -80,6 +91,35 @@ func (m *Manager) GetUser(username string) (*User, error) {
 	}
 	return &u, nil
 }
+
+// FindUserByEmail 은 이메일로 사용자를 찾는다.
+// 같은 주소를 쓰는 계정이 여럿이면 가장 먼저 만들어진 것을 돌려준다.
+func (m *Manager) FindUserByEmail(email string) (*User, error) {
+	u := User{}
+
+	if email == "" {
+		return nil, errors.WithStack(gorm.ErrRecordNotFound)
+	}
+
+	if err := m.db.Preload("Groups").Where(User{Email: email}).Take(&u).Error; err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return &u, nil
+}
+
+// UpdateEmail 은 이메일만 바꾼다.
+// UpdateUser(Save) 는 구조체 전체를 덮어써서 Groups 나 Labels 까지 건드린다.
+func (m *Manager) UpdateEmail(username string, email string) error {
+	result := m.db.Model(&User{}).Where(User{Name: username}).Update("email", email)
+	if result.Error != nil {
+		return errors.WithStack(result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return errors.WithStack(gorm.ErrRecordNotFound)
+	}
+	return nil
+}
+
 func (m *Manager) ListUser(opts ...meta.ListOptionFn) ([]User, error) {
 	opt := meta.ListOption{}
 

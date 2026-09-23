@@ -62,13 +62,16 @@ func Register(c *gin.Context) error {
 	req := struct {
 		Username string `form:"username"     validate:"required,min=4"`
 		Password string `form:"password"     validate:"required,min=4"`
+		// 계정 복구 메일을 받을 주소다. 비워도 가입된다.
+		Email string `form:"email" json:"email" binding:"omitempty,email"`
 	}{}
 
 	if err := c.ShouldBind(&req); err != nil {
 		return err
 	}
 
-	u, _, err := backends(c).Auth.Register(req.Username, req.Password, auth.WithGroup("user"))
+	u, _, err := backends(c).Auth.Register(req.Username, req.Password,
+		auth.WithGroup("user"), auth.WithEmail(req.Email))
 	if err != nil {
 		return err
 	}
@@ -140,6 +143,44 @@ func me(c *gin.Context) (*auth.User, error) {
 	}
 	c.Set(ContextKeyUser, user)
 	return user, nil
+}
+
+// UpdateMe 는 로그인한 사용자의 이메일을 바꾼다.
+// 확인(verification) 절차가 없으므로 적은 값을 그대로 저장한다.
+//
+// @Router /api/v1/users/me [patch]
+func UpdateMe(c *gin.Context) error {
+	user, err := me(c)
+	if err != nil {
+		return err
+	}
+
+	req := struct {
+		Email string `form:"email" json:"email" binding:"omitempty,email"`
+	}{}
+	if err := c.ShouldBind(&req); err != nil {
+		return err
+	}
+
+	if err := backends(c).Auth.UpdateEmail(user.Name, req.Email); err != nil {
+		return err
+	}
+
+	// 세션에 사용자 구조체가 통째로 들어 있어 같이 갱신하지 않으면 옛 값이 남는다.
+	updated, err := backends(c).Auth.GetUser(user.Name)
+	if err != nil {
+		return err
+	}
+
+	session := sessions.Default(c)
+	session.Set(SessionKeyUser, updated)
+	if err := session.Save(); err != nil {
+		return err
+	}
+	c.Set(ContextKeyUser, updated)
+
+	c.JSON(http.StatusOK, updated)
+	return nil
 }
 
 func Me(c *gin.Context) error {
