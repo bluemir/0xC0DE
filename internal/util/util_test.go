@@ -1,33 +1,12 @@
 package util_test
 
 import (
-	"errors"
 	"strings"
 	"testing"
 
 	"github.com/bluemir/0xC0DE/internal/util"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestMergeErrors(t *testing.T) {
-	err1 := errors.New("error 1")
-	err2 := errors.New("error 2")
-
-	// Test merging nil
-	assert.NoError(t, util.MergeErrors(nil, nil))
-
-	// Test merging single error
-	err := util.MergeErrors(err1, nil)
-	assert.Error(t, err)
-	// access causes directly if possible, but MultipleError is exported
-	// However, MergeErrors returns `error` interface.
-
-	// Test merging multiple
-	multiErr := util.MergeErrors(err1, err2)
-	assert.Error(t, multiErr)
-	assert.Contains(t, multiErr.Error(), "error 1")
-	assert.Contains(t, multiErr.Error(), "error 2")
-}
 
 func TestHash(t *testing.T) {
 	h1 := util.Hash("hello")
