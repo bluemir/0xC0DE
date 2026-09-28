@@ -1,6 +1,8 @@
 module github.com/bluemir/make-select
 
-go 1.26.3
+go 1.26.0
+
+toolchain go1.27.1
 
 require (
 	github.com/charmbracelet/bubbletea v1.3.10
