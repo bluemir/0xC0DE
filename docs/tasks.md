@@ -70,11 +70,11 @@
 		- passkey 로만 가입하면 이메일을 적을 자리를 거치지 않는다
 	- [ ] 만료된 `Recovery` 행 청소
 		- 사용자당 한 행이라 쌓이지는 않지만, 탈퇴한 계정의 행은 남는다
-- [ ] `util.RandomString` 이 `math/rand` 라 예측할 수 있다
+- [x] `util.RandomString` 이 `math/rand` 라 예측할 수 있다
 	- `GenerateAccessKey` 의 비밀이 여기서 나온다
 	- 복구 비밀은 `crypto/rand` 를 따로 썼다 ([ADR-0006](adr/ADR-0006-account-recovery.md))
 - [ ] `docs/roadmap.md` 작성
-- [ ] handler 의 `validate:` 태그가 실제로 검증되지 않는다
+- [x] handler 의 `validate:` 태그가 실제로 검증되지 않는다
 	- gin 기본 validator 는 `binding:` 태그를 본다
 	- `binding.Validator` 에 `SetTagName("validate")` 를 하거나 태그를 `binding:` 으로 통일
 	- `handler.Register` 는 지금 빈 username 도 통과한다

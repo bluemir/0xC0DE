@@ -29,7 +29,7 @@ backend:
 	err := os.WriteFile(yamlPath, []byte(yamlContent), 0644)
 	require.NoError(t, err)
 
-	conf, err := readCofigFile(yamlPath)
+	conf, err := readConfigFile(yamlPath)
 	assert.NoError(t, err)
 	assert.Equal(t, "test-salt", conf.Backend.Auth.Salt)
 
@@ -47,7 +47,7 @@ backend:
 	err = os.WriteFile(hjsonPath, []byte(hjsonContent), 0644)
 	require.NoError(t, err)
 
-	conf, err = readCofigFile(hjsonPath)
+	conf, err = readConfigFile(hjsonPath)
 	assert.NoError(t, err)
 	assert.Equal(t, "test-salt-hjson", conf.Backend.Auth.Salt)
 
@@ -56,7 +56,7 @@ backend:
 	err = os.WriteFile(unknownPath, []byte(""), 0644)
 	require.NoError(t, err)
 
-	_, err = readCofigFile(unknownPath)
+	_, err = readConfigFile(unknownPath)
 	assert.Error(t, err)
 }
 

@@ -35,7 +35,10 @@ func Run() error {
 	app.Flag("log-format", "Log format").
 		StringVar(&conf.logFormat)
 	app.PreAction(func(*kingpin.ParseContext) error {
-		level := logrus.Level(conf.logLevel) + defaultLogLevel
+		level := defaultLogLevel + logrus.Level(conf.logLevel) // #nosec G115 - CLI counter is non-negative
+		if level > logrus.TraceLevel {
+			level = logrus.TraceLevel
+		}
 		logrus.SetOutput(os.Stderr)
 		logrus.SetLevel(level)
 		logrus.SetReportCaller(true)

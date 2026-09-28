@@ -2,7 +2,6 @@ package auth
 
 import (
 	"github.com/cockroachdb/errors"
-	"gorm.io/gorm"
 )
 
 type Assign struct {
@@ -46,16 +45,18 @@ func (m *Manager) ListAssignedRole(subject Subject) ([]Role, error) {
 		})
 	}
 
-	roles := []Role{}
+	if len(assigns) == 0 {
+		return []Role{}, nil
+	}
+
+	roleNames := make([]string, 0, len(assigns))
 	for _, assign := range assigns {
-		role := Role{}
-		if err := m.db.Where(Role{Name: assign.Role}).Take(&role).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				continue
-			}
-			return nil, errors.WithStack(err)
-		}
-		roles = append(roles, role)
+		roleNames = append(roleNames, assign.Role)
+	}
+
+	roles := []Role{}
+	if err := m.db.Where("name IN ?", roleNames).Find(&roles).Error; err != nil {
+		return nil, errors.WithStack(err)
 	}
 
 	return roles, nil

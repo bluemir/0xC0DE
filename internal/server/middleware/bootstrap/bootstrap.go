@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -14,47 +15,66 @@ import (
 // register admin user for initialize or other purpose.
 
 var (
-	bootstrapToken = "" // QUESTION need lock?
+	tokenMutex     sync.RWMutex
+	bootstrapToken = ""
+	expireTimer    *time.Timer
 )
 
-func IssueBootstrapToken(c *gin.Context) {
+func IssueBootstrapToken(ctx *gin.Context) {
 	// TODO if has one or more admin, reject bootstraping
-	bootstrapToken = util.RandomString(32)
+	tokenMutex.Lock()
+	defer tokenMutex.Unlock()
 
-	go time.AfterFunc(5*time.Minute, func() {
+	if expireTimer != nil {
+		expireTimer.Stop()
+	}
+
+	bootstrapToken = util.RandomString(32)
+	expireTimer = time.AfterFunc(5*time.Minute, func() {
+		tokenMutex.Lock()
+		defer tokenMutex.Unlock()
 		bootstrapToken = ""
 	})
 
 	logrus.Warnf("Bootstrap Token Issued. Token: '%s'", bootstrapToken)
 }
-func CheckBootstrapToken(c *gin.Context) {
+
+func CheckBootstrapToken(ctx *gin.Context) {
 	req := struct {
 		Token string `form:"token" json:"token"`
 	}{}
 
-	if err := c.ShouldBind(&req); err != nil {
-		c.Error(err)
-		c.Abort()
+	if err := ctx.ShouldBind(&req); err != nil {
+		ctx.Error(err)
+		ctx.Abort()
 		return
 	}
 
-	if bootstrapToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "bootstrap token expired"})
-		c.Abort()
+	tokenMutex.RLock()
+	currentToken := bootstrapToken
+	tokenMutex.RUnlock()
+
+	if currentToken == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "bootstrap token expired"})
+		ctx.Abort()
 		return
 	}
 
-	if req.Token != bootstrapToken {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "bootstrap token not matched"})
-		c.Abort()
+	if req.Token != currentToken {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "bootstrap token not matched"})
+		ctx.Abort()
 		return
 	}
 
 	// continue next handler
-	c.Next()
+	ctx.Next()
 
-	if c.Writer.Status() == 200 {
-		// reset token
+	if ctx.Writer.Status() == http.StatusOK {
+		tokenMutex.Lock()
 		bootstrapToken = ""
+		if expireTimer != nil {
+			expireTimer.Stop()
+		}
+		tokenMutex.Unlock()
 	}
 }

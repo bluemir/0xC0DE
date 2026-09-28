@@ -46,7 +46,7 @@ func Run(ctx context.Context, args *Args) error {
 		return err
 	}
 
-	conf, err := readCofigFile(args.ConfigFilePath)
+	conf, err := readConfigFile(args.ConfigFilePath)
 	if err != nil {
 		return errors.Wrapf(err, "config file not exist. path: %s", args.ConfigFilePath)
 	}
@@ -162,10 +162,10 @@ func (s *Server) RunController(ctx context.Context) func() error {
 	}
 }
 
-func readCofigFile(configFilePath string) (*Config, error) {
+func readConfigFile(configFilePath string) (*Config, error) {
 	conf := Config{}
 
-	buf, err := os.ReadFile(configFilePath)
+	buf, err := os.ReadFile(filepath.Clean(configFilePath))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

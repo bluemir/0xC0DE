@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/pprof"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -51,8 +52,9 @@ func (server *Server) RunAdminHTTPServer(ctx context.Context, bind string) func(
 		app.Any("/debug/pprof/trace", gin.WrapF(pprof.Trace))
 
 		return graceful.Run(ctx, &http.Server{
-			Addr:    bind,
-			Handler: app,
+			Addr:              bind,
+			Handler:           app,
+			ReadHeaderTimeout: 1 * time.Minute,
 		})
 	}
 }

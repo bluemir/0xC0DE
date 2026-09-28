@@ -60,8 +60,8 @@ func Can(verb auth.Verb, r ResourceGetter) gin.HandlerFunc {
 
 func Register(c *gin.Context) error {
 	req := struct {
-		Username string `form:"username"     validate:"required,min=4"`
-		Password string `form:"password"     validate:"required,min=4"`
+		Username string `form:"username"     binding:"required,min=4"`
+		Password string `form:"password"     binding:"required,min=4"`
 		// 계정 복구 메일을 받을 주소다. 비워도 가입된다.
 		Email string `form:"email" json:"email" binding:"omitempty,email"`
 	}{}

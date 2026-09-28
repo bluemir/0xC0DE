@@ -103,7 +103,7 @@ func (server *Server) routes(app gin.IRouter, noRoute func(...gin.HandlerFunc)) 
 		app.GET("/admin/iam/roles", html("admin/iam/roles.html"))
 
 		// bootstrap
-		app.GET("/bootstarp", bootstrap.IssueBootstrapToken, html("bootstrap.html"))
+		app.GET("/bootstrap", bootstrap.IssueBootstrapToken, html("bootstrap.html"))
 
 		// or for SPA(single page application), client side routing
 		// app.Use(AbortIfHasPrefix("/api"), server.static("/index.html"))
@@ -155,8 +155,17 @@ type ServerSentEventErrorData struct {
 func sse(fn func(c *gin.Context) error) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rc := http.NewResponseController(c.Writer)
-		rc.SetWriteDeadline(time.Time{})
-		rc.SetReadDeadline(time.Time{})
+
+		if err := rc.SetWriteDeadline(time.Time{}); err != nil {
+			c.Error(err)
+			c.Abort()
+			return
+		}
+		if err := rc.SetReadDeadline(time.Time{}); err != nil {
+			c.Error(err)
+			c.Abort()
+			return
+		}
 
 		if err := fn(c); err != nil {
 			c.SSEvent("error", ServerSentEventErrorData{
