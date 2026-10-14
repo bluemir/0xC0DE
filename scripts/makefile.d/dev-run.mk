@@ -1,6 +1,6 @@
 ##@ Run
 
-run: build/$(APP_NAME) assets/src/js/index.js ## Run web app
+run: build/$(APP_NAME) ## Run web app
 	$< -vvv server --config runtime/config.hjson #--cert runtime/certs/server.crt --key runtime/certs/server.key
 dev-run: | runtime/tools/go ## Run dev server. If detect file change, automatically rebuild&restart server
 	go tool watcher \
