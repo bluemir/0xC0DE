@@ -19,8 +19,12 @@
 	- [ ] conditional UI(autofill)로 passkey 제안하기
 		- 지금은 "Login with Passkey" 버튼을 눌러야 시작한다
 		- username 필드 `autocomplete="username webauthn"` + `mediation: "conditional"`
-	- [ ] passkey 마지막 사용 시각 기록
-		- 목록에서 어느 기기를 지워도 되는지 판단할 근거가 없다
+	- [x] passkey 마지막 사용 시각 기록
+	- [ ] access-key 마지막 사용 시각 기록
+		- passkey 는 `PasskeySecret.LastUsedAt` 에 둔다. access-key 는 자리가 없다
+		- `AccessKeySecret` 에 또 두면 두 벌이 된다. `Token` 컬럼으로 빼는 쪽이 맞는지 같이 정한다
+		- 요청마다 쓰여서 그대로 넣으면 요청당 UPDATE 가 된다
+		- 간격을 두고 쓰거나(마지막 값이 N분보다 오래됐을 때만), 날짜 단위로 뭉개는 방법을 정한다
 	- [ ] AAGUID로 authenticator 이름 보여주기
 		- FIDO MDS 또는 aaguid 목록이 필요하다
 	- [ ] sign counter 역행(CloneWarning) 시 처리 방침 정하기
@@ -70,14 +74,20 @@
 		- passkey 로만 가입하면 이메일을 적을 자리를 거치지 않는다
 	- [ ] 만료된 `Recovery` 행 청소
 		- 사용자당 한 행이라 쌓이지는 않지만, 탈퇴한 계정의 행은 남는다
+- 아이콘 폰트
+	- [ ] SVG 아이콘을 웹폰트로 묶는 툴 만들기
+		- 조사와 방향은 [go-svg-icon-font](references/go-svg-icon-font.md)
+		- `scripts/tools/svg-font/` 에 자체 `go.mod` 로 둔다 (`make-select` 와 같은 형태)
+		- 글리프 조립은 `seehuhn.de/go/sfnt`, 매핑은 PUA codepoint + CSS 클래스
+		- 입력은 fill path 만 받고 stroke 가 있으면 에러를 낸다
+	- [ ] 생성한 폰트를 `assets/bundle/fonts/fonts.css` 로 합치기
+		- 지금은 `assets/vendor/fonts.css` 가 npm 패키지를 `@import` 하고 esbuild 가 번들한다
+		- `scripts/makefile.d/web.mk` 에 규칙을 추가하고 `scripts/makefile.d/dev-run.mk` watcher 에도 넣는다
+	- [ ] `c-icon` 에 자체 아이콘 분기 추가
+		- 지금은 Material Symbols 와 FontAwesome(`fa` 속성) 두 갈래다
 - [x] `util.RandomString` 이 `math/rand` 라 예측할 수 있다
 	- `GenerateAccessKey` 의 비밀이 여기서 나온다
 	- 복구 비밀은 `crypto/rand` 를 따로 썼다 ([ADR-0006](adr/ADR-0006-account-recovery.md))
-- [ ] `docs/roadmap.md` 작성
-- [x] handler 의 `validate:` 태그가 실제로 검증되지 않는다
-	- gin 기본 validator 는 `binding:` 태그를 본다
-	- `binding.Validator` 에 `SetTagName("validate")` 를 하거나 태그를 `binding:` 으로 통일
-	- `handler.Register` 는 지금 빈 username 도 통과한다
 - [ ] 세션 쿠키가 서명만 되고 암호화되지 않는다
 	- `cookie.NewStore` 에 block key 를 주지 않았다
 - [ ] gorm 에 넘어가지 않는 죽은 `serializer:gob` 태그 정리
