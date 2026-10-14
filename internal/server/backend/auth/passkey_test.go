@@ -13,10 +13,13 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
 )
 
 // authenticator 는 테스트용 소프트웨어 authenticator 다.
@@ -260,4 +263,69 @@ func TestPasskeyRegisterForExistingPasswordUser(t *testing.T) {
 		device.get(t, "localhost", "http://localhost:8080", assertion.Response.Challenge.String(), user.Handle))
 	require.NoError(t, err)
 	assert.Equal(t, "bob", loggedIn.Name)
+}
+
+func TestPasskeyLastUsedAt(t *testing.T) {
+	m, db, err := newManagerWithDB()
+	require.NoError(t, err)
+
+	site, err := url.Parse("http://localhost:8080")
+	require.NoError(t, err)
+
+	const (
+		rpID   = "localhost"
+		origin = "http://localhost:8080"
+	)
+
+	device := newAuthenticator(t)
+
+	creation, registration, err := m.BeginPasskeyRegistration(site, "carol")
+	require.NoError(t, err)
+
+	user, _, err := m.FinishPasskeyRegistration(site, registration, "my laptop",
+		device.create(t, rpID, origin, creation.Response.Challenge.String()))
+	require.NoError(t, err)
+
+	// 등록만 해서는 아직 로그인에 쓰인 적이 없다
+	passkeys, err := m.ListPasskey("carol")
+	require.NoError(t, err)
+	require.Len(t, passkeys, 1)
+	assert.Nil(t, passkeys[0].Secret.Passkey.LastUsedAt)
+
+	login := func() {
+		assertion, sessionData, err := m.BeginPasskeyLogin(site)
+		require.NoError(t, err)
+
+		_, err = m.FinishPasskeyLogin(site, sessionData,
+			device.get(t, rpID, origin, assertion.Response.Challenge.String(), user.Handle))
+		require.NoError(t, err)
+	}
+
+	login()
+
+	passkeys, err = m.ListPasskey("carol")
+	require.NoError(t, err)
+	require.Len(t, passkeys, 1)
+	require.NotNil(t, passkeys[0].Secret.Passkey.LastUsedAt)
+	assert.WithinDuration(t, time.Now(), *passkeys[0].Secret.Passkey.LastUsedAt, time.Minute)
+
+	// 다음 로그인이 값을 덮는지 본다.
+	// 두 번을 연달아 부르면 시각이 같게 나올 수 있어 저장된 값을 과거로 돌려 놓는다.
+	stale := time.Now().Add(-time.Hour)
+	staleSecret := passkeys[0].Secret
+	staleSecret.Passkey.LastUsedAt = &stale
+
+	require.NoError(t, db.Model(&auth.Token{}).
+		Where("kind = ? AND external_id = ?", auth.TokenKindPasskey, passkeys[0].ExternalID).
+		Updates(auth.Token{Secret: staleSecret}).Error)
+
+	login()
+
+	passkeys, err = m.ListPasskey("carol")
+	require.NoError(t, err)
+	require.Len(t, passkeys, 1)
+
+	lastUsedAt := passkeys[0].Secret.Passkey.LastUsedAt
+	require.NotNil(t, lastUsedAt)
+	assert.True(t, lastUsedAt.After(stale), "last used at should move forward: %s", lastUsedAt)
 }

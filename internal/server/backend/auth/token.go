@@ -48,6 +48,12 @@ type AccessKeySecret struct {
 type PasskeySecret struct {
 	Credential []byte // webauthn.Credential JSON
 	Label      string // 사용자가 붙인 이름
+
+	// LastUsedAt 은 이 passkey 로 마지막에 로그인한 시각이다. 쓰인 적이 없으면 nil 이다.
+	// 목록에서 어느 기기를 지워도 되는지 판단할 근거로 보여준다.
+	// 로그인할 때마다 Credential 을 다시 쓰므로 여기 두면 쓰기가 늘지 않는다.
+	// 대신 gob 안이라 DB 에서 직접 읽거나 정렬할 수는 없다.
+	LastUsedAt *time.Time
 }
 
 // OAuthSecret 은 연결된 외부 계정의 프로필이다.

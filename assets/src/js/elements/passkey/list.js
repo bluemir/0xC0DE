@@ -25,6 +25,7 @@ var tmpl = (elem) => html`
 			<tr>
 				<th>label</th>
 				<th>created</th>
+				<th>last used</th>
 				<th></th>
 			</tr>
 		</thead>
@@ -33,6 +34,7 @@ var tmpl = (elem) => html`
 			<tr>
 				<td>${item.label || "-"}</td>
 				<td>${new Date(item.createdAt).toLocaleString()}</td>
+				<td>${item.lastUsedAt ? new Date(item.lastUsedAt).toLocaleString() : "-"}</td>
 				<td><button @click=${() => elem.revoke(item.index)}>Delete</button></td>
 			</tr>
 		`)}

@@ -200,9 +200,10 @@ func DeletePasskey(c *gin.Context) error {
 
 // PasskeyResponse 는 Token 에서 공개해도 되는 값만 골라 담는다.
 type PasskeyResponse struct {
-	Index     int       `json:"index"`
-	Label     string    `json:"label"`
-	CreatedAt time.Time `json:"createdAt"`
+	Index      int        `json:"index"`
+	Label      string     `json:"label"`
+	CreatedAt  time.Time  `json:"createdAt"`
+	LastUsedAt *time.Time `json:"lastUsedAt"` // 로그인에 쓰인 적이 없으면 null 이다
 }
 
 func toPasskeyResponse(token *auth.Token) PasskeyResponse {
@@ -212,6 +213,7 @@ func toPasskeyResponse(token *auth.Token) PasskeyResponse {
 	}
 	if token.Secret.Passkey != nil {
 		res.Label = token.Secret.Passkey.Label
+		res.LastUsedAt = token.Secret.Passkey.LastUsedAt
 	}
 	return res
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/cockroachdb/errors"
 	"github.com/go-webauthn/webauthn/protocol"
@@ -280,7 +281,9 @@ func (m *Manager) FinishPasskeyLogin(site *url.URL, sessionData []byte, req *htt
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	now := time.Now()
 	matched.Secret.Passkey.Credential = buf
+	matched.Secret.Passkey.LastUsedAt = &now
 
 	// Update("secret", ...) 는 serializer 를 거치지 않고,
 	// Save 는 Index 0 을 새 행으로 봐서 INSERT 가 된다. 구조체 Updates 를 쓴다.
