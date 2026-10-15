@@ -27,8 +27,8 @@
 		- 간격을 두고 쓰거나(마지막 값이 N분보다 오래됐을 때만), 날짜 단위로 뭉개는 방법을 정한다
 	- [ ] AAGUID로 authenticator 이름 보여주기
 		- FIDO MDS 또는 aaguid 목록이 필요하다
-	- [ ] sign counter 역행(CloneWarning) 시 처리 방침 정하기
-		- 지금은 경고 로그만 남기고 로그인은 통과시킨다
+	- [x] sign counter 역행(CloneWarning) 시 처리 방침 정하기
+		- 막지 않고 경고 로그만 남긴다. 복제보다 키 초기화·복원 쪽이 훨씬 흔하다
 	- [ ] 마지막 로그인 수단을 지우지 못하게 막기
 		- passkey 로만 가입한 계정이 마지막 passkey 를 지우면 로그인할 수 없다
 		- 이메일을 등록해 뒀다면 계정 복구로 되살릴 수 있다 ([ADR-0006](adr/ADR-0006-account-recovery.md))

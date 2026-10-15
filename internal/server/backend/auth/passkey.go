@@ -249,10 +249,17 @@ func (m *Manager) FinishPasskeyLogin(site *url.URL, sessionData []byte, req *htt
 		return nil, errors.WithStack(err)
 	}
 
+	// 받은 sign counter 를 알아야 역행을 기록한 뒤 기준을 옮길 수 있다.
+	// FinishPasskeyLogin 은 안에서 파싱하고 그 값을 버려서, 직접 파싱해 두고 Validate 로 넘긴다.
+	parsed, err := protocol.ParseCredentialRequestResponse(req)
+	if err != nil {
+		return nil, errors.Join(ErrUnauthorized, err)
+	}
+
 	// 검증에 쓰인 토큰을 밖으로 꺼내 sign counter 를 되돌려 저장한다.
 	matched := (*Token)(nil)
 
-	_, credential, err := rp.FinishPasskeyLogin(func(rawID, userHandle []byte) (webauthn.User, error) {
+	_, credential, err := rp.ValidatePasskeyLogin(func(rawID, userHandle []byte) (webauthn.User, error) {
 		token, err := m.getPasskeyToken(rawID)
 		if err != nil {
 			return nil, err
@@ -268,13 +275,24 @@ func (m *Manager) FinishPasskeyLogin(site *url.URL, sessionData []byte, req *htt
 
 		matched = token
 		return identity, nil
-	}, session, req)
+	}, session, parsed)
 	if err != nil {
 		return nil, errors.Join(ErrUnauthorized, err)
 	}
 
+	// sign counter 가 뒤로 갔다는 것은 authenticator 가 복제됐을 수 있다는 신호다.
+	// 그런데 하드웨어 키를 초기화하거나 백업에서 되살려도 똑같이 뒤로 간다.
+	// 복제보다 그쪽이 훨씬 흔해서 로그인을 막지 않고 남기기만 한다.
+	//
+	// 플래그를 그대로 저장하면 안 된다. webauthn 쪽에 끄는 코드가 없어서 한 번 켜지면
+	// 저장된 credential 에 남고, 옛 카운터도 같이 남아 다음 로그인마다 같은 줄이 또 찍힌다.
+	// 받은 값을 새 기준으로 삼아 역행 한 번에 한 줄만 남게 한다.
 	if credential.Authenticator.CloneWarning {
-		logrus.Warnf("passkey sign counter went backwards. user: %s", matched.Username)
+		logrus.Warnf("passkey sign counter went backwards. user: %s, stored: %d, received: %d",
+			matched.Username, credential.Authenticator.SignCount, parsed.Response.AuthenticatorData.Counter)
+
+		credential.Authenticator.CloneWarning = false
+		credential.Authenticator.SignCount = parsed.Response.AuthenticatorData.Counter
 	}
 
 	buf, err := json.Marshal(credential)

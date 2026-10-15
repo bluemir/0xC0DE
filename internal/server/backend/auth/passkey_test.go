@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -352,4 +354,72 @@ func TestPasskeyLastUsedAt(t *testing.T) {
 	lastUsedAt := passkeys[0].Secret.Passkey.LastUsedAt
 	require.NotNil(t, lastUsedAt)
 	assert.True(t, lastUsedAt.After(stale), "last used at should move forward: %s", lastUsedAt)
+}
+
+// sign counter 가 뒤로 가도 로그인은 되고, 경고는 역행 한 번에 한 줄만 남아야 한다.
+func TestPasskeyLoginWithRegressedSignCounter(t *testing.T) {
+	m, err := newManager()
+	require.NoError(t, err)
+
+	site, err := url.Parse("http://localhost:8080")
+	require.NoError(t, err)
+
+	const (
+		rpID   = "localhost"
+		origin = "http://localhost:8080"
+	)
+
+	device := newAuthenticator(t)
+
+	creation, registration, err := m.BeginPasskeyRegistration(site, "dave")
+	require.NoError(t, err)
+
+	user, _, err := m.FinishPasskeyRegistration(site, registration, "yubikey",
+		device.create(t, rpID, origin, creation.Response.Challenge.String()))
+	require.NoError(t, err)
+
+	login := func() {
+		assertion, sessionData, err := m.BeginPasskeyLogin(site)
+		require.NoError(t, err)
+
+		loggedIn, err := m.FinishPasskeyLogin(site, sessionData,
+			device.get(t, rpID, origin, assertion.Response.Challenge.String(), user.Handle))
+		require.NoError(t, err)
+		assert.Equal(t, "dave", loggedIn.Name)
+	}
+
+	storedCounter := func() uint32 {
+		passkeys, err := m.ListPasskey("dave")
+		require.NoError(t, err)
+		require.Len(t, passkeys, 1)
+
+		credential, err := passkeys[0].PasskeyCredential()
+		require.NoError(t, err)
+		assert.False(t, credential.Authenticator.CloneWarning, "플래그를 저장하면 다음 로그인에서 또 경고가 난다")
+
+		return credential.Authenticator.SignCount
+	}
+
+	device.signCount = 10
+	login()
+	require.Equal(t, uint32(11), storedCounter())
+
+	// 키를 초기화해 카운터가 0 으로 돌아간 것처럼 만든다
+	device.signCount = 0
+
+	hook := test.NewGlobal()
+
+	login()
+	assert.Equal(t, uint32(1), storedCounter(), "받은 값을 새 기준으로 삼아야 한다")
+	// 테스트는 TraceLevel 이라 레벨을 짚지 않으면 Debug 로 내려가도 통과한다
+	require.Len(t, hook.AllEntries(), 1)
+	assert.Equal(t, logrus.WarnLevel, hook.LastEntry().Level)
+	assert.Contains(t, hook.LastEntry().Message, "sign counter went backwards")
+
+	// 이어지는 로그인은 조용해야 한다
+	hook.Reset()
+
+	login()
+	assert.Equal(t, uint32(2), storedCounter())
+	assert.Empty(t, hook.AllEntries())
 }
