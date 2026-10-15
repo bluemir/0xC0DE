@@ -55,9 +55,9 @@ type IManager interface {
 
 	// Passkey(WebAuthn)
 	BeginPasskeyRegistration(ctx context.Context, site *url.URL, username string) (*protocol.CredentialCreation, *PasskeyRegistration, error)
-	FinishPasskeyRegistration(site *url.URL, reg *PasskeyRegistration, label string, req *http.Request) (*User, *Token, error)
+	FinishPasskeyRegistration(ctx context.Context, site *url.URL, reg *PasskeyRegistration, label string, parsed *protocol.ParsedCredentialCreationData) (*User, *Token, error)
 	BeginPasskeyLogin(ctx context.Context, site *url.URL) (*protocol.CredentialAssertion, []byte, error)
-	FinishPasskeyLogin(site *url.URL, sessionData []byte, req *http.Request) (*User, error)
+	FinishPasskeyLogin(ctx context.Context, site *url.URL, sessionData []byte, parsed *protocol.ParsedCredentialAssertionData) (*User, error)
 	ListPasskey(ctx context.Context, username string) ([]Token, error)
 	RevokePasskey(ctx context.Context, username string, index int) error
 

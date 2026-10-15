@@ -8,14 +8,12 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
-	"net/http"
-	"net/http/httptest"
 	"net/url"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
@@ -98,7 +96,7 @@ func (a *authenticator) authData(t *testing.T, rpID string, flags byte, attested
 }
 
 // create 는 navigator.credentials.create() 의 응답을 만든다.
-func (a *authenticator) create(t *testing.T, rpID, origin, challenge string) *http.Request {
+func (a *authenticator) create(t *testing.T, rpID, origin, challenge string) *protocol.ParsedCredentialCreationData {
 	clientData := a.clientData(t, "webauthn.create", challenge, origin)
 	authData := a.authData(t, rpID, flagUserPresent|flagUserVerified|flagBackupEligible|flagBackupState|flagAttestedData, true)
 
@@ -109,7 +107,7 @@ func (a *authenticator) create(t *testing.T, rpID, origin, challenge string) *ht
 	})
 	require.NoError(t, err)
 
-	return jsonRequest(t, map[string]any{
+	parsed, err := protocol.ParseCredentialCreationResponseBytes(jsonBody(t, map[string]any{
 		"id":    b64(a.credentialID),
 		"rawId": b64(a.credentialID),
 		"type":  "public-key",
@@ -117,11 +115,14 @@ func (a *authenticator) create(t *testing.T, rpID, origin, challenge string) *ht
 			"clientDataJSON":    b64(clientData),
 			"attestationObject": b64(attestation),
 		},
-	})
+	}))
+	require.NoError(t, err)
+
+	return parsed
 }
 
 // get 는 navigator.credentials.get() 의 응답을 만든다.
-func (a *authenticator) get(t *testing.T, rpID, origin, challenge string, handle []byte) *http.Request {
+func (a *authenticator) get(t *testing.T, rpID, origin, challenge string, handle []byte) *protocol.ParsedCredentialAssertionData {
 	a.signCount++
 
 	clientData := a.clientData(t, "webauthn.get", challenge, origin)
@@ -133,7 +134,7 @@ func (a *authenticator) get(t *testing.T, rpID, origin, challenge string, handle
 	signature, err := ecdsa.SignASN1(rand.Reader, a.key, signed[:])
 	require.NoError(t, err)
 
-	return jsonRequest(t, map[string]any{
+	parsed, err := protocol.ParseCredentialRequestResponseBytes(jsonBody(t, map[string]any{
 		"id":    b64(a.credentialID),
 		"rawId": b64(a.credentialID),
 		"type":  "public-key",
@@ -143,17 +144,17 @@ func (a *authenticator) get(t *testing.T, rpID, origin, challenge string, handle
 			"signature":         b64(signature),
 			"userHandle":        b64(handle),
 		},
-	})
+	}))
+	require.NoError(t, err)
+
+	return parsed
 }
 
-func jsonRequest(t *testing.T, body map[string]any) *http.Request {
+func jsonBody(t *testing.T, body map[string]any) []byte {
 	buf, err := json.Marshal(body)
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(string(buf)))
-	req.Header.Set("Content-Type", "application/json")
-
-	return req
+	return buf
 }
 
 func TestPasskeyRegisterAndLogin(t *testing.T) {
@@ -177,7 +178,7 @@ func TestPasskeyRegisterAndLogin(t *testing.T) {
 	assert.Equal(t, rpID, creation.Response.RelyingParty.ID)
 	assert.Equal(t, "alice", registration.Username)
 
-	user, token, err := m.FinishPasskeyRegistration(site, registration, "my laptop",
+	user, token, err := m.FinishPasskeyRegistration(ctx, site, registration, "my laptop",
 		device.create(t, rpID, origin, creation.Response.Challenge.String()))
 	require.NoError(t, err)
 	assert.Equal(t, "alice", user.Name)
@@ -191,7 +192,7 @@ func TestPasskeyRegisterAndLogin(t *testing.T) {
 	assertion, sessionData, err := m.BeginPasskeyLogin(ctx, site)
 	require.NoError(t, err)
 
-	loggedIn, err := m.FinishPasskeyLogin(site, sessionData,
+	loggedIn, err := m.FinishPasskeyLogin(ctx, site, sessionData,
 		device.get(t, rpID, origin, assertion.Response.Challenge.String(), user.Handle))
 	require.NoError(t, err)
 	assert.Equal(t, "alice", loggedIn.Name)
@@ -228,7 +229,7 @@ func TestPasskeyLoginWithUnknownCredential(t *testing.T) {
 	assertion, sessionData, err := m.BeginPasskeyLogin(ctx, site)
 	require.NoError(t, err)
 
-	_, err = m.FinishPasskeyLogin(site, sessionData,
+	_, err = m.FinishPasskeyLogin(ctx, site, sessionData,
 		device.get(t, "localhost", "http://localhost:8080", assertion.Response.Challenge.String(), []byte("nobody")))
 	// 표시해 두지 않으면 errs 미들웨어가 401 대신 500 을 낸다
 	assert.ErrorIs(t, err, auth.ErrUnauthorized)
@@ -249,7 +250,7 @@ func TestPasskeyRegisterWithWrongChallenge(t *testing.T) {
 	require.NoError(t, err)
 
 	// 서버가 낸 것이 아닌 challenge 로 응답을 만든다
-	_, _, err = m.FinishPasskeyRegistration(site, registration, "my laptop",
+	_, _, err = m.FinishPasskeyRegistration(ctx, site, registration, "my laptop",
 		device.create(t, "localhost", "http://localhost:8080", b64([]byte("not-the-challenge"))))
 	assert.ErrorIs(t, err, auth.ErrUnauthorized)
 
@@ -274,7 +275,7 @@ func TestPasskeyRegisterForExistingPasswordUser(t *testing.T) {
 	creation, registration, err := m.BeginPasskeyRegistration(ctx, site, "bob")
 	require.NoError(t, err)
 
-	_, _, err = m.FinishPasskeyRegistration(site, registration, "yubikey",
+	_, _, err = m.FinishPasskeyRegistration(ctx, site, registration, "yubikey",
 		device.create(t, "localhost", "http://localhost:8080", creation.Response.Challenge.String()))
 	require.NoError(t, err)
 
@@ -289,7 +290,7 @@ func TestPasskeyRegisterForExistingPasswordUser(t *testing.T) {
 	user, err := m.GetUser(ctx, "bob")
 	require.NoError(t, err)
 
-	loggedIn, err := m.FinishPasskeyLogin(site, sessionData,
+	loggedIn, err := m.FinishPasskeyLogin(ctx, site, sessionData,
 		device.get(t, "localhost", "http://localhost:8080", assertion.Response.Challenge.String(), user.Handle))
 	require.NoError(t, err)
 	assert.Equal(t, "bob", loggedIn.Name)
@@ -313,7 +314,7 @@ func TestPasskeyLastUsedAt(t *testing.T) {
 	creation, registration, err := m.BeginPasskeyRegistration(ctx, site, "carol")
 	require.NoError(t, err)
 
-	user, _, err := m.FinishPasskeyRegistration(site, registration, "my laptop",
+	user, _, err := m.FinishPasskeyRegistration(ctx, site, registration, "my laptop",
 		device.create(t, rpID, origin, creation.Response.Challenge.String()))
 	require.NoError(t, err)
 
@@ -327,7 +328,7 @@ func TestPasskeyLastUsedAt(t *testing.T) {
 		assertion, sessionData, err := m.BeginPasskeyLogin(ctx, site)
 		require.NoError(t, err)
 
-		_, err = m.FinishPasskeyLogin(site, sessionData,
+		_, err = m.FinishPasskeyLogin(ctx, site, sessionData,
 			device.get(t, rpID, origin, assertion.Response.Challenge.String(), user.Handle))
 		require.NoError(t, err)
 	}
@@ -380,7 +381,7 @@ func TestPasskeyLoginWithRegressedSignCounter(t *testing.T) {
 	creation, registration, err := m.BeginPasskeyRegistration(ctx, site, "dave")
 	require.NoError(t, err)
 
-	user, _, err := m.FinishPasskeyRegistration(site, registration, "yubikey",
+	user, _, err := m.FinishPasskeyRegistration(ctx, site, registration, "yubikey",
 		device.create(t, rpID, origin, creation.Response.Challenge.String()))
 	require.NoError(t, err)
 
@@ -388,7 +389,7 @@ func TestPasskeyLoginWithRegressedSignCounter(t *testing.T) {
 		assertion, sessionData, err := m.BeginPasskeyLogin(ctx, site)
 		require.NoError(t, err)
 
-		loggedIn, err := m.FinishPasskeyLogin(site, sessionData,
+		loggedIn, err := m.FinishPasskeyLogin(ctx, site, sessionData,
 			device.get(t, rpID, origin, assertion.Response.Challenge.String(), user.Handle))
 		require.NoError(t, err)
 		assert.Equal(t, "dave", loggedIn.Name)

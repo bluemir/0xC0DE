@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
-	"net/http"
 	"net/url"
 	"time"
 
@@ -170,9 +169,9 @@ func (m *Manager) BeginPasskeyRegistration(ctx context.Context, site *url.URL, u
 
 // FinishPasskeyRegistration 은 authenticator 응답을 검증하고 passkey 를 저장한다.
 // 아직 없는 사용자면 이 시점에 계정을 만든다.
-func (m *Manager) FinishPasskeyRegistration(site *url.URL, reg *PasskeyRegistration, label string, req *http.Request) (*User, *Token, error) {
-	ctx := req.Context()
-
+//
+// 응답은 파싱된 것을 받는다. 요청에서 꺼내는 일은 HTTP 를 아는 쪽의 몫이다.
+func (m *Manager) FinishPasskeyRegistration(ctx context.Context, site *url.URL, reg *PasskeyRegistration, label string, parsed *protocol.ParsedCredentialCreationData) (*User, *Token, error) {
 	rp, err := m.relyingParty(site)
 	if err != nil {
 		return nil, nil, err
@@ -185,7 +184,7 @@ func (m *Manager) FinishPasskeyRegistration(site *url.URL, reg *PasskeyRegistrat
 
 	identity := &passkeyIdentity{username: reg.Username, handle: reg.Handle}
 
-	credential, err := rp.FinishRegistration(identity, session, req)
+	credential, err := rp.CreateCredential(identity, session, parsed)
 	if err != nil {
 		return nil, nil, errors.Join(ErrUnauthorized, err)
 	}
@@ -241,9 +240,9 @@ func (m *Manager) BeginPasskeyLogin(ctx context.Context, site *url.URL) (*protoc
 }
 
 // FinishPasskeyLogin 은 assertion 을 검증하고 로그인한 사용자를 돌려준다.
-func (m *Manager) FinishPasskeyLogin(site *url.URL, sessionData []byte, req *http.Request) (*User, error) {
-	ctx := req.Context()
-
+//
+// 응답은 파싱된 것을 받는다. 요청에서 꺼내는 일은 HTTP 를 아는 쪽의 몫이다.
+func (m *Manager) FinishPasskeyLogin(ctx context.Context, site *url.URL, sessionData []byte, parsed *protocol.ParsedCredentialAssertionData) (*User, error) {
 	rp, err := m.relyingParty(site)
 	if err != nil {
 		return nil, err
@@ -252,13 +251,6 @@ func (m *Manager) FinishPasskeyLogin(site *url.URL, sessionData []byte, req *htt
 	session := webauthn.SessionData{}
 	if err := json.Unmarshal(sessionData, &session); err != nil {
 		return nil, errors.WithStack(err)
-	}
-
-	// 받은 sign counter 를 알아야 역행을 기록한 뒤 기준을 옮길 수 있다.
-	// FinishPasskeyLogin 은 안에서 파싱하고 그 값을 버려서, 직접 파싱해 두고 Validate 로 넘긴다.
-	parsed, err := protocol.ParseCredentialRequestResponse(req)
-	if err != nil {
-		return nil, errors.Join(ErrUnauthorized, err)
 	}
 
 	// 검증에 쓰인 토큰을 밖으로 꺼내 sign counter 를 되돌려 저장한다.

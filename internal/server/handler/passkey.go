@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/cockroachdb/errors"
+	"github.com/go-webauthn/webauthn/protocol"
+
 	"github.com/gin-contrib/location"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -84,8 +87,15 @@ func PasskeyRegisterFinish(c *gin.Context) error {
 		return err
 	}
 
+	// 요청에서 응답을 꺼내는 것은 여기까지다. 뒤로는 파싱된 것만 넘긴다.
+	// 모양이 어긋난 응답은 자격증명이 아니므로 검증 실패와 같이 다룬다.
+	parsed, err := protocol.ParseCredentialCreationResponse(c.Request)
+	if err != nil {
+		return errors.Join(auth.ErrUnauthorized, err)
+	}
+
 	user, token, err := backends(c).Auth.FinishPasskeyRegistration(
-		location.Get(c), registration, c.Query("label"), c.Request)
+		c.Request.Context(), location.Get(c), registration, c.Query("label"), parsed)
 	if err != nil {
 		return err
 	}
@@ -141,7 +151,13 @@ func PasskeyLoginFinish(c *gin.Context) error {
 		return err
 	}
 
-	user, err := backends(c).Auth.FinishPasskeyLogin(location.Get(c), sessionData, c.Request)
+	parsed, err := protocol.ParseCredentialRequestResponse(c.Request)
+	if err != nil {
+		return errors.Join(auth.ErrUnauthorized, err)
+	}
+
+	user, err := backends(c).Auth.FinishPasskeyLogin(
+		c.Request.Context(), location.Get(c), sessionData, parsed)
 	if err != nil {
 		return err
 	}
