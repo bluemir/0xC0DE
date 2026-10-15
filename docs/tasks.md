@@ -32,6 +32,10 @@
 	- [ ] 마지막 로그인 수단을 지우지 못하게 막기
 		- passkey 로만 가입한 계정이 마지막 passkey 를 지우면 로그인할 수 없다
 		- 이메일을 등록해 뒀다면 계정 복구로 되살릴 수 있다 ([ADR-0006](adr/ADR-0006-account-recovery.md))
+	- [ ] ceremony 를 브라우저에서 한 번은 돌려보는 수단 마련
+		- `navigator.credentials` 를 감싸는 dict 를 빼먹어 등록·로그인이 둘 다 NotSupportedError 로 죽어 있었다
+		- Go 테스트는 핸들러까지만 본다. JS 를 거치는 경로는 아무것도 보지 않는다
+		- virtual authenticator(CDP `WebAuthn.addVirtualAuthenticator`)를 붙일지, 수동 점검 절차로 남길지 정한다
 - oauth(social login)
 	- [x] Token 에 소셜 로그인 자리 만들기
 		- [ADR-0003](adr/ADR-0003-oauth-social-login-model.md)

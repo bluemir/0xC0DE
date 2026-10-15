@@ -23,9 +23,12 @@ export async function register({username = "", label = ""} = {}) {
 		body: {username},
 	});
 
-	let credential = await navigator.credentials.create(
-		PublicKeyCredential.parseCreationOptionsFromJSON(begin.json.publicKey),
-	);
+	// parse* 가 돌려주는 것은 publicKey 안쪽이다. credentials.create/get 은 어느 종류의
+	// credential 인지 가리는 바깥 dict 를 받으므로 다시 감싸야 한다.
+	// 감싸지 않으면 아는 종류가 하나도 없다고 NotSupportedError 가 난다.
+	let credential = await navigator.credentials.create({
+		publicKey: PublicKeyCredential.parseCreationOptionsFromJSON(begin.json.publicKey),
+	});
 
 	let res = await $.request("POST", "/api/v1/passkeys/register/finish", {
 		query: {label},
@@ -41,9 +44,9 @@ export async function login() {
 
 	let begin = await $.request("POST", "/api/v1/passkeys/login/begin");
 
-	let credential = await navigator.credentials.get(
-		PublicKeyCredential.parseRequestOptionsFromJSON(begin.json.publicKey),
-	);
+	let credential = await navigator.credentials.get({
+		publicKey: PublicKeyCredential.parseRequestOptionsFromJSON(begin.json.publicKey),
+	});
 
 	let res = await $.request("POST", "/api/v1/passkeys/login/finish", {
 		body: credential.toJSON(),
