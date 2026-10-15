@@ -164,11 +164,27 @@ func (m *Manager) UpdateUser(user *User) error {
 	}
 	return nil
 }
+
+// DeleteUser 는 계정을 지우고 EventUserDeleted 를 발행한다.
+//
+// 딸린 데이터(토큰, 복구·확인 비밀, 역할 배정, 그룹 소속)는 이벤트를 받은 쪽이 치운다.
+// auth 자신의 행은 userCleanup 이 치우고, 다른 백엔드가 사용자에 딸린 데이터를 갖게 되면
+// 여기에 핸들러를 더 건다.
+//
+// 이벤트는 users 행을 지운 뒤에 보낸다. Dispatch 라 핸들러의 실패가 에러로 올라오지만,
+// 이벤트는 삭제 트랜잭션 밖이라 계정 삭제가 되돌아가지는 않는다. 에러는 "계정은 없어졌고
+// 딸린 행이 남았다" 는 뜻이고, 같은 이름으로 다시 지우면 남은 행을 마저 치울 수 있다.
 func (m *Manager) DeleteUser(username string) error {
+	user, err := m.GetUser(username)
+	if err != nil {
+		return err
+	}
+
 	if err := m.db.Delete(User{Name: username}).Error; err != nil {
 		return errors.WithStack(err)
 	}
-	return nil
+
+	return m.events.Dispatch(m.processContext, EventUserDeleted{User: *user})
 }
 func (u *User) Subjects() []Subject {
 	if u == nil {

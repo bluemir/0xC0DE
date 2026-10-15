@@ -57,7 +57,7 @@ func TestHub_Watch_WithOptions(t *testing.T) {
 		// 1. Publish 1st event - should succeed (buffer 1)
 		doneCh := make(chan struct{})
 		go func() {
-			hub.Publish(ctx, EventForTest{Message: "1"})
+			hub.Dispatch(ctx, EventForTest{Message: "1"})
 			close(doneCh)
 		}()
 
@@ -70,7 +70,7 @@ func TestHub_Watch_WithOptions(t *testing.T) {
 		// 2. Publish 2nd event - should block (buffer full)
 		doneCh2 := make(chan struct{})
 		go func() {
-			hub.Publish(ctx, EventForTest{Message: "2"})
+			hub.Dispatch(ctx, EventForTest{Message: "2"})
 			close(doneCh2)
 		}()
 

@@ -80,7 +80,7 @@ func TestHub_SingleEvent(t *testing.T) {
 	hub.AddHandler(EventForTest{}, recorder)
 
 	eventToSend := EventForTest{Message: "hello"}
-	hub.Publish(ctx, eventToSend)
+	hub.Dispatch(ctx, eventToSend)
 
 	// Wait briefly for event processing (better: use Watch or sync)
 	time.Sleep(50 * time.Millisecond)
@@ -102,8 +102,8 @@ func TestHub_MultipleEvents(t *testing.T) {
 
 	hub.AddHandler(EventForTest{}, recoder)
 
-	hub.Publish(context.Background(), EventForTest{Message: "hello"})
-	hub.Publish(context.Background(), EventForTest{Message: "world"})
+	hub.Dispatch(context.Background(), EventForTest{Message: "hello"})
+	hub.Dispatch(context.Background(), EventForTest{Message: "world"})
 
 	assert.Len(t, recoder.Events, 2)
 	assert.Equal(t, reflect.TypeFor[EventForTest]().String(), recoder.Events[0].Kind)
@@ -134,7 +134,7 @@ func TestHub_ConcurrentPublish(t *testing.T) {
 		go func(gID int) {
 			defer wg.Done()
 			for j := range numEventsPerG {
-				hub.Publish(ctx, EventForTest{Message: fmt.Sprintf("g%d-e%d", gID, j)})
+				hub.Dispatch(ctx, EventForTest{Message: fmt.Sprintf("g%d-e%d", gID, j)})
 				// time.Sleep(time.Duration(rand.Intn(5)) * time.Millisecond) // Optional: add jitter
 			}
 		}(i)
@@ -171,13 +171,13 @@ func TestHub_ModifyHandlersInHandler(t *testing.T) {
 
 	hub.AddHandler(EventAddHandler{}, ModifyingHandler{recoder}) //
 
-	hub.Publish(ctx, EventForTest{})
+	hub.Dispatch(ctx, EventForTest{})
 
 	assert.Equal(t, 0, recoder.Count(), "AddedRecorder count mismatch")
 
-	hub.Publish(ctx, EventAddHandler{}) // trigger add handler
+	hub.Dispatch(ctx, EventAddHandler{}) // trigger add handler
 
-	hub.Publish(ctx, EventForTest{})
+	hub.Dispatch(ctx, EventForTest{})
 
 	assert.Equal(t, 1, recoder.Count(), "AddedRecorder count mismatch")
 }
@@ -193,7 +193,7 @@ func TestHub_RemoveHandler(t *testing.T) {
 	// Note: AddHandler uses reflect.TypeOf(kind), so pass an instance
 	hub.AddHandler(EventForTest{}, recoder)
 
-	hub.Publish(ctx, EventForTest{Message: "msg1"})
+	hub.Dispatch(ctx, EventForTest{Message: "msg1"})
 
 	// Wait specifically or ensure synchronous behavior if possible.
 	// The current implementation of Publish seems synchronous for handlers but potentially async for channels?
@@ -204,7 +204,7 @@ func TestHub_RemoveHandler(t *testing.T) {
 
 	hub.RemoveHandler(EventForTest{}, recoder)
 
-	hub.Publish(ctx, EventForTest{Message: "msg2"})
+	hub.Dispatch(ctx, EventForTest{Message: "msg2"})
 	assert.Equal(t, 1, recoder.Count(), "Should not receive event after removal")
 }
 
@@ -222,7 +222,7 @@ func TestHub_Watch(t *testing.T) {
 	go func() {
 		// Give time for Watch to be registered if needed, though it should be synchronous
 		time.Sleep(10 * time.Millisecond)
-		hub.Publish(ctx, EventForTest{Message: expectedMsg})
+		hub.Dispatch(ctx, EventForTest{Message: expectedMsg})
 	}()
 
 	select {
@@ -256,7 +256,7 @@ func TestHub_WatchAll(t *testing.T) {
 	expectedMsg := "test-watch-all"
 	go func() {
 		time.Sleep(10 * time.Millisecond)
-		hub.Publish(ctx, EventForTest{Message: expectedMsg})
+		hub.Dispatch(ctx, EventForTest{Message: expectedMsg})
 	}()
 
 	select {

@@ -1,6 +1,7 @@
 package auth_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
+	"github.com/bluemir/0xC0DE/internal/pubsub"
 	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
 )
 
@@ -16,7 +18,12 @@ func newTestManager(t *testing.T) *auth.Manager {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(t, err)
 
-	m, err := auth.New(db, &auth.Config{Salt: "test-salt"})
+	ctx := context.Background()
+
+	events, err := pubsub.NewHub(ctx)
+	require.NoError(t, err)
+
+	m, err := auth.New(ctx, &auth.Config{Salt: "test-salt"}, db, events)
 	require.NoError(t, err)
 	return m
 }

@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"fmt"
 	"runtime"
 
@@ -9,6 +10,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/bluemir/0xC0DE/internal/pubsub"
 	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
 )
 
@@ -32,7 +34,14 @@ func newManager() (*auth.Manager, error) {
 	}
 	sqlDB.SetMaxOpenConns(1)
 
-	m, err := auth.New(db, &auth.Config{})
+	ctx := context.Background()
+
+	events, err := pubsub.NewHub(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	m, err := auth.New(ctx, &auth.Config{}, db, events)
 	if err != nil {
 		return nil, err
 	}

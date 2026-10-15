@@ -30,7 +30,7 @@ func TestHub_RecursivePublish_Deadlock(t *testing.T) {
 
 	// Trigger the first event
 	go func() {
-		hub.Publish(ctx, RecursiveEvent{Depth: 0})
+		hub.Dispatch(ctx, RecursiveEvent{Depth: 0})
 	}()
 
 	// Consume and republish recursively
@@ -76,7 +76,7 @@ func TestHub_RecursivePublish_Deadlock(t *testing.T) {
 				// So we (the reader) will BLOCK on 'hub.Publish'.
 				// DEADLOCK.
 
-				hub.Publish(ctx, RecursiveEvent{Depth: e.Depth + 1})
+				hub.Dispatch(ctx, RecursiveEvent{Depth: e.Depth + 1})
 			case <-timeout:
 				assert.Fail(t, "Deadlock detected or test timed out")
 				return

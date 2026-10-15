@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/errors"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -94,7 +95,12 @@ func (m *Manager) ValidateRecovery(username string, unhashedSecret string) (*Use
 		return nil, ErrUnauthorized
 	}
 
+	// 만료된 행은 다시 쓸 일이 없다. 본 김에 치운다.
+	// 아무도 링크를 누르지 않으면 그대로 남지만, 재발급하면 덮어써서 쌓이지는 않는다.
 	if recovery.ExpiredAt.Before(time.Now()) {
+		if err := m.RevokeRecovery(username); err != nil {
+			logrus.Warnf("fail to remove expired recovery of %s: %+v", username, err)
+		}
 		return nil, ErrUnauthorized
 	}
 

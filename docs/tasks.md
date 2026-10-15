@@ -71,8 +71,8 @@
 	- [ ] 확인 메일 발송에 rate limit
 		- 계정당 5분 간격만 있다. 한 계정으로 특정 주소에 계속 보낼 수 있다
 		- 복구 요청 rate limit 과 같은 자리에서 같이 정한다
-	- [ ] 만료된 `Verification` 행 청소
-		- `Recovery` 와 같은 문제다. 사용자당 한 행이지만 탈퇴한 계정의 행은 남는다
+	- [x] 만료된 `Verification` 행 청소
+		- [ADR-0008](adr/ADR-0008-notify-dispatch-and-user-cleanup.md)
 	- [ ] 복구 요청에 IP 기준 rate limit
 		- 계정당 15분 간격만 있다. 모르는 주소로 퍼붓는 것은 안 막는다
 	- [ ] 복구 완료 시 access-key 를 폐기할지 정하기
@@ -80,8 +80,8 @@
 		- 지우면 정상 사용자의 자동화가 조용히 끊긴다
 	- [ ] 이메일 없는 계정에 복구 수단이 없다는 것을 알려주기
 		- passkey 로만 가입하면 이메일을 적을 자리를 거치지 않는다
-	- [ ] 만료된 `Recovery` 행 청소
-		- 사용자당 한 행이라 쌓이지는 않지만, 탈퇴한 계정의 행은 남는다
+	- [x] 만료된 `Recovery` 행 청소
+		- [ADR-0008](adr/ADR-0008-notify-dispatch-and-user-cleanup.md)
 - 아이콘 폰트
 	- [ ] SVG 아이콘을 웹폰트로 묶는 툴 만들기
 		- 조사와 방향은 [go-svg-icon-font](references/go-svg-icon-font.md)
@@ -96,6 +96,24 @@
 - [x] `util.RandomString` 이 `math/rand` 라 예측할 수 있다
 	- `GenerateAccessKey` 의 비밀이 여기서 나온다
 	- 복구 비밀은 `crypto/rand` 를 따로 썼다 ([ADR-0006](adr/ADR-0006-account-recovery.md))
+- 계정 삭제
+	- [x] `pubsub.Hub` 의 발행을 `Notify`(async) 와 `Dispatch`(sync, error)로 가르기
+		- [ADR-0008](adr/ADR-0008-notify-dispatch-and-user-cleanup.md)
+	- [x] `DeleteUser` 가 딸린 행을 치우게 하기
+		- [ADR-0008](adr/ADR-0008-notify-dispatch-and-user-cleanup.md)
+	- [ ] 탈퇴 경로 만들기
+		- `DeleteUser` 를 부르는 곳이 아직 없다. API 도 CLI 도 없다
+		- 비밀번호 재확인을 요구할지, passkey 만 있는 계정은 어떻게 할지 정한다
+		- 마지막 관리자를 지우지 못하게 막을지도 같이 본다
+	- [ ] `pubsub.Router` 도 `Notify`/`Dispatch` 로 가를지 정하기
+		- 지금은 `Publish` 하나뿐이라 `Hub` 와 이름이 어긋난다
+		- 쓰는 곳이 없어 이번에는 건드리지 않았다. 지울지 맞출지 정한다
+	- [ ] 정리 실패를 사람이 알 수 있게 하기
+		- `Dispatch` 가 에러를 주지만 계정 삭제는 이미 끝나 되돌아가지 않는다
+		- 남은 행을 찾아내는 방법이 없다. 점검 명령이나 재시도를 붙일지 정한다
+- [ ] `Manager.Default` 가 비밀번호 불일치에 bcrypt 에러를 그대로 올린다
+	- `ErrUnauthorized` 가 아니라 `bcrypt.ErrMismatchedHashAndPassword` 다
+	- 호출측이 `errors.Is(err, ErrUnauthorized)` 로 거르지 못한다
 - [ ] 세션 쿠키가 서명만 되고 암호화되지 않는다
 	- `cookie.NewStore` 에 block key 를 주지 않았다
 - [ ] gorm 에 넘어가지 않는 죽은 `serializer:gob` 태그 정리

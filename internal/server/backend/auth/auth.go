@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 
@@ -8,6 +9,7 @@ import (
 
 	"github.com/go-webauthn/webauthn/protocol"
 
+	"github.com/bluemir/0xC0DE/internal/pubsub"
 	"github.com/bluemir/0xC0DE/internal/server/backend/meta"
 	"github.com/cockroachdb/errors"
 	"github.com/sirupsen/logrus"
@@ -98,9 +100,14 @@ type Manager struct {
 	db      *gorm.DB
 	salt    string
 	passkey PasskeyConfig
+	events  *pubsub.Hub
+
+	// processContext 는 요청에 매이지 않은 일에 쓸 context 다.
+	// 계정 삭제 이벤트처럼 호출 경로가 context 를 들고 오지 않는 자리에서 쓴다.
+	processContext context.Context
 }
 
-func New(db *gorm.DB, conf *Config) (*Manager, error) {
+func New(ctx context.Context, conf *Config, db *gorm.DB, events *pubsub.Hub) (*Manager, error) {
 
 	if err := db.AutoMigrate(
 		&User{},
@@ -115,7 +122,11 @@ func New(db *gorm.DB, conf *Config) (*Manager, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	m := &Manager{db, conf.Salt, conf.Passkey}
+	m := &Manager{db, conf.Salt, conf.Passkey, events, ctx}
+
+	// 계정이 지워지면 딸린 행도 지워야 한다. 자기 이벤트를 자기가 받는 모양이지만,
+	// 같은 자리에 다른 백엔드의 핸들러도 걸리므로 치우는 쪽을 한 줄로 모아 둔다.
+	events.AddHandler(EventUserDeleted{}, &userCleanup{manager: m})
 
 	if err := m.initialize(); err != nil {
 		return nil, err

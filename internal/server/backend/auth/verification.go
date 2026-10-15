@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/errors"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -107,7 +108,11 @@ func (m *Manager) ConfirmVerification(username string, unhashedSecret string) (*
 		return nil, ErrUnauthorized
 	}
 
+	// 만료된 행은 다시 쓸 일이 없다. 본 김에 치운다.
 	if verification.ExpiredAt.Before(time.Now()) {
+		if err := m.RevokeVerification(username); err != nil {
+			logrus.Warnf("fail to remove expired verification of %s: %+v", username, err)
+		}
 		return nil, ErrUnauthorized
 	}
 

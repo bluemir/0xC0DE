@@ -30,7 +30,7 @@ func Initialize(ctx context.Context, conf *Config, db *gorm.DB) (*Backends, erro
 	}
 	// init components
 
-	authManager, err := auth.New(db, &conf.Auth)
+	authManager, err := auth.New(ctx, &conf.Auth, db, events)
 	if err != nil {
 		return nil, err
 	}

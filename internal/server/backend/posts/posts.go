@@ -45,7 +45,7 @@ func (m *Manager) Create(ctx context0.Context, message string) (*Post, error) {
 		return nil, err
 	}
 
-	m.events.Publish(ctx, EventPostCreated{Post: *post})
+	m.events.Notify(ctx, EventPostCreated{Post: *post})
 
 	return post, nil
 }
