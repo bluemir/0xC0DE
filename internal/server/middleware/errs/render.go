@@ -2,10 +2,10 @@ package errs
 
 import (
 	"encoding/json"
-	"errors"
 	"maps"
 	"net/http"
 
+	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )

@@ -1,10 +1,13 @@
 package errs
 
 import (
-	"errors"
 	"net/http"
 	"os"
 	"strings"
+
+	// 저장소 전체가 cockroachdb/errors 로 감싸 올린다. 표준 errors.Is 는
+	// 그쪽 마커(errors.Mark)를 읽지 못해, 표시해 둔 에러가 여기서 500 으로 떨어진다.
+	"github.com/cockroachdb/errors"
 
 	"github.com/bluemir/0xC0DE/internal/server/backend/auth"
 	"github.com/bluemir/0xC0DE/internal/server/backend/meta"

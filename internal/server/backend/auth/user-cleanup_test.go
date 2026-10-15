@@ -118,7 +118,7 @@ func TestDeleteUserThenRegisterAgain(t *testing.T) {
 
 	// 옛 비밀번호의 토큰이 남아 있었다면 여기서 통과해 버린다
 	_, err = m.Default("alice", "old-password")
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, auth.ErrUnauthorized)
 
 	_, err = m.Default("alice", "new-password")
 	assert.NoError(t, err)

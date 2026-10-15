@@ -136,3 +136,40 @@ func TestTokenSecretMismatch(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, tokens, 0)
 }
+
+// Validate 의 실패는 이유를 가리지 않고 ErrUnauthorized 로 표시된다.
+// 이 표식이 없으면 errs 미들웨어가 401 대신 500 을 낸다.
+func TestValidateMarksUnauthorized(t *testing.T) {
+	m, err := newManager()
+	require.NoError(t, err)
+
+	_, _, err = m.Register("alice", "password")
+	require.NoError(t, err)
+
+	token, err := m.GetToken("alice", auth.TokenKindPassword, 0)
+	require.NoError(t, err)
+
+	// 비밀번호 불일치
+	assert.ErrorIs(t, token.Validate("wrong"), auth.ErrUnauthorized)
+
+	// 만료
+	past := time.Now().Add(-time.Hour)
+	token.ExpiredAt = &past
+	assert.ErrorIs(t, token.Validate("password"), auth.ErrUnauthorized)
+
+	// 맞으면 nil 이다. Mark 가 성공 경로를 건드리지 않는다
+	token.ExpiredAt = nil
+	assert.NoError(t, token.Validate("password"))
+}
+
+// Default 로 들어오는 경로에서도 표식이 살아 있어야 한다
+func TestDefaultMarksUnauthorized(t *testing.T) {
+	m, err := newManager()
+	require.NoError(t, err)
+
+	_, _, err = m.Register("alice", "password")
+	require.NoError(t, err)
+
+	_, err = m.Default("alice", "wrong")
+	assert.ErrorIs(t, err, auth.ErrUnauthorized)
+}

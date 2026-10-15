@@ -184,7 +184,7 @@ func (m *Manager) FinishPasskeyRegistration(site *url.URL, reg *PasskeyRegistrat
 
 	credential, err := rp.FinishRegistration(identity, session, req)
 	if err != nil {
-		return nil, nil, errors.Mark(err, ErrUnauthorized)
+		return nil, nil, errors.Join(ErrUnauthorized, err)
 	}
 
 	user, err := m.GetUser(reg.Username)
@@ -270,7 +270,7 @@ func (m *Manager) FinishPasskeyLogin(site *url.URL, sessionData []byte, req *htt
 		return identity, nil
 	}, session, req)
 	if err != nil {
-		return nil, errors.Mark(err, ErrUnauthorized)
+		return nil, errors.Join(ErrUnauthorized, err)
 	}
 
 	if credential.Authenticator.CloneWarning {

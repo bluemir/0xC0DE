@@ -182,7 +182,7 @@ func TestPasskeyRegisterAndLogin(t *testing.T) {
 
 	// password 는 없으므로 ID/PW 로그인은 실패해야 한다
 	_, err = m.Default("alice", "")
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, auth.ErrUnauthorized)
 
 	// username 없이 passkey 로 로그인
 	assertion, sessionData, err := m.BeginPasskeyLogin(site)
@@ -226,6 +226,30 @@ func TestPasskeyLoginWithUnknownCredential(t *testing.T) {
 
 	_, err = m.FinishPasskeyLogin(site, sessionData,
 		device.get(t, "localhost", "http://localhost:8080", assertion.Response.Challenge.String(), []byte("nobody")))
+	// 표시해 두지 않으면 errs 미들웨어가 401 대신 500 을 낸다
+	assert.ErrorIs(t, err, auth.ErrUnauthorized)
+}
+
+// 등록 ceremony 가 어긋나도 401 이어야 한다
+func TestPasskeyRegisterWithWrongChallenge(t *testing.T) {
+	m, err := newManager()
+	require.NoError(t, err)
+
+	site, err := url.Parse("http://localhost:8080")
+	require.NoError(t, err)
+
+	device := newAuthenticator(t)
+
+	_, registration, err := m.BeginPasskeyRegistration(site, "alice")
+	require.NoError(t, err)
+
+	// 서버가 낸 것이 아닌 challenge 로 응답을 만든다
+	_, _, err = m.FinishPasskeyRegistration(site, registration, "my laptop",
+		device.create(t, "localhost", "http://localhost:8080", b64([]byte("not-the-challenge"))))
+	assert.ErrorIs(t, err, auth.ErrUnauthorized)
+
+	// 실패했으므로 계정도 생기지 않는다
+	_, err = m.GetUser("alice")
 	assert.Error(t, err)
 }
 

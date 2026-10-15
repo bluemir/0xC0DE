@@ -76,9 +76,17 @@ const (
 	TokenKindGitHub TokenKind = "github"
 )
 
+// Validate 는 받은 비밀이 이 토큰의 것인지 본다.
+//
+// 실패는 이유가 무엇이든 ErrUnauthorized 를 섞어 올린다. 만료든 불일치든 부르는 쪽에는
+// "이 비밀로는 통과 못 한다" 하나이고, errs 미들웨어가 그것을 보고 401 을 낸다.
+// 섞지 않으면 bcrypt 의 에러가 그대로 올라가 500 이 된다.
+//
+// errors.Mark 를 쓰지 않는다. 마커는 cockroachdb 의 Is 를 거쳐야 보여서,
+// 표준 errors.Is 를 쓰는 쪽(테스트의 assert.ErrorIs 를 포함해)에서는 묻힌다.
 func (token *Token) Validate(unhashedSecret string) error {
 	if token.ExpiredAt != nil && token.ExpiredAt.Before(time.Now()) {
-		return errors.New("token is expired") // TODO
+		return errors.Join(ErrUnauthorized, errors.New("token is expired"))
 	}
 	hashedSecret := []byte(nil)
 	switch {
@@ -91,7 +99,12 @@ func (token *Token) Validate(unhashedSecret string) error {
 		return ErrUnauthorized
 	}
 
-	return bcrypt.CompareHashAndPassword(hashedSecret, []byte(unhashedSecret))
+	// 통과한 경우를 감싸면 안 된다. errors.Join 은 두 번째가 nil 이어도
+	// 첫 번째를 담은 non-nil 을 돌려줘서, 그대로 두면 모든 로그인이 실패한다.
+	if err := bcrypt.CompareHashAndPassword(hashedSecret, []byte(unhashedSecret)); err != nil {
+		return errors.Join(ErrUnauthorized, err)
+	}
+	return nil
 }
 
 // validateSecret 은 Kind 와 Secret 이 어긋나지 않는지 본다.

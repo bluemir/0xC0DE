@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"errors"
 	"io"
 	"net/http"
 
+	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"

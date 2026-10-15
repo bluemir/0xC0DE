@@ -111,9 +111,19 @@
 	- [ ] 정리 실패를 사람이 알 수 있게 하기
 		- `Dispatch` 가 에러를 주지만 계정 삭제는 이미 끝나 되돌아가지 않는다
 		- 남은 행을 찾아내는 방법이 없다. 점검 명령이나 재시도를 붙일지 정한다
-- [ ] `Manager.Default` 가 비밀번호 불일치에 bcrypt 에러를 그대로 올린다
-	- `ErrUnauthorized` 가 아니라 `bcrypt.ErrMismatchedHashAndPassword` 다
-	- 호출측이 `errors.Is(err, ErrUnauthorized)` 로 거르지 못한다
+- 에러 다루기
+	- [x] 인증 실패에 `ErrUnauthorized` 를 섞어 올리기
+		- [ADR-0009](adr/ADR-0009-mark-auth-failures-with-join.md), [issue 0001](issues/0001-cockroachdb-mark-not-visible-to-std-errors-is.md)
+	- [ ] 에러 메시지가 응답 본문에 그대로 나간다
+		- `errs` 의 `toJSON`, `toProblemDetail` 이 모든 에러의 `err.Error()` 를 담는다
+		- 지금 401 응답에 `crypto/bcrypt: ...` 가, 500 에 DB 와 내부 경로가 실린다
+		- 5xx 만 고정 문구로 덮을지, 4xx 까지 손볼지 정한다
+	- [ ] `render.go` 의 `errors.Is(err, validator.ValidationErrors{})` 가 늘 false 다
+		- `ValidationErrors` 는 슬라이스 타입이라 `Is` 로 비교할 것이 아니다
+		- `code()` 쪽은 `errors.As` 를 쓴다. 여기도 맞추거나 분기를 지운다
+	- [ ] 남은 `errors.Mark` 사용처가 생기지 않게 하기
+		- 표준 `errors.Is` 와 `assert.ErrorIs` 에 잡히지 않아 조용히 썩는다
+		- lint 로 막을지, 주석으로만 남길지 정한다
 - [ ] 세션 쿠키가 서명만 되고 암호화되지 않는다
 	- `cookie.NewStore` 에 block key 를 주지 않았다
 - [ ] gorm 에 넘어가지 않는 죽은 `serializer:gob` 태그 정리
