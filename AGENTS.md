@@ -2,7 +2,7 @@
 
 - 애매하거나 결정이 필요한 사항은 질문을 반드시 할것
 - 의도나 용어는 추측하지 말고 물어볼 것
-- 명확하지기 전에는 계속 해서 재질문 할것
+- 명확해지기 전에는 계속 해서 재질문 할것
 
 ## Code Style
 
@@ -20,7 +20,7 @@
 - 과도한 추상화를 하지 않는다.
 	- interface 는 반드시 필요하기 전에는 도입하지 않는다.
 		- 예외: 대형 구조체(Manager 등)의 전체 공개 API 색인/가이드 제공 및 컴파일 타임 일치 검증(`var _ I... = (*...)(nil)`)을 위한 인터페이스는 허용한다.
-	- Depandancy Injection 은 최소화 한다.
+	- Dependency Injection 은 최소화 한다.
 	- 단순 중복이 있다고 helper 를 만들지 않는다.
 - 코드는 의도에 따라 작성한다.
 	- 변수명은 과도하게 축약하지 않는다.(eg 한글자 변수명)
@@ -46,16 +46,16 @@
 	- 작업의 결과를 기록하지 않는다. 결과는 ADR 이나 다른 문서에 기록 한다.
 	- 후속으로 할일만 새 항목으로 작성 한다.
 - 끝낸 항목중 오래되거나 장기 추적이 필요 없는 건은 주기적으로 `docs/done.md` 로 옮겨진다.
-	- 옯기는 작업은 별도로 명시적으로 진행 하며, 임의로 진행 하지 않는다.
+	- 옮기는 작업은 별도로 명시적으로 진행 하며, 임의로 진행 하지 않는다.
 
 예시
 
 ```
 - [ ] example 1
 - [ ] example 2
-	- descrition 1
-	- descrition 2
-	- descrition 3
+	- description 1
+	- description 2
+	- description 3
 - epic example
 	- [ ] job1
 	- [ ] job2
@@ -73,7 +73,7 @@
 
 ### Reference
 
-- 참고할만만 Article, 영상 등의 요약, 정리는 `docs/references/` 아래에 작성한다.
+- 참고할만한 Article, 영상 등의 요약, 정리는 `docs/references/` 아래에 작성한다.
 - 파일명: `짧은-제목.md`
 
 ### ADR (Architecture Decision Records)
