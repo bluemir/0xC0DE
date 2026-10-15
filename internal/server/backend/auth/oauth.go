@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"time"
 
 	"github.com/cockroachdb/errors"
@@ -25,7 +26,7 @@ func (kind TokenKind) IsOAuth() bool {
 
 // LinkOAuth 는 외부 계정을 사용자에 연결한다.
 // 이미 다른 사용자에 붙어 있는 계정이면 unique index 에 걸려 실패한다.
-func (m *Manager) LinkOAuth(username string, kind TokenKind, externalID string, profile OAuthSecret) (*Token, error) {
+func (m *Manager) LinkOAuth(ctx context.Context, username string, kind TokenKind, externalID string, profile OAuthSecret) (*Token, error) {
 	if !kind.IsOAuth() {
 		return nil, errors.Errorf("token kind %q is not an oauth provider", kind)
 	}
@@ -43,7 +44,7 @@ func (m *Manager) LinkOAuth(username string, kind TokenKind, externalID string, 
 		ExternalID: []byte(externalID),
 		Secret:     Secret{OAuth: &profile},
 	}
-	if err := m.createToken(token); err != nil {
+	if err := m.createToken(ctx, token); err != nil {
 		return nil, err
 	}
 
@@ -52,23 +53,23 @@ func (m *Manager) LinkOAuth(username string, kind TokenKind, externalID string, 
 
 // FindOAuthUser 는 provider 가 준 사용자 ID 로 연결된 사용자를 찾는다.
 // 로그인 흐름이 붙으면 여기서 얻은 사용자를 세션에 담게 된다.
-func (m *Manager) FindOAuthUser(kind TokenKind, externalID string) (*User, error) {
+func (m *Manager) FindOAuthUser(ctx context.Context, kind TokenKind, externalID string) (*User, error) {
 	if !kind.IsOAuth() {
 		return nil, errors.Errorf("token kind %q is not an oauth provider", kind)
 	}
 
 	token := Token{}
-	if err := m.db.Where("kind = ? AND external_id = ?", kind, []byte(externalID)).
+	if err := m.db.WithContext(ctx).Where("kind = ? AND external_id = ?", kind, []byte(externalID)).
 		Take(&token).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	return m.GetUser(token.Username)
+	return m.GetUser(ctx, token.Username)
 }
 
 // UpdateOAuthProfile 은 연결에 붙은 프로필을 다시 저장한다.
 // provider 에서 프로필을 새로 받아왔을 때 쓴다.
-func (m *Manager) UpdateOAuthProfile(kind TokenKind, externalID string, profile OAuthSecret) error {
+func (m *Manager) UpdateOAuthProfile(ctx context.Context, kind TokenKind, externalID string, profile OAuthSecret) error {
 	if !kind.IsOAuth() {
 		return errors.Errorf("token kind %q is not an oauth provider", kind)
 	}
@@ -78,7 +79,7 @@ func (m *Manager) UpdateOAuthProfile(kind TokenKind, externalID string, profile 
 	}
 
 	// serializer 가 붙은 필드라 Update 가 아니라 구조체 Updates 를 쓴다.
-	result := m.db.Model(&Token{}).
+	result := m.db.WithContext(ctx).Model(&Token{}).
 		Where("kind = ? AND external_id = ?", kind, []byte(externalID)).
 		Updates(Token{Secret: Secret{OAuth: &profile}})
 	if result.Error != nil {
@@ -92,9 +93,9 @@ func (m *Manager) UpdateOAuthProfile(kind TokenKind, externalID string, profile 
 }
 
 // ListOAuth 는 사용자에 연결된 외부 계정을 모두 돌려준다.
-func (m *Manager) ListOAuth(username string) ([]Token, error) {
+func (m *Manager) ListOAuth(ctx context.Context, username string) ([]Token, error) {
 	tokens := []Token{}
-	if err := m.db.Where("username = ? AND kind IN ?", username, []TokenKind{TokenKindGoogle, TokenKindGitHub}).
+	if err := m.db.WithContext(ctx).Where("username = ? AND kind IN ?", username, []TokenKind{TokenKindGoogle, TokenKindGitHub}).
 		Order("kind asc, `index` asc").
 		Find(&tokens).Error; err != nil {
 		return nil, errors.WithStack(err)
@@ -103,9 +104,9 @@ func (m *Manager) ListOAuth(username string) ([]Token, error) {
 }
 
 // RevokeOAuth 는 연결을 끊는다.
-func (m *Manager) RevokeOAuth(username string, kind TokenKind, index int) error {
+func (m *Manager) RevokeOAuth(ctx context.Context, username string, kind TokenKind, index int) error {
 	if !kind.IsOAuth() {
 		return errors.Errorf("token kind %q is not an oauth provider", kind)
 	}
-	return m.RevokeToken(username, kind, index)
+	return m.RevokeToken(ctx, username, kind, index)
 }

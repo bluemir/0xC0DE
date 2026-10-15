@@ -50,7 +50,7 @@ func Can(verb auth.Verb, r ResourceGetter) gin.HandlerFunc {
 
 		resource := r(c)
 
-		if !backends(c).Auth.Can(user, verb, resource) {
+		if !backends(c).Auth.Can(c.Request.Context(), user, verb, resource) {
 			c.Error(auth.ErrForbidden)
 			c.Abort()
 			//c.AbortWithError(http.StatusForbidden, auth.ErrForbidden)
@@ -73,7 +73,7 @@ func Register(c *gin.Context) error {
 		return err
 	}
 
-	u, _, err := backends(c).Auth.Register(req.Username, req.Password,
+	u, _, err := backends(c).Auth.Register(c.Request.Context(), req.Username, req.Password,
 		auth.WithGroup("user"), auth.WithEmail(req.Email))
 	if err != nil {
 		return err
@@ -94,7 +94,7 @@ func Login(c *gin.Context) error {
 		return err
 	}
 
-	user, err := backends(c).Auth.Default(req.Username, req.Password)
+	user, err := backends(c).Auth.Default(c.Request.Context(), req.Username, req.Password)
 	if err != nil {
 		return err
 	}
@@ -165,12 +165,12 @@ func UpdateMe(c *gin.Context) error {
 		return err
 	}
 
-	if err := backends(c).Auth.UpdateEmail(user.Name, req.Email); err != nil {
+	if err := backends(c).Auth.UpdateEmail(c.Request.Context(), user.Name, req.Email); err != nil {
 		return err
 	}
 
 	// 세션에 사용자 구조체가 통째로 들어 있어 같이 갱신하지 않으면 옛 값이 남는다.
-	updated, err := backends(c).Auth.GetUser(user.Name)
+	updated, err := backends(c).Auth.GetUser(c.Request.Context(), user.Name)
 	if err != nil {
 		return err
 	}
@@ -219,7 +219,7 @@ func Me(c *gin.Context) error {
 
 // @Router /api/v1/users [get]
 func ListUsers(c *gin.Context) error {
-	users, err := backends(c).Auth.ListUser()
+	users, err := backends(c).Auth.ListUser(c.Request.Context())
 	if err != nil {
 		return err
 	}
@@ -230,14 +230,14 @@ func ListUsers(c *gin.Context) error {
 
 // @Router /api/v1/groups [get]
 func ListGroups(c *gin.Context) error {
-	groups, err := backends(c).Auth.ListGroup()
+	groups, err := backends(c).Auth.ListGroup(c.Request.Context())
 	if err != nil {
 		return err
 	}
 
 	res := []GroupWithBindingRoles{}
 	for _, group := range groups {
-		roles, err := backends(c).Auth.ListAssignedRole(auth.Subject{
+		roles, err := backends(c).Auth.ListAssignedRole(c.Request.Context(), auth.Subject{
 			Kind: auth.KindGroup,
 			Name: group.Name,
 		})
@@ -269,7 +269,7 @@ type GroupWithBindingRoles struct {
 
 // @Router /api/v1/roles [get]
 func ListRoles(c *gin.Context) error {
-	roles, err := backends(c).Auth.ListRole()
+	roles, err := backends(c).Auth.ListRole(c.Request.Context())
 	if err != nil {
 
 		return err
@@ -292,7 +292,7 @@ func CanAPI(c *gin.Context) error {
 		resource[k] = strings.Join(v, ",")
 	}
 
-	if backends(c).Auth.Can(user, auth.Verb(verb), resource) {
+	if backends(c).Auth.Can(c.Request.Context(), user, auth.Verb(verb), resource) {
 		c.Status(http.StatusOK)
 	} else {
 		c.Status(http.StatusForbidden)
@@ -326,7 +326,7 @@ func CanBulkAPI(c *gin.Context) error {
 
 	res := []AuthzResponse{}
 	for _, item := range req {
-		allow := backends(c).Auth.Can(user, item.Verb, item.Resource)
+		allow := backends(c).Auth.Can(c.Request.Context(), user, item.Verb, item.Resource)
 
 		res = append(res, AuthzResponse{
 			Verb:     item.Verb,

@@ -25,7 +25,7 @@ import (
 // SMTP 는 백그라운드다. 보내지 못해도 저장은 되돌리지 않는다. 주소는 이미 바뀌었고
 // 확인만 안 된 상태이며, 사용자는 간격이 지난 뒤 다시 저장해 재발송할 수 있다.
 func sendVerificationMail(c *gin.Context, username string, email string) error {
-	secret, err := backends(c).Auth.IssueVerification(username, email)
+	secret, err := backends(c).Auth.IssueVerification(c.Request.Context(), username, email)
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ type verificationMailData struct {
 func ConfirmEmail(c *gin.Context) {
 	username, secret := splitLinkToken(c.Param("token"))
 
-	user, err := backends(c).Auth.ConfirmVerification(username, secret)
+	user, err := backends(c).Auth.ConfirmVerification(c.Request.Context(), username, secret)
 	if err != nil {
 		c.Error(err)
 		c.Abort()

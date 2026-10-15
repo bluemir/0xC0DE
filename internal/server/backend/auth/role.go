@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"context"
+
 	"github.com/bluemir/functional/v2"
 	"github.com/cockroachdb/errors"
 	"github.com/sirupsen/logrus"
@@ -26,52 +28,52 @@ type Rule struct {
 	//   subject == object.owner
 }
 
-func (m *Manager) CreateRole(name string, rules []Rule) (*Role, error) {
+func (m *Manager) CreateRole(ctx context.Context, name string, rules []Rule) (*Role, error) {
 	role := &Role{
 		Name:  name,
 		Rules: rules,
 	}
-	if err := m.db.Create(role).Error; err != nil {
+	if err := m.db.WithContext(ctx).Create(role).Error; err != nil {
 		return nil, err
 	}
 	return role, nil
 }
-func (m *Manager) GetRole(name string) (*Role, error) {
+func (m *Manager) GetRole(ctx context.Context, name string) (*Role, error) {
 	role := Role{}
-	if err := m.db.Where(Role{Name: name}).Take(&role).Error; err != nil {
+	if err := m.db.WithContext(ctx).Where(Role{Name: name}).Take(&role).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 	return &role, nil
 }
-func (m *Manager) ListRole(opts ...meta.ListOptionFn) ([]Role, error) {
+func (m *Manager) ListRole(ctx context.Context, opts ...meta.ListOptionFn) ([]Role, error) {
 	opt := meta.ListOption{}
 
 	for _, fn := range opts {
 		fn(&opt)
 	}
 
-	return m.ListRoleWithOption(&opt)
+	return m.ListRoleWithOption(ctx, &opt)
 }
-func (m *Manager) ListRoleWithOption(option *meta.ListOption) ([]Role, error) {
+func (m *Manager) ListRoleWithOption(ctx context.Context, option *meta.ListOption) ([]Role, error) {
 	if option.Limit == 0 {
 		option.Limit = 20
 	}
 	roles := []Role{}
 
-	if err := m.db.Offset(option.Offset).Limit(option.Limit).Find(&roles).Error; err != nil {
+	if err := m.db.WithContext(ctx).Offset(option.Offset).Limit(option.Limit).Find(&roles).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	return roles, nil
 }
-func (m *Manager) UpdateRole(role *Role) error {
-	if err := m.db.Save(role).Error; err != nil {
+func (m *Manager) UpdateRole(ctx context.Context, role *Role) error {
+	if err := m.db.WithContext(ctx).Save(role).Error; err != nil {
 		return errors.WithStack(err)
 	}
 	return nil
 }
-func (m *Manager) DeleteRole(name string) error {
-	if err := m.db.Where(Role{Name: name}).Delete(Role{Name: name}).Error; err != nil {
+func (m *Manager) DeleteRole(ctx context.Context, name string) error {
+	if err := m.db.WithContext(ctx).Where(Role{Name: name}).Delete(Role{Name: name}).Error; err != nil {
 		return errors.WithStack(err)
 	}
 	return nil

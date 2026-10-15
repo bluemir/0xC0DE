@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"time"
@@ -48,7 +49,7 @@ type Verification struct {
 //
 // 직전 발급으로부터 VerificationResendInterval 이 지나지 않았으면 ErrVerificationTooSoon 이다.
 // 단 주소가 달라졌으면 간격과 상관없이 새로 발급한다. 오타를 고친 사용자를 기다리게 할 이유가 없다.
-func (m *Manager) IssueVerification(username string, email string) (string, error) {
+func (m *Manager) IssueVerification(ctx context.Context, username string, email string) (string, error) {
 	if email == "" {
 		return "", errors.Errorf("cannot verify empty email")
 	}
@@ -65,7 +66,7 @@ func (m *Manager) IssueVerification(username string, email string) (string, erro
 
 	now := time.Now()
 
-	tx := m.db.Begin()
+	tx := m.db.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
 	last := Verification{}
@@ -102,15 +103,15 @@ func (m *Manager) IssueVerification(username string, email string) (string, erro
 
 // ConfirmVerification 은 확인 링크의 비밀을 검증하고 그 주소를 확인된 것으로 표시한다.
 // 없는 계정, 만료, 비밀 불일치, 그 사이에 바뀐 주소를 모두 ErrUnauthorized 하나로 답한다.
-func (m *Manager) ConfirmVerification(username string, unhashedSecret string) (*User, error) {
+func (m *Manager) ConfirmVerification(ctx context.Context, username string, unhashedSecret string) (*User, error) {
 	verification := Verification{}
-	if err := m.db.Where(Verification{Username: username}).Take(&verification).Error; err != nil {
+	if err := m.db.WithContext(ctx).Where(Verification{Username: username}).Take(&verification).Error; err != nil {
 		return nil, ErrUnauthorized
 	}
 
 	// 만료된 행은 다시 쓸 일이 없다. 본 김에 치운다.
 	if verification.ExpiredAt.Before(time.Now()) {
-		if err := m.RevokeVerification(username); err != nil {
+		if err := m.RevokeVerification(ctx, username); err != nil {
 			logrus.Warnf("fail to remove expired verification of %s: %+v", username, err)
 		}
 		return nil, ErrUnauthorized
@@ -120,7 +121,7 @@ func (m *Manager) ConfirmVerification(username string, unhashedSecret string) (*
 		return nil, ErrUnauthorized
 	}
 
-	user, err := m.GetUser(username)
+	user, err := m.GetUser(ctx, username)
 	if err != nil {
 		return nil, ErrUnauthorized
 	}
@@ -131,13 +132,13 @@ func (m *Manager) ConfirmVerification(username string, unhashedSecret string) (*
 	}
 
 	now := time.Now()
-	if err := m.db.Model(&User{}).Where(User{Name: username}).
+	if err := m.db.WithContext(ctx).Model(&User{}).Where(User{Name: username}).
 		Update("email_verified_at", now).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 	user.EmailVerifiedAt = &now
 
-	if err := m.RevokeVerification(username); err != nil {
+	if err := m.RevokeVerification(ctx, username); err != nil {
 		return nil, err
 	}
 
@@ -145,8 +146,8 @@ func (m *Manager) ConfirmVerification(username string, unhashedSecret string) (*
 }
 
 // RevokeVerification 은 확인 비밀을 폐기한다. 없어도 에러가 아니다.
-func (m *Manager) RevokeVerification(username string) error {
-	if err := m.db.Where(Verification{Username: username}).Delete(Verification{}).Error; err != nil {
+func (m *Manager) RevokeVerification(ctx context.Context, username string) error {
+	if err := m.db.WithContext(ctx).Where(Verification{Username: username}).Delete(Verification{}).Error; err != nil {
 		return errors.WithStack(err)
 	}
 	return nil

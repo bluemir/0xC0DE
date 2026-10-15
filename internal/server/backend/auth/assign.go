@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"context"
+
 	"github.com/cockroachdb/errors"
 )
 
@@ -14,8 +16,8 @@ type Subject struct {
 	Name string `gorm:"primaryKey;size:256" expr:"name"`
 }
 
-func (m *Manager) AssignRole(subject Subject, roleName string) error {
-	if err := m.db.FirstOrCreate(&Assign{
+func (m *Manager) AssignRole(ctx context.Context, subject Subject, roleName string) error {
+	if err := m.db.WithContext(ctx).FirstOrCreate(&Assign{
 		Subject: subject,
 		Role:    roleName,
 	}).Error; err != nil {
@@ -24,8 +26,8 @@ func (m *Manager) AssignRole(subject Subject, roleName string) error {
 	return nil
 }
 
-func (m *Manager) DiscardRole(subject Subject, roleName string) error {
-	if err := m.db.Where(Assign{
+func (m *Manager) DiscardRole(ctx context.Context, subject Subject, roleName string) error {
+	if err := m.db.WithContext(ctx).Where(Assign{
 		Subject: subject,
 		Role:    roleName,
 	}).Delete(Assign{}).Error; err != nil {
@@ -33,9 +35,9 @@ func (m *Manager) DiscardRole(subject Subject, roleName string) error {
 	}
 	return nil
 }
-func (m *Manager) ListAssignedRole(subject Subject) ([]Role, error) {
+func (m *Manager) ListAssignedRole(ctx context.Context, subject Subject) ([]Role, error) {
 	assigns := []Assign{}
-	if err := m.db.Where("subject_kind = ?", subject.Kind).Where(`subject_name = "" OR subject_name = ?`, subject.Name).Find(&assigns).Error; err != nil {
+	if err := m.db.WithContext(ctx).Where("subject_kind = ?", subject.Kind).Where(`subject_name = "" OR subject_name = ?`, subject.Name).Find(&assigns).Error; err != nil {
 		return nil, err
 	}
 	if subject.Kind == KindGroup {
@@ -55,7 +57,7 @@ func (m *Manager) ListAssignedRole(subject Subject) ([]Role, error) {
 	}
 
 	roles := []Role{}
-	if err := m.db.Where("name IN ?", roleNames).Find(&roles).Error; err != nil {
+	if err := m.db.WithContext(ctx).Where("name IN ?", roleNames).Find(&roles).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 

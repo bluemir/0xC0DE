@@ -11,13 +11,14 @@ import (
 )
 
 func TestTokenManagement(t *testing.T) {
+	ctx := t.Context()
 	m := newTestManager(t)
 	username := "user-token-test"
-	_, err := m.CreateUser(username)
+	_, err := m.CreateUser(ctx, username)
 	require.NoError(t, err)
 
 	// Generate Access Key
-	token, key, err := m.GenerateAccessKey(username)
+	token, key, err := m.GenerateAccessKey(ctx, username)
 	require.NoError(t, err)
 	require.NotNil(t, token)
 	assert.NotEmpty(t, key)
@@ -35,29 +36,30 @@ func TestTokenManagement(t *testing.T) {
 	// Let's verify we can find and validate manually.
 
 	// List Tokens
-	tokens, err := m.ListToken(username)
+	tokens, err := m.ListToken(ctx, username)
 	require.NoError(t, err)
 	assert.Len(t, tokens, 1)
 	assert.Equal(t, token.Index, tokens[0].Index)
 
 	// Revoke Token
-	err = m.RevokeToken(username, auth.TokenKindAccessKey, token.Index)
+	err = m.RevokeToken(ctx, username, auth.TokenKindAccessKey, token.Index)
 	assert.NoError(t, err)
 
 	// List again
-	tokens, err = m.ListToken(username)
+	tokens, err = m.ListToken(ctx, username)
 	require.NoError(t, err)
 	assert.Len(t, tokens, 0)
 }
 
 func TestTokenExpiration(t *testing.T) {
+	ctx := t.Context()
 	m := newTestManager(t)
 	username := "user-expire-test"
-	_, err := m.CreateUser(username)
+	_, err := m.CreateUser(ctx, username)
 	require.NoError(t, err)
 
 	// Issue expired token
-	expiredToken, err := m.IssueToken(username, auth.TokenKindAccessKey, "secret", auth.ExpiredAfter(-1*time.Hour))
+	expiredToken, err := m.IssueToken(ctx, username, auth.TokenKindAccessKey, "secret", auth.ExpiredAfter(-1*time.Hour))
 	require.NoError(t, err)
 
 	// Validate should fail
@@ -66,7 +68,7 @@ func TestTokenExpiration(t *testing.T) {
 	assert.Contains(t, err.Error(), "expired")
 
 	// Issue valid token
-	validToken, err := m.IssueToken(username, auth.TokenKindAccessKey, "secret", auth.ExpiredAfter(1*time.Hour))
+	validToken, err := m.IssueToken(ctx, username, auth.TokenKindAccessKey, "secret", auth.ExpiredAfter(1*time.Hour))
 	require.NoError(t, err)
 
 	// Validate should succeed
@@ -75,16 +77,17 @@ func TestTokenExpiration(t *testing.T) {
 }
 
 func TestTokenSecret(t *testing.T) {
+	ctx := t.Context()
 	m := newTestManager(t)
 	username := "user-secret-test"
-	_, err := m.CreateUser(username)
+	_, err := m.CreateUser(ctx, username)
 	require.NoError(t, err)
 
 	// 해당하는 것만 채워지고 나머지는 nil 로 남아야 한다
-	issued, err := m.IssueToken(username, auth.TokenKindPassword, "secret")
+	issued, err := m.IssueToken(ctx, username, auth.TokenKindPassword, "secret")
 	require.NoError(t, err)
 
-	got, err := m.GetToken(username, auth.TokenKindPassword, issued.Index)
+	got, err := m.GetToken(ctx, username, auth.TokenKindPassword, issued.Index)
 	require.NoError(t, err)
 	require.NotNil(t, got.Secret.Password)
 	assert.Nil(t, got.Secret.AccessKey)
@@ -92,18 +95,18 @@ func TestTokenSecret(t *testing.T) {
 	assert.Empty(t, got.ExternalID)
 	assert.NoError(t, got.Validate("secret"))
 
-	key, _, err := m.GenerateAccessKey(username)
+	key, _, err := m.GenerateAccessKey(ctx, username)
 	require.NoError(t, err)
 
-	gotKey, err := m.GetToken(username, auth.TokenKindAccessKey, key.Index)
+	gotKey, err := m.GetToken(ctx, username, auth.TokenKindAccessKey, key.Index)
 	require.NoError(t, err)
 	require.NotNil(t, gotKey.Secret.AccessKey)
 	assert.Nil(t, gotKey.Secret.Password)
 
 	// UpdatePassword 도 Secret 을 통째로 갈아끼운다
-	require.NoError(t, m.UpdatePassword(username, "next"))
+	require.NoError(t, m.UpdatePassword(ctx, username, "next"))
 
-	updated, err := m.GetToken(username, auth.TokenKindPassword, 0)
+	updated, err := m.GetToken(ctx, username, auth.TokenKindPassword, 0)
 	require.NoError(t, err)
 	require.NotNil(t, updated.Secret.Password)
 	assert.NoError(t, updated.Validate("next"))
@@ -120,19 +123,20 @@ func TestTokenSecret(t *testing.T) {
 }
 
 func TestTokenSecretMismatch(t *testing.T) {
+	ctx := t.Context()
 	m := newTestManager(t)
 	username := "user-mismatch-test"
-	_, err := m.CreateUser(username)
+	_, err := m.CreateUser(ctx, username)
 	require.NoError(t, err)
 
 	// Kind 와 Secret 이 어긋나면 저장되지 않아야 한다
-	_, err = m.IssueToken(username, auth.TokenKindPasskey, "secret")
+	_, err = m.IssueToken(ctx, username, auth.TokenKindPasskey, "secret")
 	assert.Error(t, err)
 
-	_, err = m.IssueToken(username, "no-such-kind", "secret")
+	_, err = m.IssueToken(ctx, username, "no-such-kind", "secret")
 	assert.Error(t, err)
 
-	tokens, err := m.ListToken(username)
+	tokens, err := m.ListToken(ctx, username)
 	require.NoError(t, err)
 	assert.Len(t, tokens, 0)
 }
@@ -140,13 +144,14 @@ func TestTokenSecretMismatch(t *testing.T) {
 // Validate 의 실패는 이유를 가리지 않고 ErrUnauthorized 로 표시된다.
 // 이 표식이 없으면 errs 미들웨어가 401 대신 500 을 낸다.
 func TestValidateMarksUnauthorized(t *testing.T) {
+	ctx := t.Context()
 	m, err := newManager()
 	require.NoError(t, err)
 
-	_, _, err = m.Register("alice", "password")
+	_, _, err = m.Register(ctx, "alice", "password")
 	require.NoError(t, err)
 
-	token, err := m.GetToken("alice", auth.TokenKindPassword, 0)
+	token, err := m.GetToken(ctx, "alice", auth.TokenKindPassword, 0)
 	require.NoError(t, err)
 
 	// 비밀번호 불일치
@@ -164,12 +169,13 @@ func TestValidateMarksUnauthorized(t *testing.T) {
 
 // Default 로 들어오는 경로에서도 표식이 살아 있어야 한다
 func TestDefaultMarksUnauthorized(t *testing.T) {
+	ctx := t.Context()
 	m, err := newManager()
 	require.NoError(t, err)
 
-	_, _, err = m.Register("alice", "password")
+	_, _, err = m.Register(ctx, "alice", "password")
 	require.NoError(t, err)
 
-	_, err = m.Default("alice", "wrong")
+	_, err = m.Default(ctx, "alice", "wrong")
 	assert.ErrorIs(t, err, auth.ErrUnauthorized)
 }

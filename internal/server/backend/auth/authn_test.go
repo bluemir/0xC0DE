@@ -1,7 +1,6 @@
 package auth_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -15,10 +14,10 @@ import (
 )
 
 func newTestManager(t *testing.T) *auth.Manager {
+	ctx := t.Context()
+
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(t, err)
-
-	ctx := context.Background()
 
 	events, err := pubsub.NewHub(ctx)
 	require.NoError(t, err)
@@ -29,10 +28,11 @@ func newTestManager(t *testing.T) *auth.Manager {
 }
 
 func TestRegisterAndLogin(t *testing.T) {
+	ctx := t.Context()
 	m := newTestManager(t)
 
 	// Register
-	user, token, err := m.Register("testuser", "password", auth.WithGroup("user"))
+	user, token, err := m.Register(ctx, "testuser", "password", auth.WithGroup("user"))
 	assert.NoError(t, err)
 	assert.NotNil(t, user)
 	assert.NotNil(t, token)
@@ -45,22 +45,23 @@ func TestRegisterAndLogin(t *testing.T) {
 	assert.Contains(t, groupNames, "user")
 
 	// Login (Default)
-	loggedInUser, err := m.Default("testuser", "password")
+	loggedInUser, err := m.Default(ctx, "testuser", "password")
 	require.NoError(t, err)
 	require.NotNil(t, loggedInUser)
 	assert.Equal(t, user.Name, loggedInUser.Name)
 
 	// Login fail
-	_, err = m.Default("testuser", "wrongpassword")
+	_, err = m.Default(ctx, "testuser", "wrongpassword")
 	assert.Error(t, err)
 }
 
 func TestTokenLifecycle(t *testing.T) {
+	ctx := t.Context()
 	m := newTestManager(t)
-	m.Register("user1", "pass")
+	m.Register(ctx, "user1", "pass")
 
 	// Issue Token
-	token, err := m.IssueToken("user1", auth.TokenKindAccessKey, "secret123", auth.ExpiredAfter(1*time.Hour))
+	token, err := m.IssueToken(ctx, "user1", auth.TokenKindAccessKey, "secret123", auth.ExpiredAfter(1*time.Hour))
 	require.NoError(t, err)
 	require.NotNil(t, token)
 	assert.Equal(t, 0, token.Index)
@@ -73,12 +74,12 @@ func TestTokenLifecycle(t *testing.T) {
 	assert.Error(t, err)
 
 	// Issue another token (index increment)
-	token2, err := m.IssueToken("user1", auth.TokenKindAccessKey, "secret456")
+	token2, err := m.IssueToken(ctx, "user1", auth.TokenKindAccessKey, "secret456")
 	assert.NoError(t, err)
 	assert.Equal(t, 1, token2.Index)
 
 	// List Tokens
-	tokens, err := m.ListToken("user1")
+	tokens, err := m.ListToken(ctx, "user1")
 	assert.NoError(t, err)
 	// Expect 3 tokens? Password token (index 0) + 2 access keys?
 	// Register creates a password token.
@@ -89,28 +90,29 @@ func TestTokenLifecycle(t *testing.T) {
 	assert.Len(t, tokens, 3)
 
 	// Get Token
-	gotToken, err := m.GetToken("user1", auth.TokenKindAccessKey, 1)
+	gotToken, err := m.GetToken(ctx, "user1", auth.TokenKindAccessKey, 1)
 	assert.NoError(t, err)
 	assert.Equal(t, token2.Secret.AccessKey.HashedSecret, gotToken.Secret.AccessKey.HashedSecret)
 
 	// Revoke Token
-	err = m.RevokeToken("user1", auth.TokenKindAccessKey, 0)
+	err = m.RevokeToken(ctx, "user1", auth.TokenKindAccessKey, 0)
 	assert.NoError(t, err)
 
-	_, err = m.GetToken("user1", auth.TokenKindAccessKey, 0)
+	_, err = m.GetToken(ctx, "user1", auth.TokenKindAccessKey, 0)
 	assert.Error(t, err)
 }
 
 func TestUpdatePassword(t *testing.T) {
+	ctx := t.Context()
 	m := newTestManager(t)
-	m.Register("user1", "oldpass")
+	m.Register(ctx, "user1", "oldpass")
 
-	err := m.UpdatePassword("user1", "newpass")
+	err := m.UpdatePassword(ctx, "user1", "newpass")
 	assert.NoError(t, err)
 
-	_, err = m.Default("user1", "newpass")
+	_, err = m.Default(ctx, "user1", "newpass")
 	assert.NoError(t, err)
 
-	_, err = m.Default("user1", "oldpass")
+	_, err = m.Default(ctx, "user1", "oldpass")
 	assert.Error(t, err)
 }

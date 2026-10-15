@@ -9,47 +9,49 @@ import (
 )
 
 func TestUserCRUD(t *testing.T) {
+	ctx := t.Context()
 	m := newTestManager(t)
 
 	// Create User (via Register or CreateUser)
 	// CreateUser is lower level.
-	user, err := m.CreateUser("user1", auth.WithGroup("group1"))
+	user, err := m.CreateUser(ctx, "user1", auth.WithGroup("group1"))
 	assert.NoError(t, err)
 	assert.Equal(t, "user1", user.Name)
 	assert.Len(t, user.Groups, 1)
 	assert.Equal(t, "group1", user.Groups[0].Name)
 
 	// Get User
-	gotUser, err := m.GetUser("user1")
+	gotUser, err := m.GetUser(ctx, "user1")
 	assert.NoError(t, err)
 	assert.Equal(t, "user1", gotUser.Name)
 
 	// List User
-	users, err := m.ListUser()
+	users, err := m.ListUser(ctx)
 	assert.NoError(t, err)
 	assert.Len(t, users, 1)
 	assert.Equal(t, "user1", users[0].Name)
 
 	// Update User
 	gotUser.Labels = map[string]string{"key": "value"}
-	err = m.UpdateUser(gotUser)
+	err = m.UpdateUser(ctx, gotUser)
 	assert.NoError(t, err)
 
-	gotUser, err = m.GetUser("user1")
+	gotUser, err = m.GetUser(ctx, "user1")
 	assert.NoError(t, err)
 	assert.Equal(t, "value", gotUser.Labels["key"])
 
 	// Delete User
-	err = m.DeleteUser("user1")
+	err = m.DeleteUser(ctx, "user1")
 	assert.NoError(t, err)
 
-	_, err = m.GetUser("user1")
+	_, err = m.GetUser(ctx, "user1")
 	assert.Error(t, err)
 }
 
 func TestSubjects(t *testing.T) {
+	ctx := t.Context()
 	m := newTestManager(t)
-	user, _ := m.CreateUser("user1", auth.WithGroup("group1"))
+	user, _ := m.CreateUser(ctx, "user1", auth.WithGroup("group1"))
 
 	subjects := user.Subjects()
 	// Should contain user subject and group subject

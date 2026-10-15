@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -151,7 +152,7 @@ func (token *Token) validateSecret() error {
 	return nil
 }
 
-func (m *Manager) IssueToken(username string, kind TokenKind, unhashedSecret string, opts ...TokenOpt) (*Token, error) {
+func (m *Manager) IssueToken(ctx context.Context, username string, kind TokenKind, unhashedSecret string, opts ...TokenOpt) (*Token, error) {
 	hashedSecret, err := bcrypt.GenerateFromPassword([]byte(unhashedSecret), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -173,7 +174,7 @@ func (m *Manager) IssueToken(username string, kind TokenKind, unhashedSecret str
 		fn(token)
 	}
 
-	if err := m.createToken(token); err != nil {
+	if err := m.createToken(ctx, token); err != nil {
 		return nil, err
 	}
 
@@ -181,12 +182,12 @@ func (m *Manager) IssueToken(username string, kind TokenKind, unhashedSecret str
 }
 
 // createToken 은 같은 (username, kind) 안에서 다음 index 를 붙여 token 을 저장한다.
-func (m *Manager) createToken(token *Token) error {
+func (m *Manager) createToken(ctx context.Context, token *Token) error {
 	if err := token.validateSecret(); err != nil {
 		return err
 	}
 
-	tx := m.db.Begin()
+	tx := m.db.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
 	lastToken := Token{}
@@ -213,7 +214,7 @@ func (m *Manager) createToken(token *Token) error {
 
 	return nil
 }
-func (m *Manager) UpdatePassword(username string, unhashedPassword string) error {
+func (m *Manager) UpdatePassword(ctx context.Context, username string, unhashedPassword string) error {
 	hashedSecret, err := bcrypt.GenerateFromPassword([]byte(unhashedPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return errors.WithStack(err)
@@ -221,7 +222,7 @@ func (m *Manager) UpdatePassword(username string, unhashedPassword string) error
 
 	// Assignments 에 값을 직접 넣으면 serializer 를 거치지 않는다.
 	// AssignmentColumns 는 INSERT 에 쓰인 값을 그대로 가져다 쓴다.
-	if err := m.db.Clauses(clause.OnConflict{
+	if err := m.db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "username"}, {Name: "kind"}, {Name: "index"}},
 		DoUpdates: clause.AssignmentColumns([]string{"secret"}),
 	}).Create(&Token{
@@ -234,10 +235,10 @@ func (m *Manager) UpdatePassword(username string, unhashedPassword string) error
 	}
 	return nil
 }
-func (m *Manager) GenerateAccessKey(username string, opts ...TokenOpt) (*Token, string, error) {
+func (m *Manager) GenerateAccessKey(ctx context.Context, username string, opts ...TokenOpt) (*Token, string, error) {
 	unhashedSecret := util.RandomString(32)
 
-	t, err := m.IssueToken(username, TokenKindAccessKey, unhashedSecret, opts...)
+	t, err := m.IssueToken(ctx, username, TokenKindAccessKey, unhashedSecret, opts...)
 	if err != nil {
 		return nil, "", err
 	}
@@ -246,9 +247,9 @@ func (m *Manager) GenerateAccessKey(username string, opts ...TokenOpt) (*Token, 
 
 	return t, fmt.Sprintf("%s.%d.%s", username, t.Index, unhashedSecret), nil
 }
-func (m *Manager) GetToken(username string, kind TokenKind, index int) (*Token, error) {
+func (m *Manager) GetToken(ctx context.Context, username string, kind TokenKind, index int) (*Token, error) {
 	token := Token{}
-	if err := m.db.Where(Token{
+	if err := m.db.WithContext(ctx).Where(Token{
 		Username: username,
 		Kind:     kind,
 		Index:    index,
@@ -258,16 +259,16 @@ func (m *Manager) GetToken(username string, kind TokenKind, index int) (*Token, 
 
 	return &token, nil
 }
-func (m *Manager) ListToken(username string) ([]Token, error) {
+func (m *Manager) ListToken(ctx context.Context, username string) ([]Token, error) {
 	tokens := []Token{}
 
-	if err := m.db.Where(Token{Username: username}).Find(&tokens).Error; err != nil {
+	if err := m.db.WithContext(ctx).Where(Token{Username: username}).Find(&tokens).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 	return tokens, nil
 }
-func (m *Manager) RevokeToken(username string, kind TokenKind, index int) error {
-	if err := m.db.Where(Token{
+func (m *Manager) RevokeToken(ctx context.Context, username string, kind TokenKind, index int) error {
+	if err := m.db.WithContext(ctx).Where(Token{
 		Username: username,
 		Kind:     kind,
 		Index:    index,

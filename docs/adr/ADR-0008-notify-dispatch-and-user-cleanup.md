@@ -1,4 +1,4 @@
-# ADR-0008: 이벤트 발행을 Notify 와 Dispatch 로 가르고, 계정 삭제 정리를 거기에 건다
+# ADR-0008: 이벤트 발행을 Notify 와 Dispatch 로 가르고, 계정 삭제 정리는 한 트랜잭션에서 한다
 
 - 상태: 채택
 - 날짜: 2026-10-15
@@ -53,43 +53,57 @@ Dispatch(ctx context.Context, detail any) error  // sync, 핸들러 에러를 �
 프로세스 context 다. 요청 context 를 그대로 실으면 응답이 끝나는 순간 취소되어
 뒤늦게 도는 핸들러가 죽은 context 를 받는다. `jobs.Manager.processContext` 와 같은 수다.
 
-### 3. 계정 삭제 정리는 삭제 **뒤에** `Dispatch` 로 보낸다
+### 3. 계정 삭제 정리는 `DeleteUser` 안에서 한 트랜잭션으로 한다
 
 ```go
-func (m *Manager) DeleteUser(username string) error {
-	user, err := m.GetUser(username)
+func (m *Manager) DeleteUser(ctx context.Context, username string) error {
+	user, err := m.GetUser(ctx, username)
 	...
-	m.db.Delete(User{Name: username})
-	return m.events.Dispatch(m.processContext, EventUserDeleted{User: *user})
+	tx := m.db.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	tx.Delete(User{Name: username})
+	deleteUserRows(tx, username)   // tokens, recoveries, verifications, assigns, members
+
+	tx.Commit()
+
+	m.events.Notify(ctx, EventUserDeleted{User: *user})
+	return nil
 }
 ```
 
-**버린 선택지: 삭제 전에 보내기.** 핸들러가 모두 성공해야 `users` 행을 지우는
-모양이다. 중간에 실패하면 계정이 남아 다시 시도할 수 있다는 장점이 있다.
-고르지 않았다. 그 사이에 토큰만 지워지고 계정은 살아 있는 구간이 생긴다.
-그 계정은 로그인할 수 없는데 존재하기는 해서, 사용자 눈에는 "지워지지도 않고
-들어갈 수도 없는" 상태가 된다. 지워진 것이 확실한 쪽이 낫다.
+전부 되거나 전부 안 된다. 중간에 실패하면 계정도 되돌아오므로 같은 요청을 다시 보내면
+된다. "계정은 없어졌는데 `tokens` 가 남은" 상태가 아예 만들어지지 않는다.
+
+**버린 선택지: 정리를 이벤트 핸들러에 맡기기.** 처음에는 `userCleanup` 을 `auth.New`
+에서 등록하고 `Dispatch` 로 불렀다. 치우는 쪽을 `EventUserDeleted` 한 자리에 모으면
+다른 백엔드가 붙기 쉽다고 봤다. 되돌렸다. 핸들러는 삭제 트랜잭션 밖에서 돌아
+부분 실패가 남고, 그 실패를 받아도 되돌릴 방법이 없어 에러의 뜻이 "딸린 행이 남았다"
+밖에 되지 않았다. 자기 이벤트를 자기가 받는 모양이기도 했다.
+
+**버린 선택지: 삭제 전에 이벤트를 보내기.** 핸들러가 모두 성공해야 `users` 행을
+지우는 모양이다. 고르지 않았다. 그 사이에 토큰만 지워지고 계정은 살아 있는 구간이
+생긴다. 그 계정은 로그인할 수 없는데 존재하기는 해서, 사용자 눈에는 "지워지지도 않고
+들어갈 수도 없는" 상태가 된다.
 
 **버린 선택지: 트랜잭션을 이벤트에 실어 보내기.** `Event.Context` 에 gorm 트랜잭션을
-담으면 전부 되거나 전부 안 되게 만들 수 있다. 고르지 않았다. 모든 핸들러가 gorm 과
-같은 DB 를 써야 하고, `pubsub` 이 영속계층을 알게 된다.
+담으면 밖의 핸들러까지 묶을 수 있다. 고르지 않았다. 모든 핸들러가 gorm 과 같은 DB 를
+써야 하고, `pubsub` 이 영속계층을 알게 된다.
 
-그래서 **`Dispatch` 의 에러는 "되돌려라" 가 아니라 "계정은 없어졌고 딸린 행이 남았다"
-는 뜻이다.** 같은 이름으로 다시 `DeleteUser` 를 불러 마저 치울 수 있다.
-이벤트가 트랜잭션 밖이라는 것은 에러를 받아도 달라지지 않는다.
+### 4. 밖으로는 `Notify` 로 알리기만 한다
 
-### 4. auth 자신의 행도 핸들러로 치운다
+`EventUserDeleted` 는 남는다. 다만 "치워 달라" 가 아니라 "지워졌다" 는 알림이다.
+auth 가 가진 것은 3 에서 이미 다 치운 뒤이고, 받는 쪽은 auth 밖에서 사용자에 딸린
+데이터를 가진 백엔드다. 결과를 부르는 쪽의 판단에 쓰지 않으므로 `Notify` 다.
 
-`userCleanup` 이 `EventUserDeleted` 를 받아 `tokens`, `recoveries`, `verifications`,
-`assigns`, `members` 를 한 트랜잭션에서 지운다. `auth.New` 가 자기를 등록한다.
+이벤트는 커밋된 **뒤에** 보낸다. 되돌아간 삭제를 알릴 수 없고, 트랜잭션이 열린 채
+보내면 받는 쪽이 DB 를 치다 멈춘다. 커넥션 하나로 도는 구성에서는 그대로 걸린다.
 
-자기 이벤트를 자기가 받는 모양이고, 지금 치울 것이 전부 `auth` 안에 있어서
-`DeleteUser` 안에서 바로 지우는 쪽이 짧다. 그래도 핸들러로 둔다. 치우는 쪽을
-`EventUserDeleted` 라는 한 자리에 모아 두면, 나중에 다른 백엔드가 사용자에 딸린
-데이터를 갖게 됐을 때 `auth` 가 그 백엔드를 알지 않고도 붙는다.
+구독자의 실패는 `DeleteUser` 에 올라오지 않는다. 올려도 할 수 있는 일이 없다.
+auth 쪽 정리는 끝났고, 남의 백엔드의 실패를 계정 삭제가 되돌릴 수는 없다.
 
-이 때문에 `auth.New` 가 `ctx` 와 `*pubsub.Hub` 를 받게 됐다.
-`posts.New`, `jobs.New` 와 같은 모양이 됐다.
+이로써 `Dispatch` 를 부르는 프로덕션 코드는 없어졌다. API 는 남겨 둔다.
+1 의 갈림길("부르는 쪽이 결과를 쓰는가")은 그대로 유효하고, 쓸 자리가 생기면 쓴다.
 
 ### 5. 만료된 행은 조회할 때 지운다
 
@@ -97,12 +111,14 @@ func (m *Manager) DeleteUser(username string) error {
 주기 작업을 돌리는 장치가 없고(`internal/workers` 는 fan-out 파이프라인이다),
 만들 만큼 급하지도 않다. 사용자당 한 행이고 재발급하면 덮어쓴다.
 
-아무도 링크를 누르지 않으면 행은 그대로 남는다. 그 계정이 지워질 때 4 가 치운다.
+아무도 링크를 누르지 않으면 행은 그대로 남는다. 그 계정이 지워질 때 3 이 치운다.
 
 ## 결과
 
 - 계정을 지우면 딸린 행이 같이 사라진다. 같은 이름으로 다시 가입해도 옛 비밀번호로
   들어올 수 없다
-- 호출측이 발행 방식을 고르게 됐다. `Notify` 는 막지 않고, `Dispatch` 는 알려준다
+- 정리에 실패하면 계정도 지워지지 않는다. 부분 실패가 남지 않는다
+- 호출측이 발행 방식을 고르게 됐다. `Notify` 는 막지 않고, `Dispatch` 는 알려준다.
+  다만 지금 `Dispatch` 를 부르는 프로덕션 코드는 없다
 - `pubsub.Router` 는 아직 `Publish` 하나뿐이다. 쓰는 곳이 없어 건드리지 않았다
 - 탈퇴 경로(`DeleteUser` 를 부르는 API)는 여전히 없다. `docs/tasks.md` 에 남겼다

@@ -42,7 +42,12 @@
 		- provider 와 주고받는 부분 없이 연결 생성/조회/해제만 있다
 	- [ ] provider 설정을 config 에 두기
 		- client id/secret, redirect URL, scope
-		- `auth.PasskeyConfig` 와 같은 자리에 붙인다
+		- `auth.Config` 에 `Passkey` 옆으로 붙인다. provider 마다 struct 를 따로 두고 포인터로 가진다
+		- `nil` 이 "이 provider 는 쓰지 않는다" 다. 설정이 없는 provider 는 로그인 수단으로 내보내지 않는다
+		- provider 고유 설정이 들어갈 자리가 생긴다. GitHub Enterprise 의 base URL, Google 의 hosted domain
+		- 공통 네 필드는 provider struct 마다 그대로 적는다. 임베드는 `yaml:",inline"` 을 빠뜨리면 조용히 빈 값이 된다
+		- client secret 은 config 파일에 그대로 적는다. 대신 배포에서 ConfigMap 이 아니라 Secret 으로 마운트해야 한다
+		- `deployment/server.yaml` 의 주석 예시와 마운트도 같이 고친다
 	- [ ] authorization code 흐름 구현
 		- state 와 PKCE 는 passkey ceremony 처럼 세션에 담는다
 		- `golang.org/x/oauth2` 의존성이 생긴다
@@ -112,9 +117,12 @@
 	- [ ] `pubsub.Router` 도 `Notify`/`Dispatch` 로 가를지 정하기
 		- 지금은 `Publish` 하나뿐이라 `Hub` 와 이름이 어긋난다
 		- 쓰는 곳이 없어 이번에는 건드리지 않았다. 지울지 맞출지 정한다
-	- [ ] 정리 실패를 사람이 알 수 있게 하기
-		- `Dispatch` 가 에러를 주지만 계정 삭제는 이미 끝나 되돌아가지 않는다
-		- 남은 행을 찾아내는 방법이 없다. 점검 명령이나 재시도를 붙일지 정한다
+	- [x] 정리 실패를 사람이 알 수 있게 하기
+		- [ADR-0008](adr/ADR-0008-notify-dispatch-and-user-cleanup.md) §3
+	- [ ] controller 가 할 일 정하기
+		- `Run` 안이 `//eg.Go(c.handleJob(ctx))` 주석 하나라 바로 끝난다
+		- 백엔드 바깥에서 돌아야 하는 일을 모으는 자리다
+		- auth 밖에서 사용자에 딸린 데이터를 갖게 되면 `EventUserDeleted` 구독을 여기 둔다
 - 에러 다루기
 	- [x] 인증 실패에 `ErrUnauthorized` 를 섞어 올리기
 		- [ADR-0009](adr/ADR-0009-mark-auth-failures-with-join.md), [issue 0001](issues/0001-cockroachdb-mark-not-visible-to-std-errors-is.md)
@@ -128,6 +136,11 @@
 	- [ ] 남은 `errors.Mark` 사용처가 생기지 않게 하기
 		- 표준 `errors.Is` 와 `assert.ErrorIs` 에 잡히지 않아 조용히 썩는다
 		- lint 로 막을지, 주석으로만 남길지 정한다
+- [ ] yaml 로 설정을 쓰면 camelCase 키가 조용히 무시된다
+	- yaml.v3 는 필드명을 전부 소문자로 낮춰 맞춘다. `displayName` 이 아니라 `displayname` 이어야 들어간다
+	- hjson 은 대소문자를 무시해 둘 다 먹는다. `runtime/config.hjson` 만 쓰면 드러나지 않는다
+	- `deployment/server.yaml` 의 ConfigMap 예시가 `displayName` 이라 주석을 푸는 순간 무시된다
+	- 예시를 소문자로 고칠지, 구조체에 yaml 태그를 붙여 camelCase 를 받게 할지 정한다
 - [ ] 세션 쿠키가 서명만 되고 암호화되지 않는다
 	- `cookie.NewStore` 에 block key 를 주지 않았다
 - [ ] gorm 에 넘어가지 않는 죽은 `serializer:gob` 태그 정리

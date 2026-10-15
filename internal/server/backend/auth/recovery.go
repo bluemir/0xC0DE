@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"time"
@@ -41,7 +42,7 @@ type Recovery struct {
 // 돌려주는 값은 해시 전의 원본이고, 이 순간이 지나면 다시 알 수 없다.
 //
 // 직전 발급으로부터 RecoveryResendInterval 이 지나지 않았으면 ErrRecoveryTooSoon 이다.
-func (m *Manager) IssueRecovery(username string) (string, error) {
+func (m *Manager) IssueRecovery(ctx context.Context, username string) (string, error) {
 	secret, err := newRecoverySecret()
 	if err != nil {
 		return "", err
@@ -54,7 +55,7 @@ func (m *Manager) IssueRecovery(username string) (string, error) {
 
 	now := time.Now()
 
-	tx := m.db.Begin()
+	tx := m.db.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
 	last := Recovery{}
@@ -89,16 +90,16 @@ func (m *Manager) IssueRecovery(username string) (string, error) {
 
 // ValidateRecovery 는 복구 링크의 비밀을 검증하고 그 계정을 돌려준다.
 // 없는 계정, 만료, 비밀 불일치를 모두 ErrUnauthorized 하나로 답한다.
-func (m *Manager) ValidateRecovery(username string, unhashedSecret string) (*User, error) {
+func (m *Manager) ValidateRecovery(ctx context.Context, username string, unhashedSecret string) (*User, error) {
 	recovery := Recovery{}
-	if err := m.db.Where(Recovery{Username: username}).Take(&recovery).Error; err != nil {
+	if err := m.db.WithContext(ctx).Where(Recovery{Username: username}).Take(&recovery).Error; err != nil {
 		return nil, ErrUnauthorized
 	}
 
 	// 만료된 행은 다시 쓸 일이 없다. 본 김에 치운다.
 	// 아무도 링크를 누르지 않으면 그대로 남지만, 재발급하면 덮어써서 쌓이지는 않는다.
 	if recovery.ExpiredAt.Before(time.Now()) {
-		if err := m.RevokeRecovery(username); err != nil {
+		if err := m.RevokeRecovery(ctx, username); err != nil {
 			logrus.Warnf("fail to remove expired recovery of %s: %+v", username, err)
 		}
 		return nil, ErrUnauthorized
@@ -108,7 +109,7 @@ func (m *Manager) ValidateRecovery(username string, unhashedSecret string) (*Use
 		return nil, ErrUnauthorized
 	}
 
-	user, err := m.GetUser(username)
+	user, err := m.GetUser(ctx, username)
 	if err != nil {
 		return nil, ErrUnauthorized
 	}
@@ -116,8 +117,8 @@ func (m *Manager) ValidateRecovery(username string, unhashedSecret string) (*Use
 }
 
 // RevokeRecovery 는 복구 비밀을 폐기한다. 없어도 에러가 아니다.
-func (m *Manager) RevokeRecovery(username string) error {
-	if err := m.db.Where(Recovery{Username: username}).Delete(Recovery{}).Error; err != nil {
+func (m *Manager) RevokeRecovery(ctx context.Context, username string) error {
+	if err := m.db.WithContext(ctx).Where(Recovery{Username: username}).Delete(Recovery{}).Error; err != nil {
 		return errors.WithStack(err)
 	}
 	return nil

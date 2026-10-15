@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"net/http"
@@ -81,8 +82,8 @@ func (m *Manager) relyingParty(site *url.URL) (*webauthn.WebAuthn, error) {
 
 // identity 는 username 으로 webauthn.User 를 만든다.
 // 없는 사용자면 새 handle 을 만들어 가입에 쓸 수 있게 한다.
-func (m *Manager) identity(username string) (*passkeyIdentity, error) {
-	user, err := m.GetUser(username)
+func (m *Manager) identity(ctx context.Context, username string) (*passkeyIdentity, error) {
+	user, err := m.GetUser(ctx, username)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		handle, err := newPasskeyHandle()
 		if err != nil {
@@ -100,13 +101,13 @@ func (m *Manager) identity(username string) (*passkeyIdentity, error) {
 		if err != nil {
 			return nil, err
 		}
-		if err := m.db.Model(user).Update("handle", handle).Error; err != nil {
+		if err := m.db.WithContext(ctx).Model(user).Update("handle", handle).Error; err != nil {
 			return nil, errors.WithStack(err)
 		}
 		user.Handle = handle
 	}
 
-	tokens, err := m.ListPasskey(username)
+	tokens, err := m.ListPasskey(ctx, username)
 	if err != nil {
 		return nil, err
 	}
@@ -129,13 +130,13 @@ func (m *Manager) identity(username string) (*passkeyIdentity, error) {
 
 // BeginPasskeyRegistration 은 passkey 등록 ceremony 를 시작한다.
 // 반환된 PasskeyRegistration 은 FinishPasskeyRegistration 에 그대로 넘겨야 한다.
-func (m *Manager) BeginPasskeyRegistration(site *url.URL, username string) (*protocol.CredentialCreation, *PasskeyRegistration, error) {
+func (m *Manager) BeginPasskeyRegistration(ctx context.Context, site *url.URL, username string) (*protocol.CredentialCreation, *PasskeyRegistration, error) {
 	rp, err := m.relyingParty(site)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	identity, err := m.identity(username)
+	identity, err := m.identity(ctx, username)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -170,6 +171,8 @@ func (m *Manager) BeginPasskeyRegistration(site *url.URL, username string) (*pro
 // FinishPasskeyRegistration 은 authenticator 응답을 검증하고 passkey 를 저장한다.
 // 아직 없는 사용자면 이 시점에 계정을 만든다.
 func (m *Manager) FinishPasskeyRegistration(site *url.URL, reg *PasskeyRegistration, label string, req *http.Request) (*User, *Token, error) {
+	ctx := req.Context()
+
 	rp, err := m.relyingParty(site)
 	if err != nil {
 		return nil, nil, err
@@ -187,9 +190,9 @@ func (m *Manager) FinishPasskeyRegistration(site *url.URL, reg *PasskeyRegistrat
 		return nil, nil, errors.Join(ErrUnauthorized, err)
 	}
 
-	user, err := m.GetUser(reg.Username)
+	user, err := m.GetUser(ctx, reg.Username)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		user, err = m.CreateUser(reg.Username, WithGroup("user"), withHandle(reg.Handle))
+		user, err = m.CreateUser(ctx, reg.Username, WithGroup("user"), withHandle(reg.Handle))
 	}
 	if err != nil {
 		return nil, nil, err
@@ -209,7 +212,7 @@ func (m *Manager) FinishPasskeyRegistration(site *url.URL, reg *PasskeyRegistrat
 			Label:      label,
 		}},
 	}
-	if err := m.createToken(token); err != nil {
+	if err := m.createToken(ctx, token); err != nil {
 		return nil, nil, err
 	}
 
@@ -218,7 +221,7 @@ func (m *Manager) FinishPasskeyRegistration(site *url.URL, reg *PasskeyRegistrat
 
 // BeginPasskeyLogin 은 username 없이 진행하는 로그인 ceremony 를 시작한다.
 // 반환된 세션 데이터는 FinishPasskeyLogin 에 그대로 넘겨야 한다.
-func (m *Manager) BeginPasskeyLogin(site *url.URL) (*protocol.CredentialAssertion, []byte, error) {
+func (m *Manager) BeginPasskeyLogin(ctx context.Context, site *url.URL) (*protocol.CredentialAssertion, []byte, error) {
 	rp, err := m.relyingParty(site)
 	if err != nil {
 		return nil, nil, err
@@ -239,6 +242,8 @@ func (m *Manager) BeginPasskeyLogin(site *url.URL) (*protocol.CredentialAssertio
 
 // FinishPasskeyLogin 은 assertion 을 검증하고 로그인한 사용자를 돌려준다.
 func (m *Manager) FinishPasskeyLogin(site *url.URL, sessionData []byte, req *http.Request) (*User, error) {
+	ctx := req.Context()
+
 	rp, err := m.relyingParty(site)
 	if err != nil {
 		return nil, err
@@ -260,12 +265,12 @@ func (m *Manager) FinishPasskeyLogin(site *url.URL, sessionData []byte, req *htt
 	matched := (*Token)(nil)
 
 	_, credential, err := rp.ValidatePasskeyLogin(func(rawID, userHandle []byte) (webauthn.User, error) {
-		token, err := m.getPasskeyToken(rawID)
+		token, err := m.getPasskeyToken(ctx, rawID)
 		if err != nil {
 			return nil, err
 		}
 
-		identity, err := m.identity(token.Username)
+		identity, err := m.identity(ctx, token.Username)
 		if err != nil {
 			return nil, err
 		}
@@ -305,27 +310,27 @@ func (m *Manager) FinishPasskeyLogin(site *url.URL, sessionData []byte, req *htt
 
 	// Update("secret", ...) 는 serializer 를 거치지 않고,
 	// Save 는 Index 0 을 새 행으로 봐서 INSERT 가 된다. 구조체 Updates 를 쓴다.
-	if err := m.db.Model(&Token{}).
+	if err := m.db.WithContext(ctx).Model(&Token{}).
 		Where("kind = ? AND external_id = ?", TokenKindPasskey, credential.ID).
 		Updates(Token{Secret: matched.Secret}).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	return m.GetUser(matched.Username)
+	return m.GetUser(ctx, matched.Username)
 }
 
-func (m *Manager) getPasskeyToken(credentialID []byte) (*Token, error) {
+func (m *Manager) getPasskeyToken(ctx context.Context, credentialID []byte) (*Token, error) {
 	token := Token{}
-	if err := m.db.Where("kind = ? AND external_id = ?", TokenKindPasskey, credentialID).
+	if err := m.db.WithContext(ctx).Where("kind = ? AND external_id = ?", TokenKindPasskey, credentialID).
 		Take(&token).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 	return &token, nil
 }
 
-func (m *Manager) ListPasskey(username string) ([]Token, error) {
+func (m *Manager) ListPasskey(ctx context.Context, username string) ([]Token, error) {
 	tokens := []Token{}
-	if err := m.db.Where(Token{Username: username, Kind: TokenKindPasskey}).
+	if err := m.db.WithContext(ctx).Where(Token{Username: username, Kind: TokenKindPasskey}).
 		Order("`index` asc").
 		Find(&tokens).Error; err != nil {
 		return nil, errors.WithStack(err)
@@ -333,8 +338,8 @@ func (m *Manager) ListPasskey(username string) ([]Token, error) {
 	return tokens, nil
 }
 
-func (m *Manager) RevokePasskey(username string, index int) error {
-	return m.RevokeToken(username, TokenKindPasskey, index)
+func (m *Manager) RevokePasskey(ctx context.Context, username string, index int) error {
+	return m.RevokeToken(ctx, username, TokenKindPasskey, index)
 }
 
 // PasskeyCredential 은 저장된 WebAuthn credential 을 되살린다.

@@ -10,10 +10,11 @@ import (
 )
 
 func TestRoleCRUD(t *testing.T) {
+	ctx := t.Context()
 	m := newTestManager(t)
 
 	// Create Role
-	role, err := m.CreateRole("test-admin", []auth.Rule{
+	role, err := m.CreateRole(ctx, "test-admin", []auth.Rule{
 		{
 			Verbs: []auth.Verb{"*"},
 			Selector: auth.KeyValues{
@@ -27,12 +28,12 @@ func TestRoleCRUD(t *testing.T) {
 	assert.Len(t, role.Rules, 1)
 
 	// Get Role
-	gotRole, err := m.GetRole("test-admin")
+	gotRole, err := m.GetRole(ctx, "test-admin")
 	assert.NoError(t, err)
 	assert.Equal(t, "test-admin", gotRole.Name)
 
 	// List Role
-	roles, err := m.ListRole()
+	roles, err := m.ListRole(ctx)
 	assert.NoError(t, err)
 	// Might contain default admin role + test-admin
 	assert.Condition(t, func() bool {
@@ -46,17 +47,17 @@ func TestRoleCRUD(t *testing.T) {
 
 	// Update Role
 	gotRole.Rules = []auth.Rule{}
-	err = m.UpdateRole(gotRole)
+	err = m.UpdateRole(ctx, gotRole)
 	assert.NoError(t, err)
 
-	gotRole, err = m.GetRole("test-admin")
+	gotRole, err = m.GetRole(ctx, "test-admin")
 	assert.NoError(t, err)
 	assert.Len(t, gotRole.Rules, 0)
 
 	// Delete Role
-	err = m.DeleteRole("test-admin")
+	err = m.DeleteRole(ctx, "test-admin")
 	assert.NoError(t, err)
 
-	_, err = m.GetRole("test-admin")
+	_, err = m.GetRole(ctx, "test-admin")
 	assert.Error(t, err)
 }

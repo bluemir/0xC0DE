@@ -10,11 +10,12 @@ import (
 )
 
 func TestAddRoleWithCondition(t *testing.T) {
+	ctx := t.Context()
 	m, err := newManager()
 	if err != nil {
 		t.Fatal(err)
 	}
-	r, err := m.CreateRole("hello", []auth.Rule{
+	r, err := m.CreateRole(ctx, "hello", []auth.Rule{
 		{
 			Verbs: []auth.Verb{"create", "get", "list"},
 		},
@@ -34,11 +35,12 @@ func TestAddRoleWithCondition(t *testing.T) {
 	assert.Len(t, r.Rules, 2)
 }
 func TestRole(t *testing.T) {
+	ctx := t.Context()
 	m, err := newManager()
 	if err != nil {
 		t.Fatal(err)
 	}
-	r, err := m.CreateRole("test", []auth.Rule{
+	r, err := m.CreateRole(ctx, "test", []auth.Rule{
 		{
 			Selector: auth.KeyValues{
 				"kind": "user",

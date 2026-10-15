@@ -45,14 +45,14 @@ func PasskeyRegisterBegin(c *gin.Context) error {
 		}
 
 		// 이미 있는 계정에 passkey 를 붙이려면 그 계정으로 로그인해야 한다.
-		if _, err := backends(c).Auth.GetUser(req.Username); err == nil {
+		if _, err := backends(c).Auth.GetUser(c.Request.Context(), req.Username); err == nil {
 			return auth.ErrUnauthorized
 		}
 
 		username = req.Username
 	}
 
-	creation, registration, err := backends(c).Auth.BeginPasskeyRegistration(location.Get(c), username)
+	creation, registration, err := backends(c).Auth.BeginPasskeyRegistration(c.Request.Context(), location.Get(c), username)
 	if err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func PasskeyRegisterFinish(c *gin.Context) error {
 
 // @Router /api/v1/passkeys/login/begin [post]
 func PasskeyLoginBegin(c *gin.Context) error {
-	assertion, sessionData, err := backends(c).Auth.BeginPasskeyLogin(location.Get(c))
+	assertion, sessionData, err := backends(c).Auth.BeginPasskeyLogin(c.Request.Context(), location.Get(c))
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,7 @@ func ListPasskeys(c *gin.Context) error {
 		return err
 	}
 
-	tokens, err := backends(c).Auth.ListPasskey(user.Name)
+	tokens, err := backends(c).Auth.ListPasskey(c.Request.Context(), user.Name)
 	if err != nil {
 		return err
 	}
@@ -190,7 +190,7 @@ func DeletePasskey(c *gin.Context) error {
 		return err
 	}
 
-	if err := backends(c).Auth.RevokePasskey(user.Name, req.Index); err != nil {
+	if err := backends(c).Auth.RevokePasskey(c.Request.Context(), user.Name, req.Index); err != nil {
 		return err
 	}
 

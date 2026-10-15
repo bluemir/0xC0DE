@@ -9,56 +9,59 @@ import (
 )
 
 func TestUserUpdateUser(t *testing.T) {
+	ctx := t.Context()
 	m, err := newManager()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	user, err := m.CreateUser("bluemir", auth.WithGroup("user"))
+	user, err := m.CreateUser(ctx, "bluemir", auth.WithGroup("user"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, true, m.Can(user, "update", auth.Resource{
+	assert.Equal(t, true, m.Can(ctx, user, "update", auth.Resource{
 		"kind": "user",
 		"name": "bluemir",
 	}))
 
-	assert.Equal(t, false, m.Can(user, "update", auth.Resource{
+	assert.Equal(t, false, m.Can(ctx, user, "update", auth.Resource{
 		"kind": "user",
 		"name": "redmir",
 	}))
 }
 func TestAdminUpdateUser(t *testing.T) {
+	ctx := t.Context()
 	m, err := newManager()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	user, err := m.CreateUser("bluemir", auth.WithGroup("admin"))
+	user, err := m.CreateUser(ctx, "bluemir", auth.WithGroup("admin"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	assert.Len(t, user.Groups, 1)
 
-	assert.Equal(t, true, m.Can(user, "update", auth.Resource{
+	assert.Equal(t, true, m.Can(ctx, user, "update", auth.Resource{
 		"kind": "user",
 		"name": "bluemir",
 	}))
-	assert.Equal(t, true, m.Can(user, "update", auth.Resource{
+	assert.Equal(t, true, m.Can(ctx, user, "update", auth.Resource{
 		"kind": "user",
 		"name": "redmir",
 	}))
 }
 
 func TestGroupRole(t *testing.T) {
+	ctx := t.Context()
 	m, err := newManager()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	roles, err := m.ListAssignedRole(auth.Subject{
+	roles, err := m.ListAssignedRole(ctx, auth.Subject{
 		Kind: auth.KindGroup,
 		Name: "admin",
 	})
@@ -71,17 +74,18 @@ func TestGroupRole(t *testing.T) {
 }
 
 func TestRoleGroup(t *testing.T) {
+	ctx := t.Context()
 	m, err := newManager()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	user, err := m.CreateUser("bluemir", auth.WithGroup("admin"))
+	user, err := m.CreateUser(ctx, "bluemir", auth.WithGroup("admin"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	role, err := m.GetRole("admin")
+	role, err := m.GetRole(ctx, "admin")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -116,6 +120,7 @@ func TestIsSubsetOf(t *testing.T) {
 }
 
 func TestRule(t *testing.T) {
+	ctx := t.Context()
 	m, err := newManager()
 	if err != nil {
 		t.Fatal(err)
@@ -127,7 +132,7 @@ func TestRule(t *testing.T) {
 		},
 	}
 
-	user, err := m.CreateUser("bluemir", auth.WithGroup("admin"))
+	user, err := m.CreateUser(ctx, "bluemir", auth.WithGroup("admin"))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -46,7 +46,7 @@ func RequestRecovery(c *gin.Context) error {
 		return err
 	}
 
-	if user, err := backends(c).Auth.FindUserByEmail(req.Email); err == nil {
+	if user, err := backends(c).Auth.FindUserByEmail(c.Request.Context(), req.Email); err == nil {
 		sendRecoveryMail(c, user.Name, user.Email)
 	} else {
 		logrus.Debugf("recovery requested for unknown email: %s", req.Email)
@@ -64,7 +64,7 @@ func sendRecoveryMail(c *gin.Context, username string, email string) {
 	sender := mailer(c)
 
 	if _, err := backends(c).Jobs.Run(c, "recovery-mail", func(ctx context.Context) error {
-		secret, err := manager.IssueRecovery(username)
+		secret, err := manager.IssueRecovery(ctx, username)
 		if err != nil {
 			return err
 		}
@@ -114,7 +114,7 @@ type recoveryMailData struct {
 func EnterRecovery(c *gin.Context) {
 	username, secret := splitLinkToken(c.Param("token"))
 
-	user, err := backends(c).Auth.ValidateRecovery(username, secret)
+	user, err := backends(c).Auth.ValidateRecovery(c.Request.Context(), username, secret)
 	if err != nil {
 		c.Error(err)
 		c.Abort()
@@ -146,7 +146,7 @@ func ResetPassword(c *gin.Context) error {
 		return err
 	}
 
-	if err := backends(c).Auth.UpdatePassword(recovery.Username, req.Password); err != nil {
+	if err := backends(c).Auth.UpdatePassword(c.Request.Context(), recovery.Username, req.Password); err != nil {
 		return err
 	}
 
@@ -179,11 +179,11 @@ func recoverySession(c *gin.Context) (*RecoverySession, bool) {
 
 // finishRecovery 는 복구 비밀과 복구 세션을 지우고 그 계정으로 로그인시킨다.
 func finishRecovery(c *gin.Context, username string) (*auth.User, error) {
-	if err := backends(c).Auth.RevokeRecovery(username); err != nil {
+	if err := backends(c).Auth.RevokeRecovery(c.Request.Context(), username); err != nil {
 		return nil, err
 	}
 
-	user, err := backends(c).Auth.GetUser(username)
+	user, err := backends(c).Auth.GetUser(c.Request.Context(), username)
 	if err != nil {
 		return nil, err
 	}

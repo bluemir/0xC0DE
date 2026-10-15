@@ -16,6 +16,9 @@ const (
 )
 
 func (m *Manager) HTTP(req *http.Request) (*User, error) {
+	// 요청을 통째로 받았으니 ctx 도 여기서 꺼낸다. 따로 받으면 둘이 어긋날 수 있다.
+	ctx := req.Context()
+
 	header := req.Header.Get(headerAuthorization)
 	scheme, payload := split2(header, " ")
 
@@ -28,7 +31,7 @@ func (m *Manager) HTTP(req *http.Request) (*User, error) {
 
 		name, password := split2(string(c), ":")
 
-		return m.Default(name, password)
+		return m.Default(ctx, name, password)
 	case "bearer":
 		// {username}.{index}.{secret}
 		tokenId, secret := split2Last(payload, ".")
@@ -39,7 +42,7 @@ func (m *Manager) HTTP(req *http.Request) (*User, error) {
 			return nil, errors.WithStack(err) // maybe 400?
 		}
 
-		token, err := m.GetToken(username, TokenKindAccessKey, int(index))
+		token, err := m.GetToken(ctx, username, TokenKindAccessKey, int(index))
 		if err != nil {
 			return nil, err
 		}
@@ -47,7 +50,7 @@ func (m *Manager) HTTP(req *http.Request) (*User, error) {
 		if err := token.Validate(secret); err != nil {
 			return nil, err
 		}
-		return m.GetUser(username)
+		return m.GetUser(ctx, username)
 	default:
 		return nil, meta.ErrNotImplemented
 	}

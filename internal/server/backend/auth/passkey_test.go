@@ -157,6 +157,7 @@ func jsonRequest(t *testing.T, body map[string]any) *http.Request {
 }
 
 func TestPasskeyRegisterAndLogin(t *testing.T) {
+	ctx := t.Context()
 	m, err := newManager()
 	require.NoError(t, err)
 
@@ -171,7 +172,7 @@ func TestPasskeyRegisterAndLogin(t *testing.T) {
 	device := newAuthenticator(t)
 
 	// passkey 만으로 가입
-	creation, registration, err := m.BeginPasskeyRegistration(site, "alice")
+	creation, registration, err := m.BeginPasskeyRegistration(ctx, site, "alice")
 	require.NoError(t, err)
 	assert.Equal(t, rpID, creation.Response.RelyingParty.ID)
 	assert.Equal(t, "alice", registration.Username)
@@ -183,11 +184,11 @@ func TestPasskeyRegisterAndLogin(t *testing.T) {
 	assert.Equal(t, "my laptop", token.Secret.Passkey.Label)
 
 	// password 는 없으므로 ID/PW 로그인은 실패해야 한다
-	_, err = m.Default("alice", "")
+	_, err = m.Default(ctx, "alice", "")
 	assert.ErrorIs(t, err, auth.ErrUnauthorized)
 
 	// username 없이 passkey 로 로그인
-	assertion, sessionData, err := m.BeginPasskeyLogin(site)
+	assertion, sessionData, err := m.BeginPasskeyLogin(ctx, site)
 	require.NoError(t, err)
 
 	loggedIn, err := m.FinishPasskeyLogin(site, sessionData,
@@ -196,7 +197,7 @@ func TestPasskeyRegisterAndLogin(t *testing.T) {
 	assert.Equal(t, "alice", loggedIn.Name)
 
 	// 등록된 passkey 목록
-	passkeys, err := m.ListPasskey("alice")
+	passkeys, err := m.ListPasskey(ctx, "alice")
 	require.NoError(t, err)
 	require.Len(t, passkeys, 1)
 	assert.Equal(t, device.credentialID, passkeys[0].ExternalID)
@@ -207,14 +208,15 @@ func TestPasskeyRegisterAndLogin(t *testing.T) {
 	assert.Equal(t, device.signCount, credential.Authenticator.SignCount)
 	assert.False(t, credential.Authenticator.CloneWarning)
 
-	require.NoError(t, m.RevokePasskey("alice", passkeys[0].Index))
+	require.NoError(t, m.RevokePasskey(ctx, "alice", passkeys[0].Index))
 
-	passkeys, err = m.ListPasskey("alice")
+	passkeys, err = m.ListPasskey(ctx, "alice")
 	require.NoError(t, err)
 	assert.Len(t, passkeys, 0)
 }
 
 func TestPasskeyLoginWithUnknownCredential(t *testing.T) {
+	ctx := t.Context()
 	m, err := newManager()
 	require.NoError(t, err)
 
@@ -223,7 +225,7 @@ func TestPasskeyLoginWithUnknownCredential(t *testing.T) {
 
 	device := newAuthenticator(t)
 
-	assertion, sessionData, err := m.BeginPasskeyLogin(site)
+	assertion, sessionData, err := m.BeginPasskeyLogin(ctx, site)
 	require.NoError(t, err)
 
 	_, err = m.FinishPasskeyLogin(site, sessionData,
@@ -234,6 +236,7 @@ func TestPasskeyLoginWithUnknownCredential(t *testing.T) {
 
 // 등록 ceremony 가 어긋나도 401 이어야 한다
 func TestPasskeyRegisterWithWrongChallenge(t *testing.T) {
+	ctx := t.Context()
 	m, err := newManager()
 	require.NoError(t, err)
 
@@ -242,7 +245,7 @@ func TestPasskeyRegisterWithWrongChallenge(t *testing.T) {
 
 	device := newAuthenticator(t)
 
-	_, registration, err := m.BeginPasskeyRegistration(site, "alice")
+	_, registration, err := m.BeginPasskeyRegistration(ctx, site, "alice")
 	require.NoError(t, err)
 
 	// 서버가 낸 것이 아닌 challenge 로 응답을 만든다
@@ -251,23 +254,24 @@ func TestPasskeyRegisterWithWrongChallenge(t *testing.T) {
 	assert.ErrorIs(t, err, auth.ErrUnauthorized)
 
 	// 실패했으므로 계정도 생기지 않는다
-	_, err = m.GetUser("alice")
+	_, err = m.GetUser(ctx, "alice")
 	assert.Error(t, err)
 }
 
 func TestPasskeyRegisterForExistingPasswordUser(t *testing.T) {
+	ctx := t.Context()
 	m, err := newManager()
 	require.NoError(t, err)
 
 	site, err := url.Parse("http://localhost:8080")
 	require.NoError(t, err)
 
-	_, _, err = m.Register("bob", "password")
+	_, _, err = m.Register(ctx, "bob", "password")
 	require.NoError(t, err)
 
 	device := newAuthenticator(t)
 
-	creation, registration, err := m.BeginPasskeyRegistration(site, "bob")
+	creation, registration, err := m.BeginPasskeyRegistration(ctx, site, "bob")
 	require.NoError(t, err)
 
 	_, _, err = m.FinishPasskeyRegistration(site, registration, "yubikey",
@@ -275,14 +279,14 @@ func TestPasskeyRegisterForExistingPasswordUser(t *testing.T) {
 	require.NoError(t, err)
 
 	// ID/PW 로그인은 그대로 동작해야 한다
-	_, err = m.Default("bob", "password")
+	_, err = m.Default(ctx, "bob", "password")
 	require.NoError(t, err)
 
 	// passkey 로도 로그인된다
-	assertion, sessionData, err := m.BeginPasskeyLogin(site)
+	assertion, sessionData, err := m.BeginPasskeyLogin(ctx, site)
 	require.NoError(t, err)
 
-	user, err := m.GetUser("bob")
+	user, err := m.GetUser(ctx, "bob")
 	require.NoError(t, err)
 
 	loggedIn, err := m.FinishPasskeyLogin(site, sessionData,
@@ -292,6 +296,7 @@ func TestPasskeyRegisterForExistingPasswordUser(t *testing.T) {
 }
 
 func TestPasskeyLastUsedAt(t *testing.T) {
+	ctx := t.Context()
 	m, db, err := newManagerWithDB()
 	require.NoError(t, err)
 
@@ -305,7 +310,7 @@ func TestPasskeyLastUsedAt(t *testing.T) {
 
 	device := newAuthenticator(t)
 
-	creation, registration, err := m.BeginPasskeyRegistration(site, "carol")
+	creation, registration, err := m.BeginPasskeyRegistration(ctx, site, "carol")
 	require.NoError(t, err)
 
 	user, _, err := m.FinishPasskeyRegistration(site, registration, "my laptop",
@@ -313,13 +318,13 @@ func TestPasskeyLastUsedAt(t *testing.T) {
 	require.NoError(t, err)
 
 	// 등록만 해서는 아직 로그인에 쓰인 적이 없다
-	passkeys, err := m.ListPasskey("carol")
+	passkeys, err := m.ListPasskey(ctx, "carol")
 	require.NoError(t, err)
 	require.Len(t, passkeys, 1)
 	assert.Nil(t, passkeys[0].Secret.Passkey.LastUsedAt)
 
 	login := func() {
-		assertion, sessionData, err := m.BeginPasskeyLogin(site)
+		assertion, sessionData, err := m.BeginPasskeyLogin(ctx, site)
 		require.NoError(t, err)
 
 		_, err = m.FinishPasskeyLogin(site, sessionData,
@@ -329,7 +334,7 @@ func TestPasskeyLastUsedAt(t *testing.T) {
 
 	login()
 
-	passkeys, err = m.ListPasskey("carol")
+	passkeys, err = m.ListPasskey(ctx, "carol")
 	require.NoError(t, err)
 	require.Len(t, passkeys, 1)
 	require.NotNil(t, passkeys[0].Secret.Passkey.LastUsedAt)
@@ -347,7 +352,7 @@ func TestPasskeyLastUsedAt(t *testing.T) {
 
 	login()
 
-	passkeys, err = m.ListPasskey("carol")
+	passkeys, err = m.ListPasskey(ctx, "carol")
 	require.NoError(t, err)
 	require.Len(t, passkeys, 1)
 
@@ -358,6 +363,7 @@ func TestPasskeyLastUsedAt(t *testing.T) {
 
 // sign counter 가 뒤로 가도 로그인은 되고, 경고는 역행 한 번에 한 줄만 남아야 한다.
 func TestPasskeyLoginWithRegressedSignCounter(t *testing.T) {
+	ctx := t.Context()
 	m, err := newManager()
 	require.NoError(t, err)
 
@@ -371,7 +377,7 @@ func TestPasskeyLoginWithRegressedSignCounter(t *testing.T) {
 
 	device := newAuthenticator(t)
 
-	creation, registration, err := m.BeginPasskeyRegistration(site, "dave")
+	creation, registration, err := m.BeginPasskeyRegistration(ctx, site, "dave")
 	require.NoError(t, err)
 
 	user, _, err := m.FinishPasskeyRegistration(site, registration, "yubikey",
@@ -379,7 +385,7 @@ func TestPasskeyLoginWithRegressedSignCounter(t *testing.T) {
 	require.NoError(t, err)
 
 	login := func() {
-		assertion, sessionData, err := m.BeginPasskeyLogin(site)
+		assertion, sessionData, err := m.BeginPasskeyLogin(ctx, site)
 		require.NoError(t, err)
 
 		loggedIn, err := m.FinishPasskeyLogin(site, sessionData,
@@ -389,7 +395,7 @@ func TestPasskeyLoginWithRegressedSignCounter(t *testing.T) {
 	}
 
 	storedCounter := func() uint32 {
-		passkeys, err := m.ListPasskey("dave")
+		passkeys, err := m.ListPasskey(ctx, "dave")
 		require.NoError(t, err)
 		require.Len(t, passkeys, 1)
 
