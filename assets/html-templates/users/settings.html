@@ -20,6 +20,7 @@
 					<label>Email</label>
 					<section>
 						<input name="email" type="email" autocomplete="email" />
+						<output name="verified"></output>
 					</section>
 					<div>
 						<button enhanced>저장</button>
@@ -33,11 +34,24 @@
 
 			let status = $.get(`p[role="status"]`);
 			let input = $.get(`input[name="email"]`);
+			let verified = $.get(`output[name="verified"]`);
+
+			// 확인되지 않은 주소도 복구에 쓰인다. 오타면 남에게 가므로 상태를 적어 둔다.
+			let showVerified = user => {
+				if (!user.email) {
+					verified.textContent = "";
+				} else if (user.emailVerifiedAt) {
+					verified.textContent = `확인됨 (${new Date(user.emailVerifiedAt).toLocaleString()})`;
+				} else {
+					verified.textContent = "확인되지 않음 - 보낸 메일의 링크를 열어 주세요";
+				}
+			};
 
 			try {
 				let res = await $.request("GET", "/api/v1/users/me");
 
 				input.value = res.json.email || "";
+				showVerified(res.json);
 			} catch(e) {
 				console.error(e);
 
@@ -48,11 +62,18 @@
 				evt.preventDefault();
 
 				try {
-					await $.request("PATCH", "/api/v1/users/me", {
+					let res = await $.request("PATCH", "/api/v1/users/me", {
 						body: new FormData(evt.target),
 					});
 
-					status.textContent = "저장했습니다.";
+					showVerified(res.json);
+
+					// 재발송 간격에 걸리면 보내지 않는다. 서버가 알려준 대로 적는다
+					status.textContent = res.json.verificationMailSent
+						? "저장했습니다. 확인 메일을 보냈습니다."
+						: res.json.email && !res.json.emailVerifiedAt
+							? "저장했습니다. 확인 메일은 조금 뒤에 다시 저장하면 보냅니다."
+							: "저장했습니다.";
 				} catch(e) {
 					console.error(e);
 

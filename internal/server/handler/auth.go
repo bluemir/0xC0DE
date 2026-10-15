@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/cockroachdb/errors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 
@@ -63,6 +64,8 @@ func Register(c *gin.Context) error {
 		Username string `form:"username"     binding:"required,min=4"`
 		Password string `form:"password"     binding:"required,min=4"`
 		// 계정 복구 메일을 받을 주소다. 비워도 가입된다.
+		// 여기서는 확인 메일을 보내지 않는다. 가입 폼은 로그인 전이라
+		// 아무 주소로나 메일을 쏘는 통로가 된다. 확인은 설정 화면에서 한다.
 		Email string `form:"email" json:"email" binding:"omitempty,email"`
 	}{}
 
@@ -146,7 +149,7 @@ func me(c *gin.Context) (*auth.User, error) {
 }
 
 // UpdateMe 는 로그인한 사용자의 이메일을 바꾼다.
-// 확인(verification) 절차가 없으므로 적은 값을 그대로 저장한다.
+// 아직 확인되지 않은 주소면 확인 메일을 보낸다. 같은 주소로 다시 저장하는 것이 재발송이다.
 //
 // @Router /api/v1/users/me [patch]
 func UpdateMe(c *gin.Context) error {
@@ -179,8 +182,30 @@ func UpdateMe(c *gin.Context) error {
 	}
 	c.Set(ContextKeyUser, updated)
 
-	c.JSON(http.StatusOK, updated)
+	// 확인되지 않은 주소면 확인 메일을 보낸다. 같은 주소로 다시 저장하는 것이 재발송이다.
+	res := UpdateMeResponse{User: updated}
+	if updated.Email != "" && updated.EmailVerifiedAt == nil {
+		err := sendVerificationMail(c, updated.Name, updated.Email)
+
+		switch {
+		case err == nil:
+			res.VerificationMailSent = true
+		case errors.Is(err, auth.ErrVerificationTooSoon):
+			// 방금 보냈다. 저장은 이미 끝났으므로 실패로 만들지 않는다
+		default:
+			return err
+		}
+	}
+
+	c.JSON(http.StatusOK, res)
 	return nil
+}
+
+// UpdateMeResponse 는 바뀐 사용자를 그대로 펼쳐 담고, 확인 메일을 지금 보냈는지를 더한다.
+// 재발송 간격에 걸리면 보내지 않으므로, 화면이 "보냈다" 고 적으려면 이 값이 있어야 한다.
+type UpdateMeResponse struct {
+	*auth.User
+	VerificationMailSent bool `json:"verificationMailSent"`
 }
 
 func Me(c *gin.Context) error {

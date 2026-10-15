@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"time"
+
 	"github.com/bluemir/functional/v2"
 	"github.com/cockroachdb/errors"
 	"github.com/rs/xid"
@@ -12,10 +14,12 @@ import (
 type User struct {
 	Name string `gorm:"primaryKey;size:256" json:"name" expr:"name"`
 	// Email 은 계정 복구 메일을 받을 주소다. 비어 있을 수 있다.
-	// 확인(verification) 절차가 없으므로 사용자가 적은 값을 그대로 믿는다.
 	// 같은 주소를 여러 계정이 쓸 수 있어 uniqueIndex 가 아니다.
 	Email string `gorm:"index;size:256" json:"email" expr:"email"`
-	Salt  string `json:"-"`
+	// EmailVerifiedAt 은 확인 링크를 눌러 이 주소를 증명한 시각이다. 아직이면 nil 이다.
+	// 복구를 막지는 않는다. 확인하지 않은 주소라는 것을 화면에 알려 주는 데 쓴다.
+	EmailVerifiedAt *time.Time `json:"emailVerifiedAt"`
+	Salt            string     `json:"-"`
 	// Handle 은 WebAuthn user handle 이다.
 	// authenticator 에 노출되는 값이라 사용자 이름과 분리한다.
 	Handle []byte  `gorm:"uniqueIndex" json:"-"`
@@ -109,15 +113,28 @@ func (m *Manager) FindUserByEmail(email string) (*User, error) {
 
 // UpdateEmail 은 이메일만 바꾼다.
 // UpdateUser(Save) 는 구조체 전체를 덮어써서 Groups 나 Labels 까지 건드린다.
+//
+// 주소가 달라지면 확인 상태를 지우고 이전 주소로 보낸 확인 링크도 폐기한다.
+// 같은 주소를 다시 저장하는 것은 아무것도 바꾸지 않는다. 확인된 주소를 저장 버튼 한 번에
+// 미확인으로 되돌릴 이유가 없다.
 func (m *Manager) UpdateEmail(username string, email string) error {
-	result := m.db.Model(&User{}).Where(User{Name: username}).Update("email", email)
-	if result.Error != nil {
-		return errors.WithStack(result.Error)
+	user, err := m.GetUser(username)
+	if err != nil {
+		return err
 	}
-	if result.RowsAffected == 0 {
-		return errors.WithStack(gorm.ErrRecordNotFound)
+	if user.Email == email {
+		return nil
 	}
-	return nil
+
+	// map 으로 넘겨야 zero value 인 nil 도 같이 쓰인다.
+	if err := m.db.Model(&User{}).Where(User{Name: username}).Updates(map[string]any{
+		"email":             email,
+		"email_verified_at": nil,
+	}).Error; err != nil {
+		return errors.WithStack(err)
+	}
+
+	return m.RevokeVerification(username)
 }
 
 func (m *Manager) ListUser(opts ...meta.ListOptionFn) ([]User, error) {

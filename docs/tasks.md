@@ -62,9 +62,17 @@
 		- [ADR-0006](adr/ADR-0006-account-recovery.md)
 	- [x] `auth.Recovery` 모델과 발급·검증·폐기
 	- [x] 복구 세션과 비밀번호 재설정, 복구 중 passkey 등록
-	- [ ] 이메일 확인(verification) 절차
-		- 지금은 사용자가 적은 주소를 그대로 믿는다. 오타면 남에게 간다
-		- `EmailVerifiedAt` 을 두고 확인된 주소만 복구에 쓸지 정한다
+	- [x] 이메일 확인(verification) 절차
+		- [ADR-0007](adr/ADR-0007-email-verification.md)
+	- [ ] 확인된 주소만 복구에 쓸지 다시 보기
+		- 지금은 미확인 주소로도 복구된다. 오타를 내면 복구 메일이 남에게 간다
+		- 막으면 이미 등록된 주소가 전부 미확인이라 그 계정들이 한꺼번에 끊긴다
+		- 확인된 계정이 충분히 쌓인 뒤에 정한다 ([ADR-0007](adr/ADR-0007-email-verification.md) §2)
+	- [ ] 확인 메일 발송에 rate limit
+		- 계정당 5분 간격만 있다. 한 계정으로 특정 주소에 계속 보낼 수 있다
+		- 복구 요청 rate limit 과 같은 자리에서 같이 정한다
+	- [ ] 만료된 `Verification` 행 청소
+		- `Recovery` 와 같은 문제다. 사용자당 한 행이지만 탈퇴한 계정의 행은 남는다
 	- [ ] 복구 요청에 IP 기준 rate limit
 		- 계정당 15분 간격만 있다. 모르는 주소로 퍼붓는 것은 안 막는다
 	- [ ] 복구 완료 시 access-key 를 폐기할지 정하기

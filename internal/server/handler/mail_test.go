@@ -71,3 +71,25 @@ func TestRenderMailMissingTemplate(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, strings.Contains(err.Error(), "no-such-mail"), err.Error())
 }
+
+func TestRenderVerificationMail(t *testing.T) {
+	title, content, err := renderMail("verify-email", verificationMailData{
+		AppName:  "0xC0DE",
+		Username: "alice",
+		Link:     "https://example.com/users/verify-email/alice.abcdef",
+		Lifetime: 24 * time.Hour,
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, "[0xC0DE] 이메일 주소 확인", title)
+	assert.NotContains(t, title, "\n")
+
+	for _, body := range []string{content.Text, content.HTML} {
+		assert.Contains(t, body, "alice")
+		assert.Contains(t, body, "https://example.com/users/verify-email/alice.abcdef")
+		assert.Contains(t, body, "24h0m0s")
+	}
+
+	assert.Contains(t, content.HTML, "<p>")
+	assert.NotContains(t, content.Text, "<p>")
+}

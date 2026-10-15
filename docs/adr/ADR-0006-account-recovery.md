@@ -3,6 +3,7 @@
 - 상태: 채택
 - 날짜: 2026-09-22
 - 관련: [ADR-0002](ADR-0002-token-secret-per-kind.md) 의 자격증명 모델, [ADR-0005](ADR-0005-smtp-without-library.md) 의 메일 발송
+- 후속: [ADR-0007](ADR-0007-email-verification.md) 이 §1 의 "확인 절차 없음" 을 뒤집었다
 
 ## 배경
 

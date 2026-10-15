@@ -92,7 +92,9 @@ func recoveryLink(site *url.URL, username string, secret string) string {
 		site.Scheme, site.Host, url.PathEscape(username), secret)
 }
 
-func splitRecoveryToken(token string) (string, string) {
+// splitLinkToken 은 메일 링크의 "username.secret" 을 가른다.
+// 비밀은 base64url 이라 점을 담지 않는다. 마지막 점에서 갈라야 username 의 점이 살아남는다.
+func splitLinkToken(token string) (string, string) {
 	i := strings.LastIndex(token, ".")
 	if i < 0 {
 		return token, ""
@@ -110,7 +112,7 @@ type recoveryMailData struct {
 // EnterRecovery 는 복구 링크를 검증하고 복구 세션을 연다.
 // 링크를 여는 것만으로는 아무것도 바뀌지 않는다. 복구 비밀은 수단을 세운 뒤에 폐기한다.
 func EnterRecovery(c *gin.Context) {
-	username, secret := splitRecoveryToken(c.Param("token"))
+	username, secret := splitLinkToken(c.Param("token"))
 
 	user, err := backends(c).Auth.ValidateRecovery(username, secret)
 	if err != nil {

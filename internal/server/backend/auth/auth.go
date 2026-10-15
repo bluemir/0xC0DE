@@ -46,6 +46,11 @@ type IManager interface {
 	ValidateRecovery(username string, unhashedSecret string) (*User, error)
 	RevokeRecovery(username string) error
 
+	// Verification(이메일 확인)
+	IssueVerification(username string, email string) (string, error)
+	ConfirmVerification(username string, unhashedSecret string) (*User, error)
+	RevokeVerification(username string) error
+
 	// Passkey(WebAuthn)
 	BeginPasskeyRegistration(site *url.URL, username string) (*protocol.CredentialCreation, *PasskeyRegistration, error)
 	FinishPasskeyRegistration(site *url.URL, reg *PasskeyRegistration, label string, req *http.Request) (*User, *Token, error)
@@ -103,6 +108,7 @@ func New(db *gorm.DB, conf *Config) (*Manager, error) {
 		&ServiceAccount{},
 		&Token{},
 		&Recovery{},
+		&Verification{},
 		&Role{},
 		&Assign{},
 	); err != nil {
