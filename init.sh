@@ -20,9 +20,19 @@ if [ "$NAME" =  "" ] ; then
 fi
 echo $NAME
 
-find . -name init.sh -o -name Makefile -prune -o -type f -print0 | xargs -0 -n 1 sed -i.bak "s#github.com/bluemir/0xC0DE#$REPO#g" || true
+find . \
+	-path ./.git -prune -o \
+	-path ./scripts/tools/make-select -prune -o \
+	-name init.sh -prune -o \
+	-name Makefile -prune -o \
+	-type f -print0 | xargs -0 -n 1 sed -i.bak "s#github.com/bluemir/0xC0DE#$REPO#g" || true
 find . -name "*.bak" -delete
-find . -name init.sh -o -name Makefile -prune -o -type f -print0 | xargs -0 -n 1 sed -i.bak "s#0xC0DE#$NAME#g" || true
+find . \
+	-path ./.git -prune -o \
+	-path ./scripts/tools/make-select -prune -o \
+	-name init.sh -prune -o \
+	-name Makefile -prune -o \
+	-type f -print0 | xargs -0 -n 1 sed -i.bak "s#0xC0DE#$NAME#g" || true
 find . -name "*.bak" -delete
 
 # AI rule 삭제
