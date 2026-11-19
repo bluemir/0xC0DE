@@ -10,7 +10,7 @@ RUN dnf install -y \
 
 ENV GOPATH=/root/go
 ENV PATH=$PATH:/root/go/bin
-ENV GOTOOLCHAIN=go1.26.0+auto
+ENV GOTOOLCHAIN=auto
 
 # pre build
 WORKDIR /src
